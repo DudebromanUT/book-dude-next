@@ -1,0 +1,176 @@
+# Book Dude Next
+
+The next Book Dude, built alongside the live one (`DudebromanUT/Book-Dude`, https://dudebromanut.github.io/Book-Dude/),
+which stays exactly as it is until the family moves over. This repo started as a copy of live release 10.26.08. Plans:
+families with their own private data (Supabase), kids signing in with a username and password their parent sets,
+cousins seeing each other's reading lists and game scores, and an arcade of Maple games, starting with Maple Madness.
+
+It lives at https://dudebromanut.github.io/book-dude-next/ and keeps its own offline cache, database and saved
+settings (all named after its address), so it never touches the live app on the same device. Its Home Screen name is
+"Dude Next". Until it has its own Google script, don't paste the school quiz link into it: the copy would send its
+own weekly numbers to the live script.
+
+A static, iPhone/iPad-friendly reading app for `DudebromanUT/Book-Dude`, hosted by the Book Dude from the Reading Room, an attic library full of books, with Maple the Welsh terrier, Fig the gray tabby, Bobby Joe the secretary bird, Reddy the red-tailed hawk, and BB the blanket.
+
+The catalog includes 637 distinct books, all with descriptions, and 468 sourced AR records. The other 169 remain explicitly unresolved. Source and edition notes are available in each book's details. No account, server database, paid service, or JavaScript build dependencies are needed.
+
+## Put it on GitHub Pages
+
+1. The app lives in `docs/` (it starts at `docs/index.html`). `scripts/` builds the generated files and `tests/` checks them.
+2. In **Settings → Pages → Build and deployment**, choose **Deploy from a branch**, select `main`, select **`/docs`**, and save.
+3. Once GitHub finishes deploying (a minute or two; watch the **Actions** tab), the app is at `https://dudebromanut.github.io/book-dude-next/` unless a custom domain is configured.
+4. Use HTTPS. All asset paths, the installation manifest, the service worker, and local database naming support the `/book-dude-next/` subdirectory.
+
+The repository is public, so Pages publishes the catalog and application to anyone with the URL. Personal records are never part of the published files. The Dude's portrait and BB's drawing (`docs/img/`) and the book covers (`docs/covers/`) are part of the published site, so anyone with the link can see them. The covers are the publishers' and illustrators' artwork, kept as small thumbnails to show which book is which. Do not commit exported backups (`.gitignore` already ignores `book-dude-backup-*.json` and the older `reading-room-backup-*.json`).
+
+GitHub's instructions: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+
+## Install on each iPhone or iPad
+
+1. Open the published website in Safari.
+2. Tap **Share → Add to Home Screen**. Keep **Open as Web App** enabled if iOS shows that option.
+3. Open the new home-screen icon while online. Wait for **Ready offline** (shown at the top of Explore, and under Farty Pants Central → This device) before leaving the network.
+4. Use that icon for reading and notes from then on. Safari and home-screen installations can have separate storage. If you already entered notes in Safari, save a backup there, then restore it inside the installed app.
+5. Repeat on the other devices. Each has a separate journal and dashboard; no family sharing or cross-device synchronization is implemented.
+
+A file opened from the iOS Files preview is not a reliable installation method. Host the whole `docs` folder through Pages; do not download just index.html for home-screen installation.
+
+## What is included
+
+- **Explore** all 637 books with search (title matches first), collection chips, and filters for AR book level, AR points, interest level, age guidance, and genre. Sort by award year, title, author, level, points, Amazon rating, Open Library rating, or the original list's score. Switch between covers (standing on wooden shelves) and a list. Cards and lists show each book's Amazon rating (for example "Amazon 4.7 (88k)") and AR points; sorting by Open Library rating or the original list's score shows that score instead. The AR book level is on the book's page, which also shows the Amazon and Open Library ratings and the original list's score (it came with the list; its source was never confirmed, and it runs far lower than real reader ratings for many older books). **Ask Fig** opens a random unfinished book from the current results.
+- **Find it at the library** on every book's page (catalog books and her own) opens a Salt Lake County Library catalog search for that book (its title without the subtitle, plus the author's last name, books and e-books only), in the browser. She taps **Place hold** on the right copy and logs in with her library card there; the app never sees the card or PIN. In a sample of 40 books, 37 came up on the first page of results, usually first; the rest were older titles the library does not own, and their search shows no results.
+- **Share** on every book's page sends it to someone through the iPad's share sheet (Messages, Mail, AirDrop, Copy). A preview shows the message first: what she thinks, in her own words ("I just finished Hatchet by Gary Paulsen and gave it 5 stars!"), the award and AR facts, and a link that opens the book in Book Dude for whoever gets it, with no app or account needed. The link names only the book. Her stars go along unless she switches them off, and her note only if she switches it on. Books she added herself get a library search link instead, since they exist only on her device. **Share this list** on My Shelves sends a whole shelf as a numbered list, such as her Want to read list as gift ideas. Messages or Mail shows the message again before she sends it. Where there is no share sheet (some computers), Copy message and Email buttons appear instead.
+- Real cover art for most books, from Open Library, with a small seal for the book's award (Newbery Medal or Honor, Beehive, Classic, Pulitzer, Printz, Carnegie, National Book Award). Books without a good cover, and books she adds without a photo, get a homemade cover in the same style. The covers ship with the site: the app saves them in the background after it is ready offline (Farty Pants Central → This device shows how many are saved), and any cover not saved yet shows the homemade one. Each book's page credits Open Library.
+- **My Shelves**: Reading, Want to read, Finished, Paused, Favorites, and Read Books.
+- **Add your own books** for anything that isn't in the catalog: title, author (optional), AR book level and points (optional; blank stays unknown), a short description, and a cover photo (optional: **Take a photo of the cover** opens the camera or photo library, and the picture is cropped to a book shape and shrunk to about 40 KB on the device; it is also on the book's page as **Take a cover photo**). Use **Add a book** on My Shelves, or search for a title and tap **Add it as my book** when nothing matches (the search text becomes the title). Added books get a "My book" seal and work like every other book: shelves, notes, ratings, quiz points, search, the Progress dashboard, and backups. They can be edited or deleted from the book's page. If the title is already in the catalog, the app offers to open that book instead.
+- Private notes, reading percentage, start and finish dates, and her own 5-star rating on any book (with a word from the Dude for each star count). Her rating shows on the book's card, and Explore can sort by **My ratings**.
+- Actual AR points earned, entered from quiz results; blank and zero mean different things.
+- **Progress**: all-time and per-year dashboards, an annual points goal ring, a month-by-month chart (points by quiz date, books finished by finish date), a "Ready for a quiz" list, and progress through each award collection.
+- Earned points are counted by quiz date; books finished are counted by completion date. Currently reading is always a present-day count. Undated completions count only in All time.
+- Awaiting quiz entry means finished books without an entered quiz result. Their known available points are shown separately; unknown values are never counted as zero-value books.
+- A book has one current quiz-result entry. Edit it to correct that result. Multiple attempts and repeated readings are not separate ledger entries in this version.
+- **Spend your points** (Progress): every 10 points she earns is her choice, $10 into the Book Money Jar or 60 minutes of screen time, mixed however she likes. Until she reaches the next 10, a line shows how close she is. She can move them any time, too: **Move $10 to screen time** on the jar and **Move 60 minutes to the jar** on the screen-time card, until the money is deposited or the minutes are marked as given. Points she earned before she could choose stayed in the jar. A grown-up can fix a mistaken tap under Farty Pants Central (**Her choices**). With only one of the two switched on, every point goes straight to it.
+- **Book Money Jar** (Progress): $1 per point she puts in the jar, paid out every 10 points: $10 into her Greenlight account (it was $100 for Barnes & Noble until October 2026; a jar still on those settings switched over once, and a grown-up's own settings stay). Greenlight has no API for families, so the money moves by hand: the jar shows what's waiting ("$10 waiting"), a grown-up sends it in Greenlight, then taps **mark as deposited**, which clears everything waiting at once. Greenlight can make it money she can spend only at Barnes & Noble. The jar fills with coins, cracks jokes as it fills, and celebrates each payout. Dollars per point, points per payout, where the money goes, the payouts already made, and whether the jar shows at all are under Farty Pants Central → Book money and screen time; dollars per point 0 switches to a non-money reward. Points come from the quiz results entered in the app (honor system), or, with **Points from school** turned on, from her total on the school's AR report: a grown-up types the total in (under Farty Pants Central, or **update school points** on the jar for the weekly check-in), and only points above a starting line count. The starting line is her total when the deal started, or 0 to count the whole school year. Quizzes that arrive from the school's emails count right away on top of the last total typed in (the jar says "plus 4 points from 2 new quizzes"); the next total a grown-up types already includes them, so they stop counting separately and nothing counts twice. A quiz dated before that total's day is treated as already in it.
+- **Screen time** (Progress): 60 minutes for each 10 points she spends on it, plus 30 extra minutes for each book from the Reading Room list she finishes. Bridge to Terabithia earns its own 60 extra minutes instead of the 30 (its cards show **+60 min**); books she adds herself earn no extra. Extras count only for books finished on or after the day screen time started on that device, so books she finished earlier don't count. Each book's page says what finishing it earns. Minutes add up until a grown-up taps **mark minutes as given** and picks how many she's using (30, 60, or all); the rest stays saved. The minutes, the extras, the start date, the minutes already given, and whether it shows at all are under Farty Pants Central → Book money and screen time.
+- **The talking Dude** (with a Claude API key in the Google script; see `scripts/school-email/README.md`): a Dude joke for each new school quiz, a Sunday email to her parents with her week and dinner-table questions, **What should I read next?** (three picks from books right for her age that she hasn't read, with the Dude's reasons), and **COBOL**, a kid-safe AI helper on its own tab, an IBM 3270 mainframe terminal that opens on a main menu (1 chat, 2 Library, 3 tests): it calls her "Human" (her name never goes to Claude), answers appear whole (no typing bubble, no voice, no pictures), nothing rewards chatting longer, a line that never scrolls away says "This is an AI. Mom and Dad can read these chats.", a small yellow **Talk to a grown-up** button is always there (it tells her to go talk to Mom or Dad and emails them right away), a soft timer suggests breaks, and function keys work like a mainframe's (PF1 LIBRARY, PF3 EXIT back one step toward the menu, PF5 SOUND). The tab is always there; when the chat can't take messages it says why (not set up on this device, connecting, no connection, switched off, after hours by the iPad's clock, or done for the day), and it asks the script again when she opens COBOL and after a few minutes away. The script adds hours, a daily limit, no personal details, her parents' instructions (`scripts/school-email/cobol-prompt.md`), a log in a Google Sheet, an email when something worries it, and the week's chats in the Sunday email (a summary, everything flagged, and the whole log). Book Dude only asks and shows (`docs/app/dude-ai.js`, `docs/app/cobol.js`); the script holds the key and checks every rule. None of it shows until the script says Claude is on, and a grown-up can turn the chat off.
+- **COBOL's Library and tests**: options 2 and 3 on the COBOL tab (or PF1), with no Claude needed to read or take a test. The Library holds short knowledge articles (`docs/app/library.js`; how to write one is in `library/GUIDE.md`). COBOL's history file stays there to read any time, with no test, and also opens from the end of About the Dude. An article can have a test: a short one (up to 700 words) has 10 questions, 8 to pass, for 2 points; a long one (701 to 1,500 words) has 15, 12 to pass, for 4. Points are earned once per test (record `exam:<id>`), counted like AR points, kept in backups, and added on top of a school total; she can retake it and sees her score and what to reread, never the answers. Every test ends with a think-about-it question with no right answer: a sentence or two (at least 20 letters) earns 1 bonus point once (`exam:<id>:think`), passed or not, and COBOL replies to her idea through the script (after hours her answer is saved and COBOL replies the next time it is open). Her answers and COBOL's replies are in the Sunday email under "What she thought". The old COBOL history test is retired; points she earned from it (`exam:cobol`) stay.
+- **Quiz emails from school**: a Google script in the account that gets her Renaissance quiz emails (`scripts/school-email`, setup in its README) copies each new result once a day at 3 p.m. and serves them at a private link. A grown-up pastes that link into Farty Pants Central (it stays on her iPad). Each time the app opens online, new quizzes land: the book is marked Finished with her points and % score, or added to Read Books first. Points typed in by hand are never changed, and nothing lands twice.
+- **Reading history**: her AR quizzes since kindergarten (658 of them, from the school's list) built into the site (`docs/history.json`, so her titles and scores are public). The first time a device opens the app, they land on her shelves once; a book she already has there keeps her own copy, and a device that can't load the file tries again next time. Each is a Finished book with her quiz score ("Quiz 90%"); the month it was finished where the list had one (shown as "Finished Oct 2026"); and author, year, pages and cover from Open Library. Those covers show only while online. The 21 that are already in the catalog use the catalog's page. History books count toward the Progress tab and the chart, never toward book money, minutes or Secret Files, and they never show as waiting for a quiz. About 30 of the Dude's jokes are about her books.
+- **Grown-up passcode** (Farty Pants Central → Book money and screen time): an optional 4-digit passcode. Once it's set, entering, changing or clearing an AR quiz result, updating school points, marking book money or minutes as given, the book money and screen time settings, and restoring a backup all ask for it first. After a grown-up types it, it stays open for 5 minutes after their last change; **Lock now** closes it sooner. Five wrong tries in a row make it wait 5 minutes. The passcode is saved as a fingerprint, not the four digits, and travels with backups. It keeps things honest rather than truly locked: **Forgot the passcode?** lets anyone reset it, but then the old passcode stops working and the settings show the day it was reset.
+- **The Dude's Secret Files** (Progress): 14 short stories from the Dude's old jobs (geologist, chemist, gold miner, cowboy, marine biologist, physicist, doctor, teacher, photographer, botanist, video game developer, geologist again, fairy, and a 300-point finale), each unlocked at a point total (the same points the jar counts). They are spaced for about 250 points a year: one every few weeks. The highest one unlocked is her title on the jar.
+- **The Dude**: a speech bubble on Explore with a new joke every time the app opens (or comes back after 30 seconds away). About 100 lines are shuffled like a deck so none repeats until all have played; most are jokes about books in the catalog with a link to that book, and books on her shelves come up a little more often. A P.S. under the joke mentions book money waiting, points to spend, screen time waiting (Friday through Sunday), a quiz to enter, being close to the next reward, or the book she is reading. Tap the bubble for another joke.
+- **Visiting pets**: one small pet comes by each time the app opens, taking turns: BB the blanket (a hand drawing, in `docs/img/bb.webp`), Bobby Joe the secretary bird, Maple, Fig, and Reddy the red-tailed hawk. Walkers stand on the tab bar (or the bottom of the screen on iPad) and wander now and then; Reddy swoops in, perches, and flies to a new spot. Tap a pet for a line from it. Only the pet itself takes taps, so it never blocks the app. Farty Pants Central → Make it yours → **Visiting pets** turns them off. With Reduce Motion on, the pet sits still.
+- **About the Dude**: the Dude's story (the night of the tesseract and the beans, his 23 careers, Napoleon, Shakespeare's bear, jazz, the shirt), the crew of seven (Maple, Fig, Bobby Joe, Reddy, BB, Gerald the octopus, and the Dude), the six rules of the Reading Room, and the Dude's Word Hoard: vocabulary words in bold through the story, collected as chips at the end. A brand-new reader sees it the first time the app opens; after that it is under Farty Pants Central and behind the Dude's picture on Explore.
+- **Farty Pants Central** (the last tab): the reader's name (used in greetings), a color (leather, rug red, brass, ivy, teal, navy, plum, or berry), backup and restore, device status, and notes about the data.
+- JSON backup and restore (including added books and their cover photos). On iPhone and iPad, **Save a backup** opens the share sheet (choose **Save to Files**). Restore shows what will change before it changes anything, merges newer book records, and preserves newer device records. Annual goals already on the device take precedence. Unknown book records are retained in backups and totals.
+- Compatibility with the earlier reading-list version 1/2 JSON backups. Old notes and checkmarks migrate on import; they never become earned quiz points automatically.
+- Offline app and catalog after installation; external source links require a connection.
+- Dark mode, larger touch controls, safe-area spacing, accessible labels, reduced-motion support, and a small celebration when a book is finished or a quiz is recorded.
+
+## Privacy and storage
+
+The app uses IndexedDB for personal records. The service worker caches only the application, the public catalog, and the cover pictures. There are no analytics, remote fonts, remote cover-image requests (covers are files on the same site), or personal-data upload APIs. **Find it at the library** is an ordinary link: it sends a book's title and author's last name to the library catalog only when she taps it. **Share** hands a message to the iPad's share sheet only when she taps it; she picks the app and the person and sends it herself. Who she can message is set on the iPad in Screen Time (Communication Limits). A strict Content Security Policy blocks scripts and styles from anywhere else.
+
+Local data is not encrypted by this application. Anyone with access to the unlocked device/browser can see it. Database names are separated by site path, but browsers isolate storage by **origin**, not repository: other trusted code hosted under the same `dudebromanut.github.io` origin can access origin storage. Use a dedicated domain if you later host untrusted apps on that origin.
+
+The browser may decline a persistent-storage request. Clearing website data, deleting an installation, device loss, or storage eviction can lose records. Save backups periodically (the Progress tab reminds you after 30 days) and before changing devices or website address. Save backups in a private Files/iCloud Drive location. The backup file contains notes in plain text.
+
+Changing the site address/path or opening the app in another browser creates a separate journal. Save a backup from the old location and restore it in the new one. Backups are the transfer mechanism; there is no automatic sync.
+
+## Change the Dude's story, sayings, or the pets' names
+
+Everything the Dude says lives in `docs/dude.js`: the dog's and cat's names (`dog`, `cat`), his one-liners (`sayings`), jokes about catalog books (`bookJokes`, keyed by the book's exact title), the P.S. lines (`ps`), the `story` shown in About the Dude (wrap a word in **double asterisks** to make it a bold vocabulary word), the Secret `files` (and the point total that unlocks each), the jar's jokes (`jar`, `jarFull`, `facts`), and the visiting pets' names and lines (`pets`). The pets themselves are drawn in `docs/pets.js`. `{dog}` and `{cat}` in any text are replaced with the names. Edit the file, then run `python3 scripts/build.py` so installed apps offer the update.
+
+The portrait and its crops are in `docs/img/` (`dude.jpg`, `dude-face.jpg`, `dog.jpg`, `cat.jpg`), and the home-screen icons are in `docs/icons/`. Replacing any of them also needs `python3 scripts/build.py`.
+
+## Book covers
+
+`scripts/covers.py` finds the covers. It looks each book up on Open Library, skips other-language editions, movie tie-ins, audiobooks, large print, plain cloth bindings, and odd shapes, and saves a 280-pixel WebP thumbnail (about 13 KB) in `docs/covers/`. Its choices are kept in `scripts/covers.json`. It needs Python 3 with Pillow (`pip install Pillow`) and internet access; the app and the build never contact Open Library.
+
+- `python3 scripts/covers.py` finds covers for books that have no decision yet (for example, books just added to the CSV).
+- `python3 scripts/covers.py --use BOOK_ID NUMBER` uses a specific Open Library cover. The number is in the cover's address: `covers.openlibrary.org/b/id/NUMBER-L.jpg`.
+- `python3 scripts/covers.py --none BOOK_ID` keeps the homemade cover for a book.
+- `python3 scripts/covers.py --redo BOOK_ID` looks a book up again.
+
+Then run `python3 scripts/build.py`. Cover file names are hashes of the pictures, so a changed cover reaches installed apps as a new file.
+
+## Open Library ratings
+
+`python3 scripts/ratings.py` fetches each book's reader rating from Open Library (the same work chosen for its cover) into four columns of `docs/books.csv`: `ol_work`, `ol_rating` (average out of 5), `ol_ratings` (how many readers rated it), and `ol_checked` (the day it was fetched). Run it now and then, since ratings change, then run `python3 scripts/build.py`. Each book's page shows the rating with a link to Open Library. **Highest Open Library rating** in Explore's sort ranks books with at least 5 ratings by their average first, then books with fewer ratings, then books nobody has rated; while that sort is on, the cards show the Open Library rating and how many ratings it has instead of the community score.
+
+## Amazon ratings
+
+`python3 scripts/amazon.py` fetches each book's Amazon star rating through Amazon Scraper API (amazonscraperapi.com, a paid service with a free starter allowance; each successful lookup costs about $0.0009 and failed lookups are free) into four columns of `docs/books.csv`: `amz_asin` (the Amazon product), `amz_rating`, `amz_ratings` (how many ratings, across all of the book's formats), and `amz_checked`. It looks a book up by its `isbn10` and falls back to a title-and-author search. Books checked before are skipped unless you pass `--redo`. The service collects Amazon's public pages, which Amazon's own terms do not allow; no Amazon account is involved.
+
+The API key comes from the `AMAZON_SCRAPER_API_KEY` environment variable: set it in the cloud environment's settings (Network secrets, or an environment variable), never in a file in this repository. Each book's page shows the Amazon rating with a link to the book on Amazon. **Highest Amazon rating** in Explore's sort ranks books with at least 20 ratings first, highest rating first and more ratings breaking ties; while that sort is on, the cards show it (for example "Amazon 4.8 (34k)").
+
+## ISBNs
+
+`python3 scripts/isbns.py` gives each book an ISBN in `docs/books.csv` (`isbn13`, plus `isbn10` when there is one; for a print book the 10-digit ISBN is usually also its Amazon product number). It picks one English print edition from the book's Open Library work: the edition whose cover the app shows when it qualifies, otherwise a recent paperback or hardcover from the English-language ISBN groups that US and UK stores list (978-0, 978-1, 979-8). Audiobooks, e-books, large print, study guides, library rebinds, and editions that are probably translations are skipped. Books that already have an ISBN keep it, so a hand-typed ISBN is never replaced; `--redo` picks again for every book. About 40 books have none: the newest titles that are not on Open Library yet, and out-of-print books from before ISBNs existed. Each book's page shows its ISBN, and `build.py` rejects an ISBN whose check digit is wrong.
+
+The Open Library work in `ol_work` is the source of truth for ratings and ISBNs. The scripts match books by title, author, and edition (which finds books Open Library files under another title, such as *Dragon Rider* under its German title) and prefer the work with the most editions, since duplicates and stray records usually have one or two. To fix a wrong match, put the right `OL...W` in `ol_work` and run `ratings.py` and `isbns.py --redo`.
+
+## Update the book catalog
+
+1. Edit `docs/books.csv`. **Keep each existing `book_id` unchanged**, even when correcting a title or author. For a genuinely new book, leave `book_id` blank and the build assigns a new unique one (written back into the CSV). IDs starting with `mine:` are reserved for books added in the app.
+2. Run `python3 scripts/build.py` from any directory with Python 3 available. This regenerates `docs/catalog.js` and `docs/sw.js` together, and stops with a readable list if a row has a problem (duplicate ID, non-numeric points, points without a source link, and so on).
+3. Commit and push the changed CSV, catalog.js, and sw.js files. Changes to HTML/CSS/JS/icons also require running build.py so the offline version updates. New books get the homemade cover until you run `scripts/covers.py` (see Book covers).
+4. Installed apps check for updates when opened online. Tap **Update app** when the banner appears. Saved notes live in a separate database and are not overwritten by catalog updates.
+
+Do not manually edit generated catalog.js or sw.js. No automatic fetching of AR information is performed. The source CSV still contains unverified supplied ratings and incomplete age/genre data; the app labels them accordingly.
+
+## Where the code lives
+
+The app is plain HTML, CSS, and JavaScript with no frameworks or outside libraries; GitHub Pages serves `docs/` as it is.
+
+| File | What it is |
+|---|---|
+| `docs/index.html` | The page itself: the tab bar, the sheet and confirm boxes, and the scripts it loads |
+| `docs/styles.css` | The look |
+| `docs/core.js` | Points math, dates, records, and backup checking (no screen code, so the tests run it in Node) |
+| `docs/catalog.js` | The book list, generated from `docs/books.csv` by `scripts/build.py` |
+| `docs/dude.js` | Everything the Dude says |
+| `docs/pets.js` | The visiting pets |
+| `docs/app/` | The screens and everything behind them, one file per part (below) |
+| `docs/sw.js` | The offline service worker, generated from `scripts/sw.template.js` |
+
+In `docs/app/`:
+
+| To change | Open |
+|---|---|
+| What happens when the app opens | `main.js` |
+| The Explore tab: search, filters, sorting, and the wall of books | `explore.js` |
+| The My Shelves tab | `shelves.js` |
+| The Progress tab: points, goals, the chart, and collections | `progress.js` |
+| The More tab: name, color, the pets switch, and how the device is doing | `more.js` |
+| A book's page: shelf buttons, rating, notes, the quiz result, and the library link | `book.js` |
+| Books she adds: the form, cover photos, editing, and deleting | `my-books.js` |
+| Sharing a book or a shelf: the message, its preview, and the share sheet | `share.js` |
+| Her choices of money or minutes, the book money jar, screen time, points from school, their grown-up settings, and the Secret Files | `money.js` |
+| The grown-up passcode: asking for it, setting, changing and resetting it | `grownup.js` |
+| The Dude's speech bubble, the P.S. line, and the About the Dude story (the words are in `docs/dude.js`) | `dude-talk.js` |
+| Covers, tags, cards, and list rows that every screen uses | `cards.js` |
+| Saving a backup and restoring one | `backup.js` |
+| Working offline, saving covers, and the "new version" banner | `offline.js` |
+| Switching tabs | `tabs.js` |
+| The book list as the screens use it, and the filter and sort choices | `books.js` |
+| The app's state and saving to the device (IndexedDB) | `state.js` |
+| Toasts, confetti, and the sheet and confirm boxes | `page.js` |
+| Shared helpers and icons | `util.js`, `icons.js` |
+| How taps, typing, and forms reach the right file | `events.js` |
+
+Each file lists what it uses from the others at the top (`import`). A button's HTML names what it does (`data-act="fav"`), and the same file's `actions` list holds that name and its code; typing, changed fields, and form submits work the same way (`inputs`, `changes`, `submits`). `events.js` gathers those lists, so adding a button or a field touches only the file that draws it. `scripts/build.py` adds every file in `docs/app` to the offline list automatically; a new file needs an `import` from a file that is already used.
+
+## Verification
+
+**App version.** The small print at the top of the app ("App version 10.26") says which version a device is running. The first release of a month is MM.YY (10.26 = October 2026); each release after it that month adds .01, .02, .03 (10.26.01). It lives in `docs/app/version.js`: change it with every deploy, and `python3 scripts/build.py` checks its form. When the app opens and a new version has already downloaded (or finishes downloading in the first 30 seconds, with nothing open or being typed), it switches over by itself; after that, the "Update app" banner asks.
+
+Run `node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs`, `npx eslint docs/app`, `python3 scripts/build.py --check`, `node tests/browser/clickthrough.cjs`, `node tests/browser/history.cjs` (the built-in reading history lands once, keeps her own copies, and works offline), `node tests/browser/school-email.cjs` (quiz results from the school's emails land once, keep points typed by hand, and add books not in the app), `node tests/browser/update.cjs` (the app version shows, and a new version switches over), and `node tests/browser/dude-ai.cjs` (the jokes, picks and COBOL with its Library, tests and think-about-it bonus, with the Google script played by the test). The **Checks** GitHub Action runs all eight on every push.
+
+`tests/browser/clickthrough.cjs` opens the app on a phone-sized screen in Chromium and goes through every feature the way she would: the welcome story, the pets, search, every filter and sort, a book's page (shelf buttons, rating, notes, quiz points, the library link), adding, editing, photographing, and deleting her own book, goals, Secret Files, book money, backup and restore, and the update button. It writes down what each of its 138 steps shows and compares that with `tests/browser/clickthrough.expected.txt`; any difference fails and is listed line by line. Every run is the same (the clock starts at 9:30 a.m. on October 9, 2026 in Utah, and "random" picks repeat), so a difference means the app changed. After a deliberate change, run `UPDATE=1 node tests/browser/clickthrough.cjs` and check the diff of the `.txt` file before committing it; book data shows up in the results, so updating `docs/books.csv` or the ratings changes it too. It needs Playwright: `npm install --no-save playwright@1.56.1 && npx playwright install chromium`. `THROTTLE=4` runs it on a computer slowed down four times, to check it still passes on a slow one.
+
+The tests cover points calculations, date handling, backup migration/validation, added books (validation, totals, backup round-trip, restore merging), book-money math and settings, cover files and background cover saving (including offline and after updates), stable catalog IDs, service-worker cache boundaries, and that the files in `docs/app` fit together (every `import` names something another file really provides, `main.js` reaches every file, and every file is saved for offline). The lint step catches a name used in a file without being defined or imported there. Live iOS installation, Safari layout, and the deployed GitHub Pages origin still need a device check after publication.
+
+## Quick device check after publishing
+
+Add a note and record an actual points result, close/reopen the home-screen app, and confirm both remain. Turn on airplane mode and confirm the catalog still opens. Save a backup and restore it on a second test installation. Verify the other family member's device starts with an empty journal.

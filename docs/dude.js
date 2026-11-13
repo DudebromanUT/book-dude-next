@@ -1,0 +1,488 @@
+/*
+ * The Dude: the crew's names, the daily sayings, the story in "Meet the Dude",
+ * the Secret Files she unlocks with AR points, and the jokes on the Book Money Jar.
+ * Edit freely, then run `python3 scripts/build.py` so installed apps pick up the change.
+ *
+ * Placeholders: {dog} and {cat} become the names below. Jar and fact lines can also use
+ * {points}, {toGo}, {prize}, {pages}, and {nuggets}.
+ */
+window.BOOK_DUDE = {
+  dog: 'Maple',
+  cat: 'Fig',
+
+  // The Dude's one-liners. A new one shows every time the app opens (shuffled, no repeats until all
+  // have been seen). Tapping the speech bubble shows another.
+  sayings: [
+    'Shoes off. Socks on. What are we reading?',
+    'I found my sunglasses. They were on my head. Again.',
+    'My bathrobe has eleven pockets. Four have bookmarks. Six have snacks. One has {cat}.',
+    'Gerald the octopus sent me a postcard. It just said “thanks for the sunglasses.”',
+    'Milk. It does a body good. Books do a brain good. I carry both everywhere.',
+    'I asked {cat} for a book recommendation. {cat} recommended a nap. {cat} always recommends a nap.',
+    '{cat} knocked a book off the shelf. On purpose. While looking right at me. It was a great book. I think that was the point.',
+    'I lost my sunglasses again. {dog} found them. {dog} was wearing them.',
+    '{dog} has 212 socks. I have 211. Do the math.',
+    'Today’s forecast: 90% chance of a good book. 10% chance of {cat} sitting on it.',
+    'Fun fact: a group of owls is called a parliament. A group of books is called a Tuesday.',
+    'Some people count sheep to fall asleep. I count books I still want to read. I never fall asleep.',
+    'As a photographer, I learned to say “cheese.” As a reader, I learned to say “one more chapter.” Both are lies.',
+    'When I was a botanist I talked to plants. Now I talk to books. The books are better listeners. The plant is still sulking.',
+    'I designed a video game where you win by reading. My high score is “still reading.”',
+    'If you see a bouncing pudding in Nevada, it’s mine. Do not eat it.',
+    'Pancake, my old cowboy horse, used to read over my shoulder. Very slow reader. Horse.',
+    '{dog} tried to fetch a library book. It is now “gently loved.” Please don’t tell the librarian.',
+    'I tried reading underwater once. That was a short phase. The book is still drying.',
+    'The ladder squeaks on the fourth rung. I named the squeak Gary. We’re close.',
+    'Doctor’s orders: two chapters before bed. I was a doctor. I checked.',
+    'I once read so long my hot cocoa turned into iced cocoa. Then back into hot cocoa. It was a long book.',
+    'Bedtime arrives 40% faster when you’re in the middle of a good chapter. That’s science. I was a physicist.',
+    'I licked about four thousand rocks as a geologist. Granite tastes like a sidewalk. Do not recommend.',
+    'I traded my only gold nugget for a copy of Treasure Island. The book had way more treasure in it.',
+    'A bookmark is just a promise to come back.',
+    'Big words aren’t scary. They’re just small words holding hands.',
+    'The Dude backwards is “Edud Eht.” Sounds like a wizard. I’m keeping it.',
+    'I tried to teach {cat} to read. {cat} learned to sit on the exact page I was reading. Close enough.',
+    'The best time to read is right now. The second-best time is also right now, but with a snack.',
+    'I built a time machine once. It’s called a nap. You close your eyes and wake up in the future. Works every time.',
+    'Sleeps all day. Prowls all night. Hates garlic. Not a vampire. That’s {cat}.',
+    'The dog and the cat took over this house years ago. I just live here.',
+    'Some people worry about Martians invading. I worry about {dog} invading the couch. Only one of those actually happens.'
+  ],
+
+  // Jokes about books in the Reading Room. The title must match the book's title in the list;
+  // the Dude's speech bubble then links to that book. If she has one of these books on a shelf,
+  // the Dude brings it up more often.
+  bookJokes: {
+    // Books from her own reading history (kindergarten on). They link to her shelf once her history is restored.
+    'Diary of a Wimpy Kid': ['Greg Heffley calls it a journal, not a diary. The Dude calls his a Very Important Scientific Log. It is mostly lists of snacks.'],
+    'Diary of a Wimpy Kid: Rodrick Rules': ['Rodrick’s band is called Löded Diper. The Dude’s old band was called The Socks. We had one song. It was about socks.'],
+    'Diary of a Wimpy Kid: The Long Haul': ['The Heffleys take a road trip and everything goes wrong. The Dude once drove to the library and accidentally ended up in Nevada. Same energy.'],
+    'Diary of a Wimpy Kid: Cabin Fever': ['In Cabin Fever, Greg gets snowed in. {cat} gets snowed in every day on purpose. It is called a nap.'],
+    'Dog Man': ['Dog Man has a dog’s head on a cop’s body. {dog} has asked for a badge. {dog} has not been given a badge. {dog} is appealing the decision.'],
+    'Dog Man: Lord of the Fleas': ['Lord of the Fleas is a joke on a very serious book called Lord of the Flies. One day you will read that one and laugh twice.'],
+    'Phoebe and Her Unicorn': ['Marigold Heavenly Nostrils is the most beautiful unicorn in the world. She will tell you so herself. Repeatedly. {cat} relates.'],
+    "Kristy's Great Idea: A Graphic Novel": ['Kristy starts a babysitters club. The Dude started a sock-sitters club. Membership: one. Socks lost: forty.'],
+    'The Dragonet Prophecy (Graphic Novel)': ['Five dragonets, one prophecy, zero chill. Reddy saw the cover and has been practicing his dragon roar. It is a very loud squeak.'],
+    'The Wild Robot': ['Roz the robot learns to talk to animals. The Dude has been trying that with {cat} for years. {cat} understands perfectly. {cat} chooses not to answer.'],
+    'The Wild Robot Escapes': ['Roz escapes a farm to get home. {dog} escapes the yard to get to the neighbor’s barbecue. Both are stories about family. Kind of.'],
+    'Keeper of the Lost Cities': ['Sophie can read minds. The Dude can read minds too, but only {dog}’s, and it is always the word SNACK.'],
+    'The Last Kids on Earth': ['Jack builds a treehouse fortress to survive the monster apocalypse. The Dude built a blanket fort once. BB moved in and never left.'],
+    'Timmy Failure: Mistakes Were Made': ['Timmy runs a detective agency with a polar bear named Total. The Dude’s agency has a secretary bird named Bobby Joe. Bobby Joe has solved more cases.'],
+    'Ramona the Pest': ['Ramona pulls Susan’s boing-boing curls. The Dude does not recommend this. The Dude does recommend saying “boing-boing curls” out loud. Try it.'],
+    'Tales of a Fourth Grade Nothing': ['Fudge swallows Peter’s turtle. The Dude has kept a very close eye on all small turtles ever since.'],
+    'Little House in the Big Woods': ['Laura’s family made everything themselves: butter, cheese, even toys. The Dude once made toast. He is still very proud.'],
+    'Charlie and the Chocolate Factory': ['A chocolate river! The Dude, a former chemist, has questions about the plumbing. Mostly: can he have a cup.'],
+    'The Hobbit, or, There and Back Again': ['Bilbo just wanted second breakfast and got a dragon instead. The Dude has had mornings like that.'],
+    'Pippi Longstocking': ['Pippi can lift a horse. The Dude can lift a horse book. It is a very heavy book. He needed a nap after.'],
+    'Smile': ['Raina falls, breaks her front teeth, and turns it into a book everyone loves. The Dude falls all the time. No book yet. Working on it.'],
+    'Pax': ['Pax is a fox who waits for his boy. {dog} waits for you too. Every day. By the door. Dramatically.'],
+    'Bunnicula: A Rabbit-Tale of Mystery': ['A vampire bunny who drains vegetables. The Dude checked the fridge. One carrot looked pale. Suspicious.'],
+    'Dragons Love Tacos': ['Dragons love tacos but hate spicy salsa. The Dude learned this the hard way. The kitchen still smells smoky.'],
+    "Don't Let the Pigeon Drive the Bus!": ['The Dude did not let the pigeon drive the bus. He let Reddy drive it. That was worse.'],
+    'Pete the Cat and the Bad Banana': ['Pete the Cat and a bad banana. {cat} would like it known that {cat} has never once touched a banana, good or bad.'],
+    'Sideways Stories from Wayside School': ['Wayside School was built thirty stories tall, one classroom per floor, by mistake. The Dude’s house has a mistake too. It is the whole attic.'],
+    'The Bad Guys': ['The Bad Guys are trying very hard to be good guys. {dog} relates. {dog} is trying very hard not to eat socks.'],
+    'Big Nate Makes the Grade': ['Big Nate has a record number of detentions. The Dude has a record number of library late fees. He paid them all. With interest. And cookies.'],
+    'Guts': ['Guts is about worries that live in your stomach. The Dude’s worries live in his left sock. He changes it often.'],
+    'Holes': ['In Holes, they dig one hole a day, five feet deep. {dog} read it and took it as a personal challenge. The backyard is now Swiss cheese.'],
+    "Charlotte's Web": ['Charlotte wrote SOME PIG in her web. I asked the spider in the attic to write SOME DUDE. It just stared at me. Rude.'],
+    'Hatchet': ['Brian survives the whole wilderness in Hatchet with just a hatchet. I once got lost in a grocery store with a full cart. We are not the same.'],
+    'Because of Winn-Dixie': ['Winn-Dixie is a dog named after a grocery store. {dog} wants to be renamed after a grocery store too. {dog} is holding out for “Snack Aisle.”'],
+    'The Tale of Despereaux': ['Despereaux is a tiny mouse with enormous ears who loves stories. {cat} read it and is now very confused about how to feel about mice.'],
+    'Frindle': ['In Frindle, Nick invents a new word for pen. I invented a new word for socks: “toasters.” Nobody uses it. Please use it.'],
+    'Matilda': ['Matilda could move things with her mind. I stared at the TV remote for an hour. Then {dog} sat on it and changed the channel. {dog} might be magic.'],
+    'Wonder': ['Mr. Browne’s rule in Wonder: when you can be right or be kind, choose kind. My rule: when you can have one cookie or two, choose two. Both are wise.'],
+    'The Westing Game': ['In The Westing Game, sixteen heirs race to solve a puzzle. I once did a 500-piece puzzle of a picture of a puzzle. Took me a year. Worth it.'],
+    'Mrs. Frisby and the Rats of NIMH': ['The rats of NIMH taught themselves to read. {cat} refuses. {cat} says books are for napping on.'],
+    'From the Mixed-Up Files of Mrs. Basil E. Frankweiler': ['Claudia ran away to live in an art museum and bathed in the fountain. I ran away to the library once. I lasted four hours. The snack situation was bad.'],
+    'A Wrinkle in Time': ['A Wrinkle in Time explains the tesseract, a shortcut through space. I use the same technology to find my sunglasses. (Head. They’re on my head.)'],
+    'Island of the Blue Dolphins': ['Karana lived alone on an island for years. I spent one weekend alone in a library and started talking to the encyclopedias. Volume K was a great listener.'],
+    'Treasure Island': ['Long John Silver’s parrot shouts “Pieces of eight!” {cat} shouts “Pieces of ham!” at 6 a.m. every day. Same energy.'],
+    "Alice's Adventures in Wonderland": ['Alice drinks a bottle labeled DRINK ME and shrinks. I drank a bottle labeled DRINK ME once. It was apple juice. I have never been so disappointed.'],
+    'The Wind in the Willows': ['Mr. Toad in The Wind in the Willows yells “Poop-poop!” every time he sees a car. I’m not saying it’s the funniest thing in classic literature. I’m saying I’ve read it forty times.'],
+    'The Secret Garden': ['Mary finds a key to a secret garden. I found a key once too. It opens nothing. I’ve tried every door. It might be a key to a different book.'],
+    'Anne of Green Gables': ['Anne Shirley cracked a slate over a boy’s head for calling her “Carrots.” The Dude does not recommend this. The Dude also does not call anyone Carrots.'],
+    'Little Women': ['Jo March sold her hair for twenty-five dollars in Little Women. I tried to sell my beard. No offers. Not one.'],
+    'The Jungle Book': ['Mowgli was raised by wolves. {dog} thinks {dog} raised me. Honestly? Not wrong.'],
+    'Black Beauty': ['Black Beauty is a whole book told by a horse. My horse Pancake also had a lot to say. It was mostly complaints about me.'],
+    'The Call of the Wild': ['Buck answers the call of the wild. {dog} answers the call of the fridge door. Every time. From any room. Even asleep.'],
+    'The Adventures of Sherlock Holmes': ['Sherlock Holmes can tell where you’ve been from the mud on your boots. I can tell where {dog} has been from the mud on my couch.'],
+    'Twenty Thousand Leagues Under the Sea': ['Captain Nemo’s submarine battles a giant squid. Gerald the octopus read it and has strong opinions. They were mostly written in ink.'],
+    'A Christmas Carol': ['Scrooge gets visited by ghosts all night. I get visited by {cat} all night. Same thing, but with more stepping on my face.'],
+    'The Little Prince': ['The Little Prince says, “Draw me a sheep.” I drew a sheep once. {dog} barked at it. Best review I’ve ever gotten.'],
+    'The Hobbit': ['Hobbits have dinner twice a day when they can get it. That is the only part of The Hobbit I have tried at home. It went great.', 'Bilbo asks Gollum, “What have I got in my pocket?” I asked {dog} the same thing. {dog} guessed “treat.” {dog} was right.'],
+    'The Fellowship of the Ring': ['There is a LOT of walking in The Fellowship of the Ring. {dog} read it and asked for a walk. Then another. We’re on page 300 and mile 12.'],
+    'The Lion, the Witch and the Wardrobe': ['Lucy found a whole world in the back of a wardrobe. I check the back of my closet every day. So far: two socks, a raisin, and {cat}.'],
+    'The Lightning Thief': ['Percy Jackson has a pen that turns into a sword. My pen turns into a frindle. Different book. Ask Nick.'],
+    'The City of Ember': ['In The City of Ember, the lights keep going out. In the Reading Room, the lights stay on until I finish the chapter. So, never.'],
+    'Eragon': ['Eragon finds a stone that hatches into a dragon. I found a stone once. I licked it. It was granite. (See: geologist.)'],
+    'Ella Enchanted': ['Ella is cursed to obey every order. I wish {dog} had that curse. “{dog}, drop the sock.” {dog} did not drop the sock.'],
+    'The One and Only Ivan': ['Ivan the gorilla paints pictures. {cat} paints too. Mostly with muddy paws. Mostly on my notes.'],
+    'The Girl Who Drank the Moon': ['There’s a Perfectly Tiny Dragon in The Girl Who Drank the Moon who believes he is Simply Enormous. {cat} feels the same way about being a lion.'],
+    "Mr. Popper's Penguins": ['Mr. Popper kept a penguin in his refrigerator. I kept a penguin in my refrigerator once. It was a pudding cup shaped like a penguin. It still counts.'],
+    'The Cricket in Times Square': ['A cricket in Times Square plays music for all of New York City. A cricket in my attic plays music at 3 a.m. Nobody is buying tickets.'],
+    'Maniac Magee': ['Maniac Magee untied a knot nobody in town could untie. I can’t untie my own shoelaces. That’s why it’s socks only in here.'],
+    'Bud, Not Buddy': ['Bud has a whole list of Rules and Things for Having a Funner Life. My list has one rule: read the next chapter. It is a very short list.'],
+    'The Voyages of Doctor Dolittle': ['Doctor Dolittle could talk to animals. I was a doctor too. {dog} talked to me once. {dog} said “walk.” {dog} says it a lot.'],
+    'Smoky, the Cowhorse': ['Smoky was the best cowhorse in the West. Pancake was the best napping horse in the West. Different skills.'],
+    'Flora & Ulysses': ['Ulysses the squirrel gets superpowers from a vacuum cleaner and starts writing poetry. I vacuumed for an hour once. Nothing. Not even a haiku.'],
+    "The Inquisitor's Tale": ['There’s a dragon in The Inquisitor’s Tale whose farts are deadly. I’m not saying {dog} is a dragon. I’m saying crack a window.'],
+    'The Wednesday Wars': ['In The Wednesday Wars, Holling has to read Shakespeare every Wednesday. I read Shakespeare every Wednesday too. Also Thursdays. Also in the bathtub.'],
+    'Princess Academy': ['Princess Academy takes place on a mountain where everybody cuts stone. I licked three rocks just reading it. Old geologist habits.'],
+    'El Deafo': ['Cece turns her hearing aid into a superpower in El Deafo. I turned my bathrobe into a snack pouch. Also a superpower.'],
+    'The Candy Shop War': ['The Moon Rocks in The Candy Shop War make kids bounce like astronauts. I tried a regular jelly bean. Nothing. I’m writing a complaint.'],
+    'The Chocolate Touch': ['In The Chocolate Touch, everything John’s lips touch turns to chocolate. Sounds great until you try to drink water. I have thought about this way too much.'],
+    'Superfudge': ['There’s a bird in Superfudge that says “Bonjour, stupid.” {cat} says something like that to me every morning. Without the French.'],
+    'Dragon Rider': ['In Dragon Rider, a dragon flies across the world searching for the Rim of Heaven. I search the whole house for the TV remote. Equally epic.'],
+    'Jeremy Thatcher, Dragon Hatcher': ['Jeremy Thatcher buys a strange little ball that hatches into a dragon. I bought a strange marble once. It is still a marble. I am being very patient.'],
+    'The Great Pet Heist': ['The pets in The Great Pet Heist plan a heist. {dog} and {cat} are planning one too. The target is the cheese drawer.'],
+    'Duck and Moose: Duck Moves In!': ['Duck moves in with Moose without asking. {cat} moved into my favorite chair without asking. Nobody asked me either.'],
+    'Garlic and the Vampire': ['Garlic is a vegetable who has to face a vampire. I once had to face a vegetable. It was broccoli. I lost.'],
+    'The Graveyard Book': ['Bod is raised by ghosts in a graveyard. I was raised by librarians. Also very quiet. Also always saying “shh.”'],
+    'When You Reach Me': ['Miranda gets mysterious notes from someone who knows the future. I got a note from the future once. It said, “Your sunglasses are on your head.”'],
+    'The Twenty-One Balloons': ['The professor in The Twenty-One Balloons sets off to cross the ocean in a balloon. I tried to float in the bathtub with a book. The book did not float.'],
+    'Hoot': ['Hoot is about kids saving burrowing owls. {cat} would love to meet the owls. {cat} would love it a little too much. {cat} is not invited.'],
+    'Skyward': ['The spaceship in Skyward is completely obsessed with mushrooms. I respect that. I am completely obsessed with socks.'],
+    'Stormbreaker': ['Alex Rider gets spy gadgets disguised as a yo-yo and zit cream. I got a stapler disguised as a stapler. Still waiting for my secret mission.'],
+    'Shiloh': ['Marty hides a beagle named Shiloh. {dog} hides socks. Nobody has ever found them. Not even Marty.'],
+    'Julie of the Wolves': ['Julie learns to talk to wolves. {dog} is part Welsh terrier, part wolf, and part couch cushion.'],
+    'The Crossover': ['The Crossover tells a whole basketball season in poems. I tried to write my grocery list in poems. “Milk, so cold, so white, so true.” The cashier was not impressed.'],
+    'New Kid': ['Jordan draws comics about his new school in New Kid. I drew a comic once. It was a guy losing his sunglasses. It was based on a true story.'],
+    'Lulu and the Brontosaurus': ['Lulu wants a brontosaurus for her birthday. I also wanted a brontosaurus for my birthday. I got socks. Okay, I love socks. But still.'],
+    'Restart': ['Chase forgets everything in Restart and has to figure out who he was. I do that every morning before breakfast.']
+  },
+
+  // A "P.S." under the Dude's line about her own books and rewards. {title}, {p}, {toGo}, and {prize} are filled in.
+  ps: {
+    owed: ['P.S. Book money is waiting: {prize}. Go tell a grown-up before {dog} spends it on socks.', 'P.S. You have book money waiting! ({prize}.) The Dude is already putting on his bookstore robe.'],
+    quiz: ['P.S. You finished {title}! Take the AR quiz and add your points on its page. {cat} will supervise.', 'P.S. {title}: finished. Quiz: not yet. The Dude is tapping his sock impatiently.'],
+    quizGrownup: ['P.S. You finished {title}! After the AR quiz, bring a grown-up to add your points. {cat} will supervise.', 'P.S. {title}: finished. Quiz: not yet. When it is, a grown-up adds the points. The Dude is tapping his sock impatiently.'],
+    choose: ['P.S. You have {points} points to spend on the Progress tab. Money or {minutes} minutes for every 10? {cat} votes minutes. {dog} votes dog treats.', 'P.S. {points} points are waiting for you to decide: money or minutes? The Dude can’t decide either. He is still deciding about lunch.'],
+    close: ['P.S. Only {toGo} more points until your next reward. {dog} can smell it from here.', 'P.S. {toGo} more points and something good happens. {cat} has never been this awake.'],
+    reading: ['P.S. You’re {p}% through {title}. {cat} is saving your spot. By sitting on it.', 'P.S. {title}, {p}% done. {dog} wants to know how it ends. {dog} can’t read, so you’ll have to explain.', 'P.S. {p}% through {title}. The Dude would like a full report. Spoilers allowed.'],
+    minutes: ['P.S. You have {minutes} of screen time saved up, and it is the weekend. Go find a grown-up before {dog} spends it all on squirrel videos.', 'P.S. Weekend report: {minutes} of screen time in the bank. The Dude suggests stretching first. He pulled a hamstring once watching a documentary about moss.'],
+    readingStart: ['P.S. How’s {title} going? Give it ten pages. That’s the rule.', 'P.S. {title} is on your Reading shelf. It misses you. Books get lonely.']
+  },
+
+  // About the Dude. **double asterisks** make a word bold; "chips" and "words" show as tags; "more" follows the chips.
+  story: [
+    {
+      "heading": "Meet the Dude",
+      "paragraphs": [
+        "**Real name: unknown.** Nobody knows the Dude’s real name. Not the mail carrier. Not the librarian. Not even {dog}, whose **olfactory** talents are legendary.",
+        "He is a scientist, an explorer, a war hero, a jazz fanatic and a former fairy. But above everything else, he is a reader. A **bibliophile**, if you want the fancy word, and the Dude always wants the fancy word."
+      ]
+    },
+    {
+      "heading": "The Night Maddy Broke the Universe",
+      "paragraphs": [
+        "There are two {dog}s and two {cat}s. The originals live with a girl named Maddy in an ordinary house in an ordinary universe. The other two work in the Reading Room. Here is how that happened.",
+        "It was taco night. Maddy says three beans were involved. Eyewitnesses say thirty seven. Later that evening, Maddy was curled up on the couch with a very good book, {cat} was asleep on top of it, and {dog} was sniffing everything nearby, as usual.",
+        "Then it happened. It started as a small rumble and grew into the most **cataclysmic** act of **flatulence** in recorded history. Seismographs in three states picked it up. A volcano somewhere got nervous. And a crackling, faintly green hole tore open in the **spacetime continuum**, right above the couch.",
+        "The universe does not like losing a dog and a cat, so as {dog} and {cat} tumbled toward the hole, it quickly made copies. The original {dog} and {cat} stayed on the couch with Maddy, a little confused and smelling faintly of tacos. The copies went through.",
+        "“Excuse me,” said Maddy. The hole closed with a small, polite pop.",
+        "The new {dog} and {cat} landed in a parallel universe, completely **discombobulated**. The sky was the color of old paper, the birds sang in footnotes, and the ground was surprisingly soft and slightly plaid.",
+        "“Oof,” said the ground.",
+        "It was not the ground. It was a **sentient** blanket named BB, short for Birdie Blanky. BB used to be a reading blanket, the kind you hide under with a flashlight long after bedtime, and so many stories were read under it that they soaked right in. {cat} curled up on BB and started purring immediately. BB is the only thing besides a very good book that {cat} will sleep on, and BB considers this a great honor.",
+        "Then a long shadow fell over them. It belonged to a very tall bird on very long legs, with a crest of black feathers sticking out behind its head like a bundle of quill pens.",
+        "“Howdy,” said the bird. “Name’s Bobby Joe. Y’all came through the stinky door, huh?”",
+        "Bobby Joe is a secretary bird. Secretary birds hunt snakes by stomping on them faster than you can blink (true, look it up), which was awkward at first, since the Dude is a herpetologist. They worked it out. Bobby Joe now only stomps typos.",
+        "High overhead, a red tailed hawk circled once and let out a magnificent screech. That was Reddy. If you have ever heard an eagle scream in a movie, you were actually hearing a red tailed hawk, because real bald eagles sound a lot like squeaky toys. (True. Look it up.) Reddy does all of the Reading Room’s dramatic sound effects and is very proud of it.",
+        "Bobby Joe led them down a **labyrinthine** street to a tall, crooked, creaky house with one light on at the very top. A man in a bathrobe leaned out the window, sunglasses on top of his head, a carton of milk in one hand. He sniffed the air and raised an eyebrow.",
+        "“Ah,” he said. “Taco night? Excellent. The new staff.”",
+        "The Dude says what Maddy made that night was technically a **tesseract**, like the ones in A Wrinkle in Time, only with beans. So the copy {dog} became Head of Fetching, and the copy {cat} became Head of Naps. The Dude believes the two {cat}s share one nap across both universes, which is why both of them are always asleep.",
+        "Maddy, for the record, still says it was the cat."
+      ]
+    },
+    {
+      "heading": "Everything He Has Ever Been",
+      "paragraphs": [
+        "Before he was the Dude, he was a lot of other things."
+      ],
+      "chips": [
+        "Geologist",
+        "Chemist",
+        "Gold miner",
+        "Cowboy",
+        "Marine biologist",
+        "Physicist",
+        "Doctor",
+        "Teacher",
+        "Photographer",
+        "Botanist",
+        "Video game developer",
+        "War hero",
+        "Naturalist",
+        "Ornithologist",
+        "Herpetologist",
+        "Neurologist",
+        "Entomologist",
+        "Volcanologist",
+        "Paleontologist",
+        "Teuthologist",
+        "Etymologist",
+        "Geologist (again)",
+        "Fairy"
+      ],
+      "more": [
+        "Yes, geologist is on there twice. He missed the rocks. And yes, fairy, for one very confusing summer involving a boy who refused to grow up. He will not explain.",
+        "Being a **polymath** has its perks. As a neurologist, he learned that reading builds new connections between your **neurons**, like trails that get wider every time you walk them. As a herpetologist, he is the world’s leading expert on the yellow spotted lizards in Holes, and does not recommend digging near them. As a marine biologist, he spent one long voyage trying to convince Captain Ahab that the whale was not personally out to get him. (Read Moby Dick to see how that went.) As a teuthologist, he met Gerald the octopus, who claims to be related to the giant squid in Twenty Thousand Leagues Under the Sea. The squid says this is not true.",
+        "Ask him about any of his jobs and he **scats** a little jazz, taps his nose and says, “Earn a few points and I’ll tell you.” Every time you earn AR points, you unlock another of his Secret Files on the Progress tab. Bobby Joe will hand it to you, alphabetized."
+      ]
+    },
+    {
+      "heading": "The Hero in the Fog",
+      "paragraphs": [
+        "Long ago, in a war so old its history books have gone yellow, the Dude was a field medic and the most **intrepid** scout in the army. One night a fog rolled in so thick you could spread it on toast, and an entire **regiment** got lost in the hills.",
+        "The Dude led them home. He read the stars through gaps in the fog, the moss on the trees and the songs of night birds that only sing near water. When the sun came up, every soldier was safe.",
+        "They gave him a medal for **valor**. He uses it as a bookmark. He says being a hero is not about never being scared. It is about being scared and helping anyway."
+      ]
+    },
+    {
+      "heading": "The Emperor Who Borrowed a Book",
+      "paragraphs": [
+        "That war is how the Dude met Napoleon Bonaparte. They were supposed to negotiate an **armistice** but spent six hours arguing about books instead. Napoleon was a **voracious** reader (true: he carried a traveling library of hundreds of small books on his campaigns), and by morning he had borrowed the Dude’s copy of The Sorrows of Young Werther.",
+        "He never gave it back. The overdue fine is now about four billion dollars.",
+        "Also, Napoleon was not short. He was about five feet seven inches, perfectly ordinary for his time. The Dude measured him with the emergency ruler in his bathrobe pocket. Napoleon was not amused."
+      ]
+    },
+    {
+      "heading": "The Bear Was His Idea",
+      "paragraphs": [
+        "In the Dude’s world, books are doors, and doors do not care what century it is. So one afternoon the Dude stepped through an old book into London in 1599 and got a job at the Globe Theatre, sweeping the stage and giving William Shakespeare suggestions. Lots of suggestions. Shakespeare found him **indispensable** and **exasperating**, usually in the same afternoon.",
+        "According to the Dude, the skull in Hamlet was his, left over from his doctor days. The famous stage direction in The Winter’s Tale, “Exit, pursued by a bear,” was also his idea. Shakespeare thought a bear was too much. The Dude said there is no such thing as too much bear.",
+        "The witches’ recipe in Macbeth, with its “eye of newt, and toe of frog,” was NOT his idea. As a herpetologist, he was **apoplectic**. The newts have never forgiven either of them."
+      ]
+    },
+    {
+      "heading": "Jazz, and Everything Else",
+      "paragraphs": [
+        "The Dude loves jazz the way {cat} loves sunbeams: completely, and with his eyes closed. He plays the trumpet, not well, but with feeling. “First you learn the notes,” he says. “Then you learn the rules. Then you **improvise**.” That, he says, is also how reading works.",
+        "He loves every other kind of music too, and he will try anything once. The tango went beautifully. The bagpipes caused such a **cacophony** that the neighbors complained. The neighbors are owls. This year he is learning the **theremin**, which you play without touching it. {cat} finds it deeply suspicious."
+      ]
+    },
+    {
+      "heading": "How He Became the Dude",
+      "paragraphs": [
+        "Every job ended the same way. He would open a book “just for a minute” and look up three days later. Halfway through a cattle drive. Halfway through a chemistry experiment. Halfway up a volcano. (It was a small volcano.)",
+        "Then it hit him like a falling encyclopedia: in a book, you can be anything. A cowboy at breakfast, an ornithologist by lunch, a fairy by bedtime. And you never have to clean the octopus tank. The Dude calls it his greatest **epiphany**.",
+        "So he hung up his lasso, his lab coat and his (very small) wings, filled the top of a creaky old house with books and called it the Reading Room. Look closely at his picture for souvenirs: the old map from his geology days, the little sailboat, the brass globe, and a hanging plant named Chapter that only grows when someone reads out loud."
+      ]
+    },
+    {
+      "heading": "The Story on the Shirt",
+      "paragraphs": [
+        "When the Dude was about your age, he was not a reader. He was a fidgeter. Then a librarian with very sensible shoes handed him a book and said, “Give it ten pages.” He gave it ten. Then fifty. Then he missed dinner.",
+        "She told him, “A good book is like a prism. You put plain light in, and a whole rainbow comes out.” That is why he wears the shirt. Years later, as a physicist, he studied **refraction** and proved she was right. (He did not. Isaac Newton did that in 1666. But the Dude says he held the prism.)"
+      ]
+    },
+    {
+      "heading": "The Crew",
+      "crew": [
+        {
+          "img": "img/dog.jpg",
+          "name": "{dog}, Head of Fetching",
+          "text": "Welsh terrier, Reading Room edition. Type what you are looking for in the search box and off {dog} goes. Sometimes {dog} brings back a sock. {dog} has 212 socks. Nobody knows whose."
+        },
+        {
+          "img": "img/cat.jpg",
+          "name": "{cat}, Head of Naps",
+          "text": "Tabby cat, also the Reading Room edition. {cat} only sleeps on very good books, so when you cannot decide what to read, tap Ask {cat}."
+        },
+        {
+          "art": "bobby",
+          "name": "Bobby Joe, Head of Secret Files",
+          "text": "Secretary bird. Stomps typos on sight."
+        },
+        {
+          "art": "hawk",
+          "name": "Reddy, Head of Lookout",
+          "text": "Red tailed hawk. Can spot a lost book from high above the rooftops. Provides dramatic screeches on request, and occasionally when nobody requested them."
+        },
+        {
+          "img": "img/bb.webp",
+          "name": "BB, Head of Coziness",
+          "text": "Birdie Blanky, a sentient blanket. Please do not put BB in the washing machine."
+        },
+        {
+          "art": "gerald",
+          "name": "Gerald, Head of Mischief",
+          "text": "Octopus. Eight arms, three hearts, no respect for other people’s sunglasses."
+        },
+        {
+          "img": "img/dude-face.jpg",
+          "name": "The Dude, Head of Cardigans",
+          "text": "Loses his sunglasses about nine times a day. They are usually on his head."
+        }
+      ]
+    },
+    {
+      "heading": "The Rules of the Reading Room",
+      "ordered": true,
+      "list": [
+        "Safety is no accident.",
+        "Books on this list are there for a reason. Figure out why. Do not give up on them.",
+        "If {cat} is asleep on a book, that is your next book.",
+        "Write things down. Favorite lines, funny parts, words you did not know. That is what My notes is for.",
+        "Try something new. A new author, a new kind of story, a book that looks too big. You do not know yet whether you love it.",
+        "AR points are nice. Stories are better. (Points are still nice. Especially the book money kind.)"
+      ]
+    },
+    {
+      "heading": "The Dude’s Word Hoard",
+      "paragraphs": [
+        "The Dude has a confession: he is **sesquipedalian**. Look it up. Every word in bold here is one the Dude thinks you should meet, and so is every ologist on his list. Write your favorites in My notes. Extra glory if you use flatulence at the dinner table. (The Dude did not tell you to do that.)"
+      ],
+      "words": [
+        "olfactory",
+        "bibliophile",
+        "cataclysmic",
+        "flatulence",
+        "spacetime continuum",
+        "discombobulated",
+        "sentient",
+        "labyrinthine",
+        "tesseract",
+        "polymath",
+        "neurons",
+        "scat",
+        "intrepid",
+        "regiment",
+        "valor",
+        "armistice",
+        "voracious",
+        "indispensable",
+        "exasperating",
+        "apoplectic",
+        "improvise",
+        "cacophony",
+        "theremin",
+        "epiphany",
+        "refraction",
+        "sesquipedalian"
+      ],
+      "more": [
+        "Most of the books the Dude mentions in this story are waiting on the Reading Room shelves. Type one into the search box and see if {dog} can fetch it."
+      ]
+    },
+    {
+      "paragraphs": [
+        "Now pull up a chair. That one is the comfy one. Oh, wait. {cat} is asleep on a book. You know what that means.",
+        "What are we reading?"
+      ]
+    }
+  ],
+  signoff: 'The Dude',
+
+  // The Secret Files: one of the Dude's old jobs unlocks at each point total (all-time AR points).
+  // Spaced for about 250 points a year: one every few weeks, with the finale at 300.
+  files: [
+    { at: 5, job: 'Geologist', title: 'Junior Rock Licker',
+      text: 'My first job was geologist. Here’s a real fact: geologists lick rocks. A wet rock shows its true colors. I licked about four thousand rocks. Maybe four thousand and one. My tongue still knows what granite tastes like. Gravelly. Do not recommend.' },
+    { at: 20, job: 'Chemist', title: 'Bouncy Pudding Chemist',
+      text: 'As a chemist, I tried to invent a pudding that wouldn’t spill. It worked too well. It bounced. Off the table, off the ceiling, out the window, and as far as I know, it is still bouncing somewhere in Nevada. If you see it, don’t eat it.' },
+    { at: 40, job: 'Gold miner', title: 'Pea-Sized Gold Miner',
+      text: 'I spent a whole summer panning for gold in a freezing mountain stream. I found exactly one nugget, about the size of a pea. I traded it for a used copy of Treasure Island. Best trade I ever made. The book had way more treasure in it.' },
+    { at: 60, job: 'Cowboy', title: 'Cowboy Who Lost the Cows',
+      text: 'I was a cowboy for one long season. My horse was named Pancake. Every night I read by the campfire, and every morning the cows were gone. I finished eleven books and lost forty-two cows. Pancake was not impressed. The cows were fine. They went home. Cows know the way.' },
+    { at: 80, job: 'Marine biologist', title: 'Octopus Wrangler',
+      text: 'Out on the ocean I studied octopuses. One of them, Gerald, could open jars, unscrew bottles, and take the sunglasses right off my face. That’s when I started losing my sunglasses. I like to think Gerald is wearing them somewhere, reading.' },
+    { at: 100, job: 'Physicist', title: 'Bedtime Physicist',
+      text: 'As a physicist, I made one important discovery: bedtime arrives 40% faster when you are in the middle of a good chapter. I measured it very carefully, with a stopwatch and a flashlight under the covers. Nobody gave me a prize. I know I’m right.' },
+    { at: 125, job: 'Doctor', title: 'Dr. Two-Chapters',
+      text: 'When I was a doctor, I gave every patient the same prescription: two chapters before bed, and call me in the morning. Sniffles? Two chapters. Grumpy? Two chapters. Broken arm? Okay, a cast. And then two chapters.' },
+    { at: 150, job: 'Teacher', title: 'Teacher of the Year (Unofficial)',
+      text: 'I taught fifth grade. My class read so many books that the library ran out of shelves, and we had to build new ones out of pizza boxes. They held up surprisingly well. They smelled amazing.' },
+    { at: 175, job: 'Photographer', title: 'Blurry Hummingbird Photographer',
+      text: 'I spent three years trying to photograph a hummingbird. I took four thousand pictures of blurry hummingbirds and one perfect, crystal-clear picture of my own thumb. It’s framed. It’s on the wall. Look for it.' },
+    { at: 200, job: 'Botanist', title: 'Plant Whisperer',
+      text: 'As a botanist, I grew a plant that only grows when someone reads out loud to it. It’s the one hanging by the bookshelf. Its name is Chapter. If it ever looks droopy, you know what to do.' },
+    { at: 225, job: 'Video game developer', title: 'Final Boss Designer',
+      text: 'I made exactly one video game. The final boss could only be defeated by reading it a bedtime story. It sold eleven copies, all to librarians. All eleven of them beat it on the first try.' },
+    { at: 250, job: 'Geologist (again)', title: 'Geologist, Again',
+      text: 'I went back to geology because I missed the rocks. The rocks did not miss me. Rocks are like that. I licked one, for old times’ sake, and decided I’d had enough.' },
+    { at: 275, job: 'Fairy', title: 'Tooth Fairy, Retired',
+      text: 'Okay. Fine. For one summer, and I am not explaining how, I was a tooth fairy. Tiny wings. Tiny hat. Very long nights. I got paid in quarters, which is how I bought the armchair. The wings are in a box in the attic. No, you can’t see them. They itch.' },
+    { at: 300, job: 'All of them', title: 'Honorary Dude',
+      text: 'Three hundred points. You know what that means? You’ve been a cowboy, a scientist, a detective, a dragon rider, and who knows what else, all without leaving your chair. That’s the whole secret. You’re officially an Honorary Dude now. (Sorry. It’s the only title I’ve got.)' }
+  ],
+
+  // The visiting pets: one comes by each time the app opens, in turn. Tap a pet to hear a line.
+  // A blank name makes the pet go by what it is (for example "Red-tailed hawk").
+  pets: {
+    bb: { name: 'BB', lines: [
+      'Hi, I’m BB. I’m a blanket. My job is keeping you cozy while you read. I am extremely good at my job.',
+      'Best reading spot: under me. Second-best reading spot: also under me.',
+      'I’ve been practicing math. 10 + 2 = 12. Next I’m learning long division. Then long books.',
+      'I brought a pencil in case you want to write something in My notes.',
+      'Blanket + flashlight + book = the best fort ever invented.',
+      'If a book gets scary, I’m right here. You can pull me up to your nose.',
+      'My bows are green. {cat} keeps trying to untie them.',
+      'Sometimes I’m a cape. Don’t tell the Dude.',
+      'I’m the official blanket of the Reading Room. There was an election. I was the only one running.'
+    ] },
+    bobby: { name: 'Bobby Joe', lines: [
+      'People say secretary birds got their name because our head feathers look like old quill pens. I have never once answered a phone.',
+      'I walk about 20 miles a day. You could read a whole chapter in that time. Maybe two.',
+      'Yes, I can fly. I just prefer to strut. Have you seen these legs?',
+      'These are real eyelashes. Thank you for noticing.',
+      'I stomp on snakes. Also on cliffhangers. Mostly snakes.',
+      'It looks like you’re trying to read a book. Would you like help? Just kidding. You’ve got this.',
+      'Charlotte wrote words in a web. I’d write words with my head feathers, but I don’t have thumbs. Neither does Charlotte.',
+      'Bobby Joe’s reading tip: when a chapter ends on a cliffhanger, read the next one standing up. Very dramatic.'
+    ] },
+    maple: { name: '{dog}', lines: [
+      'Woof. (That means: read the part with the dog again.)',
+      'Welsh terriers were bred to chase foxes out of holes. I chase plot twists.',
+      'Because of Winn-Dixie is my favorite book. Winn-Dixie is a very good dog. So am I. Just saying.',
+      'If you read out loud, I will listen. If you drop a snack, I will listen harder.',
+      'I would like to report that {cat} is asleep on your book again.',
+      'Shiloh is about a kid who would do anything for a dog. I support this message.',
+      'Ginger Pye is a dog who goes missing and comes home. I also come home. Usually right at dinnertime.',
+      'I buried a bookmark in the yard. Now the yard knows where it left off.'
+    ] },
+    fig: { name: '{cat}', lines: [
+      'I’m not asleep on this book. I’m saving your place.',
+      'The rule about me napping on your next book? I wrote that one.',
+      'I knocked your bookmark off the table. You’re welcome.',
+      'Gray stripes. Green eyes. Zero apologies.',
+      'The best reading spot is wherever you were just sitting.',
+      'Mrs. Frisby and the Rats of NIMH sounds like a delicious book. I mean delightful. Delightful.',
+      'Millions of Cats is a true story. Mostly about me.',
+      'The stripes are for speed. The naps are for balance.'
+    ] },
+    hawk: { name: 'Reddy', lines: [
+      'They call me Reddy. Partly because of my tail. Mostly because I’m always ready for the next chapter.',
+      'Kee-eeee-arrr! When an eagle screams in a movie, that’s really a red-tailed hawk like me. Real eagles sound like squeaky toys.',
+      'I can spot a mouse from 100 feet up. I can spot an unfinished chapter from 200.',
+      'In My Side of the Mountain, Sam trains a falcon named Frightful. Falcons are fine. Hawks have red tails. Just pointing that out.',
+      'Brian in Hatchet could have used a hawk’s eyes. They see about eight times better than yours.',
+      'I like sitting up high and looking at everything. That’s why libraries have tall shelves.',
+      'Bobby Joe walks everywhere. I think that’s adorable.',
+      'Fly through the next chapter. That’s what I’d do.',
+      'My tail is red, my eyes are sharp, and my reading list is long.'
+    ] }
+  },
+
+  // What the Dude says about her star rating (1 to 5).
+  ratings: ['{cat} wouldn’t even nap on it.', 'Meh. {dog} would chew it.', 'Pretty good.', 'Loved it!', 'Dude-level amazing!'],
+
+  // The Book Money Jar's reaction, by how full it is (0 to 1). The last matching line wins.
+  jar: [
+    [0, 'The jar is empty. {dog} sniffed it twice to be sure. {dog} believes in you.'],
+    [0.01, 'A few points are rattling around in there. {cat} opened one eye.'],
+    [0.25, 'A quarter full! The Dude did a small, dignified sock wiggle.'],
+    [0.5, 'Halfway! {dog} is wagging so hard the whole back half of {dog} is wagging.'],
+    [0.75, 'Three-quarters! The Dude is looking for his bookstore robe.'],
+    [0.9, 'Only {toGo} points to go. The jar is shaking. (That might be {dog}.)']
+  ],
+  jarFull: 'BOOK MONEY! You earned {prize}. Go tell a grown-up. The Dude says: wear good socks to the bookstore.',
+
+  // Silly ways to measure her all-time points. One shows each day.
+  facts: [
+    'The Dude did the math: {points} points is about {pages} pages. He was a physicist once. He checked it twice.',
+    'If every point were a sock, {dog} would need {points} more hiding spots. {dog} already has 212.',
+    'In gold-miner money, that’s {nuggets}. The Dude would trade every one of them for a good book.',
+    '{cat} slept through all {points} of your points. {cat} is still very proud of you.'
+  ]
+};
