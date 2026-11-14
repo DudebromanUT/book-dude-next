@@ -68,7 +68,7 @@ if (!BASE) {
   });
 
   test('not signed in: the daily check-in works, and nothing else does', () => {
-    assert.deepEqual(rpc('anon', 'ping()'), { ok: true, schema: 1 });
+    assert.deepEqual(rpc('anon', 'ping()'), { ok: true, schema: 2 });
     assert.equal(rpc('anon', 'invite_ok(\'AAAAA-BBBBB\')'), false);
     for (const t of ['families', 'grownups', 'kids', 'kid_devices', 'items']) refused('anon', 'select * from public.' + t, /permission denied/);
     for (const f of ['me()', 'kid_sign_in(\'mia\', \'x\')', 'kid_sign_out()', 'create_kid(\'a\', \'bbb\', \'cccccc\')', 'create_invite()']) {
@@ -235,6 +235,9 @@ if (!BASE) {
       assert.deepEqual(rows(who, 'select * from public.kids where id = ' + lit(P.mia)), [], 'cannot see that she exists');
       assert.deepEqual(rows(who, 'select * from public.kid_devices where kid_id = ' + lit(P.mia)), []);
     }
+    // A reader that doesn't exist is refused the same way, and the attempt leaves nothing behind.
+    refused(nameless, item('00000000-0000-4000-8000-000000000000', 'record', 'planted', {}, '2026-11-02T10:00:00Z'), /row-level security/);
+    assert.equal(get('owner', 'select bytes from bookdude.usage where kid_id = ' + lit(P.mia)), get('owner', 'select sum(octet_length(data::text)) from public.items where kid_id = ' + lit(P.mia)), 'refused saves were not counted');
     // Her brother's device: same family, still not his to read.
     assert.deepEqual(rows(P.maxPad, 'select * from public.items where kid_id = ' + lit(P.mia)), []);
     refused(P.maxPad, item(P.mia, 'record', 'planted', {}, '2026-11-02T10:00:00Z'), /row-level security/);
@@ -371,7 +374,7 @@ if (!BASE) {
     const stale = device(), fresh = device();
     run('owner', 'update auth.users set created_at = now() - interval \'8 days\' where id in (' + [stale, P.miaPad, P.ann].map(lit).join(', ') + ')');
     run('owner', 'update bookdude.meta set at = now() - interval \'21 hours\' where key = \'tidied\'');
-    assert.deepEqual(rpc('anon', 'ping()'), { ok: true, schema: 1 });
+    assert.deepEqual(rpc('anon', 'ping()'), { ok: true, schema: 2 });
     const left = id => rows('owner', 'select 1 from auth.users where id = ' + lit(id)).length;
     assert.deepEqual([left(stale), left(fresh), left(P.miaPad), left(P.ann)], [0, 1, 1, 1]);
     // It tidies once a day, not on every call.

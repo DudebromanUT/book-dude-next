@@ -1,4 +1,4 @@
--- Book Dude Next: the database foundation (schema version 1).
+-- Book Dude Next: the database foundation (schema version 2).
 --
 -- HOW TO USE: paste this whole file into the Supabase SQL Editor and press Run. It is safe to run again: it only
 -- adds what is missing and refreshes the rules. It never deletes a family, a reader or anything they saved.
@@ -211,35 +211,44 @@ create policy "change a reader's items" on public.items for update to authentica
 -- Saving items: the newest copy wins, every change gets the next number, and no reader can fill the database
 ------------------------------------------------------------------------------------------------------------------
 
+-- Before a save: an older copy never replaces a newer one, and the change gets the next number. This runs before the
+-- rules decide whether the save is allowed, so it must not touch anything else.
 create or replace function bookdude.stamp_item() returns trigger
 language plpgsql security definer set search_path = '' as $$
-declare
-  delta bigint;
-  total bigint;
 begin
   if tg_op = 'UPDATE' then
-    -- An older copy never replaces a newer one: the change is quietly skipped.
-    if new.client_at <= old.client_at then return null; end if;
+    if new.client_at <= old.client_at then return null; end if;   -- quietly skipped
     new.kid_id := old.kid_id; new.kind := old.kind; new.id := old.id;
-    delta := octet_length(new.data::text) - octet_length(old.data::text);
-  else
-    delta := octet_length(new.data::text);
   end if;
   -- A device whose clock is wrong can't claim a time in the future and win every argument after that.
   if new.client_at > now() + interval '5 minutes' then new.client_at := now(); end if;
+  new.rev := nextval('bookdude.rev');
+  return new;
+end $$;
+
+-- After a save that the rules allowed: count what the reader has stored, and refuse the save if she is over the limit.
+create or replace function bookdude.count_item() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  delta bigint := octet_length(new.data::text) - case when tg_op = 'UPDATE' then octet_length(old.data::text) else 0 end;
+  total bigint;
+begin
   insert into bookdude.usage as u (kid_id, bytes) values (new.kid_id, greatest(delta, 0))
     on conflict (kid_id) do update set bytes = greatest(0, u.bytes + delta)
     returning u.bytes into total;
   if total > 40000000 then
     raise exception 'Book Dude: this reader''s storage is full.' using errcode = '54000';
   end if;
-  new.rev := nextval('bookdude.rev');
-  return new;
+  return null;
 end $$;
 
 drop trigger if exists stamp_item on public.items;
 create trigger stamp_item before insert or update on public.items
   for each row execute function bookdude.stamp_item();
+
+drop trigger if exists count_item on public.items;
+create trigger count_item after insert or update on public.items
+  for each row execute function bookdude.count_item();
 
 ------------------------------------------------------------------------------------------------------------------
 -- Invite codes and signing up
@@ -380,7 +389,7 @@ begin
       null; -- tidying is a courtesy: the check-in still counts
     end;
   end if;
-  return jsonb_build_object('ok', true, 'schema', 1);
+  return jsonb_build_object('ok', true, 'schema', 2);
 end $$;
 
 -- Is this invite code good? The sign-up screen asks before it sends anything, so a mistyped code gets a clear
@@ -395,7 +404,7 @@ $$;
 create or replace function public.me() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
-    'schema', 1,
+    'schema', 2,
     'user', (select auth.uid()),
     'grownup', (select jsonb_build_object('name', g.name, 'admin', g.is_admin)
                 from public.grownups g where g.user_id = (select auth.uid())),

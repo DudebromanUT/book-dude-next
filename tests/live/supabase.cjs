@@ -19,6 +19,7 @@ async function call(method, path, { token, body, headers } = {}) {
   return { status: res.status, json, text };
 }
 const rpc = (name, args, token) => call('POST', '/rest/v1/rpc/' + name, { token, body: args || {} });
+const SCHEMA = 2;   // the version supabase/001_foundation.sql says it is
 const TABLES = ['families', 'grownups', 'kids', 'kid_devices', 'items'];
 const done = [];
 const ok = what => { done.push(what); console.log('  ok  ' + what); };
@@ -33,8 +34,9 @@ const ok = what => { done.push(what); console.log('  ok  ' + what); };
 
   // 2. The script is installed, and a signed-out visitor gets the check-in and nothing else.
   const ping = await rpc('ping');
-  assert.deepEqual([ping.status, ping.json], [200, { ok: true, schema: 1 }], 'supabase/001_foundation.sql has not been run yet: ' + ping.text);
-  ok('the database script is installed (schema 1) and the daily check-in answers');
+  assert.equal(ping.status, 200, 'supabase/001_foundation.sql has not been run yet: ' + ping.text);
+  assert.deepEqual(ping.json, { ok: true, schema: SCHEMA }, 'the installed script is older than this one: run supabase/001_foundation.sql again');
+  ok('the database script is installed (schema ' + SCHEMA + ') and the daily check-in answers');
   assert.deepEqual((await rpc('invite_ok', { code: 'AAAAA-BBBBB' })).json, false);
   for (const t of TABLES) {
     const r = await call('GET', '/rest/v1/' + t + '?select=*');
@@ -69,7 +71,7 @@ const ok = what => { done.push(what); console.log('  ok  ' + what); };
     assert.deepEqual([r.status, r.json], [200, []], t + ' should be empty for a nameless device: ' + r.text);
   }
   const me = (await rpc('me', {}, token)).json;
-  assert.deepEqual([me.schema, me.grownup, me.kid, me.family, me.kids], [1, null, null, null, []]);
+  assert.deepEqual([me.schema, me.grownup, me.kid, me.family, me.kids], [SCHEMA, null, null, null, []]);
   ok('a nameless device sign-in works, and sees no family, no reader and no items');
 
   // 5. It can't write, can't sign in as a reader without the password, and can't do a grown-up's jobs.
