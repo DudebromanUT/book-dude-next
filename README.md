@@ -10,6 +10,12 @@ settings (all named after its address), so it never touches the live app on the 
 "Dude Next". Until it has its own Google script, don't paste the school quiz link into it: the copy would send its
 own weekly numbers to the live script.
 
+**The database.** Each family's records will live in a Supabase project (free plan), with rules that keep every
+family's data to itself. `supabase/README.md` explains the setup, who can see what, and how people get in;
+`supabase/001_foundation.sql` is the script; `tests/db.test.cjs` proves the rules on a scratch Postgres
+(`BOOKDUDE_TEST_DB=postgres://postgres:postgres@127.0.0.1:5432/postgres node --test tests/db.test.cjs`); and
+`node tests/live/supabase.cjs` checks the real project from the outside. The app does not use the database yet.
+
 A static, iPhone/iPad-friendly reading app for `DudebromanUT/Book-Dude`, hosted by the Book Dude from the Reading Room, an attic library full of books, with Maple the Welsh terrier, Fig the gray tabby, Bobby Joe the secretary bird, Reddy the red-tailed hawk, and BB the blanket.
 
 The catalog includes 637 distinct books, all with descriptions, and 468 sourced AR records. The other 169 remain explicitly unresolved. Source and edition notes are available in each book's details. No account, server database, paid service, or JavaScript build dependencies are needed.
