@@ -276,6 +276,7 @@ if (!BASE) {
       refused(who, 'select * from bookdude.kid_secrets', /permission denied/);
       refused(who, 'select * from bookdude.invites', /permission denied/);
       refused(who, 'select bookdude.owner_invite(\'Home\')', /permission denied/);
+      refused(who, 'select bookdude.owner_remove_family(\'Home\')', /permission denied/);
       refused(who, 'select bookdude.new_invite(null, \'X\', true, true, null)', /permission denied/);
       refused(who, 'select nextval(\'bookdude.rev\')', /permission denied/);
     }
@@ -382,6 +383,25 @@ if (!BASE) {
     run('owner', 'update auth.users set created_at = now() - interval \'8 days\' where id = ' + lit(again));
     rpc('anon', 'ping()');
     assert.equal(left(again), 1);
+  });
+
+  test('the owner can make a family whose grown-up is not an admin, and remove a whole family, from the SQL Editor only', () => {
+    const code = get('owner', 'bookdude.owner_invite(\'Try-out\', false, false)');
+    const tess = signup('tess@example.com', code, 'Tess').id;
+    assert.deepEqual(rpc(tess, 'me()').grownup, { name: 'Tess', admin: false });
+    const kid = rpc(tess, 'create_kid(\'Tia\', \'tia\', \'pepper-77\')').kid.id;
+    const pad = device();
+    assert.equal(rpc(pad, 'kid_sign_in(\'tia\', \'pepper-77\')').ok, true);
+    changed(pad, item(kid, 'record', 'hatchet--gary-paulsen', { status: 'reading' }, '2026-11-01T10:00:00Z'));
+    assert.equal(get('owner', 'bookdude.owner_remove_family(\'Nobody\')'), 'No family is called that. Nothing was removed.');
+    const before = rows('owner', 'select 1 from public.items').length;
+    assert.equal(get('owner', 'bookdude.owner_remove_family(\' Try-out \')'), 'Removed.');
+    assert.equal(rows('owner', 'select 1 from public.families where name = \'Try-out\'').length, 0);
+    assert.equal(rows('owner', 'select 1 from auth.users where id in (' + lit(tess) + ', ' + lit(pad) + ')').length, 0, 'its sign-ins are gone');
+    assert.equal(rows('owner', 'select 1 from public.kids where id = ' + lit(kid)).length, 0);
+    assert.equal(rows('owner', 'select 1 from public.items').length, before - 1, 'only that family\'s items went');
+    assert.equal(rows('owner', 'select 1 from public.families').length, 2, 'the other families are untouched');
+    assert.equal(rpc(tess, 'me()').grownup, null);
   });
 
   test('removing an account never removes a family\'s data: a deleted device just signs out, a deleted grown-up leaves the readers', () => {

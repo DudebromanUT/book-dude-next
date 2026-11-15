@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Unit and offline tests
-        run: node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs
+        run: node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs tests/sync.test.cjs
       - name: Every name in docs/app is defined or imported
         run: npx --yes eslint@10.1.0 docs/app
       - name: Generated files are up to date
@@ -49,6 +49,15 @@ jobs:
   browser:
     # Playwright 1.56.1 has no Chromium for Ubuntu 26.04, which ubuntu-latest moved to in November 2026.
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,3 +75,7 @@ jobs:
         run: node tests/browser/update.cjs
       - name: The talking Dude, with the Google script played by the test
         run: node tests/browser/dude-ai.cjs
+      - name: The family account on two devices, with Supabase's API played over the real database script
+        run: node tests/browser/account.cjs
+        env:
+          BOOKDUDE_TEST_DB: postgres://postgres:postgres@localhost:5432/postgres

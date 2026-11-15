@@ -25,8 +25,14 @@ this repo, a chat or the app.
    would, and says what is wrong if anything is.
 4. **The first grown-up.** In the SQL Editor run `select bookdude.owner_invite('Our family', true);` (change the name
    in quotes to your family's; `true` switches COBOL on for it). It shows a code like `K7WQ2-MX9PD`, good for 14 days
-   and one use. Sign up in Book Dude Next with your email, a password and that code: you are an admin. Invite everyone
-   else from the app.
+   and one use. In Book Dude Next go to **Farty Pants Central**, **Grown-up sign-in**, **I have an invite code**, and
+   sign up with your email, a password and that code: you are an admin. Invite everyone else from the app (**Make an
+   invite code**), and add your readers (**Add a reader**).
+
+To try the whole thing on the real project without touching a real family: `select bookdude.owner_invite('Dude Next
+try-out', false, false);` makes a code for a try-out family whose grown-up is not an admin, `INVITE=that-code node
+tests/live/account.cjs` runs the app against the project with it, and `select bookdude.owner_remove_family('Dude Next
+try-out');` removes that family and everything in it afterwards.
 
 ## How people get in
 
@@ -57,3 +63,9 @@ the **Checks** GitHub Action runs it on every push.
 - Every admin at once: run `select bookdude.owner_invite('Our family');` in the SQL Editor (with your family's exact
   name) for a new admin code. If the old email should be reused, first delete that user under **Authentication**,
   **Users**.
+
+## Removing a family
+
+`select bookdude.owner_remove_family('The family name');` in the SQL Editor removes a family and everything in it: its
+grown-ups' sign-ins, its readers, their devices and everything they saved. There is no undo, and the website can't
+call it.

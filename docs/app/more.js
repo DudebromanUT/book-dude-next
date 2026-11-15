@@ -8,6 +8,8 @@ import { main, toast } from './page.js';
 import { greeting } from './cards.js';
 import { rewardPanelHtml } from './money.js';
 import { coversItem } from './offline.js';
+import { accountPanelHtml } from './account.js';
+import { activeKid, activeKidName } from './cloud.js';
 
 const ACCENTS = { leather: 'Leather', rug: 'Rug red', brass: 'Brass', ivy: 'Ivy', teal: 'Teal', navy: 'Navy', plum: 'Plum', berry: 'Berry' };
 
@@ -34,6 +36,7 @@ export function renderMore() {
     unsupported: ['warn', 'Offline mode is off here', 'Open the published website over https to use the app offline.'],
     failed: ['warn', 'Could not save for offline', 'Open the app again while online.']
   }[state.offline];
+  const reader = activeKid() ? activeKidName() || 'This reader' : '';
   const item = (kind, title, text) => '<li><span class="ico ' + kind + '">' + icon(kind === 'ok' ? 'ok' : kind === 'warn' ? 'alert' : 'info') + '</span><span><b>' + title + '</b>' + (text ? '<br><span class="hint">' + text + '</span>' : '') + '</span></li>';
 
   main.innerHTML =
@@ -43,6 +46,7 @@ export function renderMore() {
       '<section class="panel meet"><span class="face"><img src="img/dude-face.jpg" alt="" width="96" height="96"></span><div><h2>About the Dude</h2>' +
         '<p class="lead">Scientist, explorer, war hero, jazz fanatic and former fairy. Mostly, a reader. Real name: unknown.</p>' +
         '<div class="row-actions"><button type="button" class="btn small primary" data-act="story">Read about the Dude</button></div></div></section>' +
+      accountPanelHtml() +
       '<section class="panel"><h2>Make it yours</h2><div class="stack">' +
         '<label class="field"><span>Your name</span><input id="reader-name" class="input" type="text" maxlength="40" autocomplete="given-name" placeholder="What should the app call you?" value="' + esc(state.settings.readerName) + '"></label>' +
         '<div class="field"><span class="label" id="accent-label">Color</span><div class="accents" role="group" aria-labelledby="accent-label">' + Object.keys(ACCENTS).map(a =>
@@ -50,7 +54,9 @@ export function renderMore() {
         '<div class="field"><label class="switch"><input type="checkbox" id="pets-on"' + (state.settings.pets ? ' checked' : '') + '> Visiting pets</label><p class="hint">' + esc(petsHint()) + '</p></div>' +
       '</div></section>' +
       rewardPanelHtml() +
-      '<section class="panel"><h2>Backups</h2><p class="lead">Your shelves, notes, quiz points, and the books you added are saved only on this device. A backup file lets you move them to a new device or get them back if something goes wrong.</p>' +
+      '<section class="panel"><h2>Backups</h2><p class="lead">' + (reader
+        ? esc(reader) + '’s shelves, notes, quiz points, and added books are saved on this device and in the family account. A backup file is an extra copy to keep, and a way to bring books in from another Book Dude.'
+        : 'Your shelves, notes, quiz points, and the books you added are saved only on this device. A backup file lets you move them to a new device or get them back if something goes wrong.') + '</p>' +
         '<p class="hint">' + (state.settings.lastExportAt ? 'Last backup: ' + esc(fmtDay(localDay(state.settings.lastExportAt))) : 'No backup saved yet.') + ' · ' + plural(total, 'book record') + (added ? ' and ' + plural(added, 'added book') : '') + ' on this device.</p>' +
         '<div class="row-actions"><button type="button" class="btn primary" data-act="export">' + icon('download') + 'Save a backup</button>' +
         '<button type="button" class="btn" data-act="restore">' + icon('upload') + 'Restore from backup</button></div>' +
@@ -62,6 +68,7 @@ export function renderMore() {
         item(offline[0], offline[1], offline[2]) +
         (state.storage === 'memory' ? item('warn', 'Not saving', 'This browser is blocking storage (Private Browsing can do this). Changes will be lost when the app closes.') :
           state.persisted === true ? item('ok', 'Storage protected', 'This device has agreed to keep your journal.') :
+          reader ? item('ok', 'Saved to the family account', 'This device keeps a copy to work offline. Clearing website data or deleting the app removes only the copy.') :
           item('', 'Saved on this device', 'Clearing website data or deleting the app removes your journal. Save backups now and then.')) +
         coversItem(item) +
         (standalone ? item('ok', 'Installed', 'Running from the Home Screen.') : item('', 'Running in the browser', 'For the best experience, add the app to your Home Screen: tap Share, then Add to Home Screen. The Home Screen app keeps its own separate journal.')) +
@@ -70,7 +77,7 @@ export function renderMore() {
         withPoints + ' have AR details from a checked source; the other ' + (CATALOG_BOOKS.length - withPoints) + ' are not verified yet, and a blank never means zero.' +
         (added ? ' You added ' + plural(added, 'more book') + ' yourself.' : '') + '</p>' +
         '<p class="hint">Always confirm the quiz and edition with your school before counting points. Amazon and Open Library ratings were collected in October 2026; the original list’s scores came with the list and their source was never confirmed. Each book shows where its information came from.</p></section>' +
-      '<section class="panel"><h2>Privacy</h2><p class="lead">No accounts, no ads, no tracking. Nothing you write leaves this device unless you save a backup file or share something yourself. Sharing opens Messages, Mail, or another app with the message filled in, so you see it before it sends. Links to book sources open other websites. Covers for books from her reading history load from Open Library while online, which sees only which cover is asked for.</p></section>' +
+      '<section class="panel"><h2>Privacy</h2><p class="lead">No ads, no tracking. On a device that isn’t signed in, nothing you write leaves it unless you save a backup file or share something yourself. Signed in to a family account, a reader’s shelves, notes, points and settings are also kept in that account, where only their own family can read them. Sharing opens Messages, Mail, or another app with the message filled in, so you see it before it sends. Links to book sources open other websites. Covers for books from her reading history load from Open Library while online, which sees only which cover is asked for.</p></section>' +
     '</div></div>';
 }
 

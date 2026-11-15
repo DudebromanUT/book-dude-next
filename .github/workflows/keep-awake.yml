@@ -1,0 +1,27 @@
+name: Daily check-in
+
+# Supabase pauses a free project after a week with no activity. This asks the Book Dude Next database "are you
+# there?" once a day so it stays awake. It uses only the public address and key in supabase/project.json, and the
+# check-in tells it nothing; once a day the database also tidies up after itself when asked (see ping() in
+# supabase/001_foundation.sql). GitHub switches a schedule off after 60 days with no changes to the repository: if
+# that happens, any push (or the "Enable workflow" button on the Actions tab) switches it back on.
+on:
+  schedule:
+    - cron: '17 13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ask the database for its daily check-in
+        run: |
+          url=$(python3 -c "import json; print(json.load(open('supabase/project.json'))['url'])")
+          key=$(python3 -c "import json; print(json.load(open('supabase/project.json'))['publishableKey'])")
+          answer=$(curl -sS --fail-with-body --max-time 30 -X POST "$url/rest/v1/rpc/ping" -H "apikey: $key" -H "Content-Type: application/json" -d '{}')
+          echo "$answer"
+          echo "$answer" | grep -q '"ok" *: *true'

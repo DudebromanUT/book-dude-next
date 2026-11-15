@@ -877,6 +877,13 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .code-input { max-width: 10ch; font-size: 1.4rem; letter-spacing: .5em; font-variant-numeric: tabular-nums; }
 .panel-sub { margin-top: 10px; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------- The family account ---------- */
+.reader-list { display: grid; gap: 12px; margin: 8px 0 0; padding: 0; list-style: none; }
+.reader-list li { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.reader-list .row-actions { margin-top: 0; gap: 8px; }
+.invite-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.7rem; font-weight: 700; letter-spacing: .08em; text-align: center; padding: 14px 10px; border: 2px dashed var(--line-strong); border-radius: 12px; color: var(--ink); user-select: all; -webkit-user-select: all; }
+#account-panel .error { margin-top: 8px; }
+
 /* ---------- The Dude's Secret Files ---------- */
 .files-hint { margin: -6px 0 12px; }
 .files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }

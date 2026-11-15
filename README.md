@@ -10,11 +10,36 @@ settings (all named after its address), so it never touches the live app on the 
 "Dude Next". Until it has its own Google script, don't paste the school quiz link into it: the copy would send its
 own weekly numbers to the live script.
 
-**The database.** Each family's records will live in a Supabase project (free plan), with rules that keep every
-family's data to itself. `supabase/README.md` explains the setup, who can see what, and how people get in;
-`supabase/001_foundation.sql` is the script; `tests/db.test.cjs` proves the rules on a scratch Postgres
-(`BOOKDUDE_TEST_DB=postgres://postgres:postgres@127.0.0.1:5432/postgres node --test tests/db.test.cjs`); and
-`node tests/live/supabase.cjs` checks the real project from the outside. The app does not use the database yet.
+**The family account.** Book Dude Next opens and works without signing in, exactly like the live app: everything is
+saved on the device. Under **Farty Pants Central**, **Family account**, a reader signs in with a username and password
+(or a grown-up with an email and password), and from then on that reader's shelves, notes, points and settings are
+also saved to her family's account, so they are on every device she signs in on and survive a lost or wiped one.
+
+- **How it saves.** The device is always the working copy, so the app never waits for the internet. Each change also
+  joins a waiting list and goes up a moment later; changes from her other devices come down when the app opens, comes
+  back to the front, or she taps **Save now**. When two devices changed the same thing, the newest wins. With no
+  internet, changes wait on the device and go up when it is back (`docs/app/sync.js`).
+- **Each reader has her own books on a device.** Signing in never mixes a reader's books with the device's own or a
+  sibling's, and signing out (or a grown-up signing her out everywhere, or setting a new password) removes her copy
+  from the device and leaves the device's own books alone. The built-in reading history only ever lands on a device's
+  own books, never in a reader's account.
+- **Grown-ups** join with a one-time invite code, add readers (first name, username, password), set a new password,
+  sign a reader out everywhere, open any of their readers on their own phone, and, if they are an admin, make invite
+  codes for another grown-up or a new family (`docs/app/account.js`). A signed-in grown-up isn't asked for the
+  grown-up passcode.
+- **Moving in from the live Book Dude:** save a backup there, open the reader here, and restore the backup. It goes
+  into her account and onto her other devices.
+- **What stays on one device:** the school quiz link (anyone who learned a reader's password could otherwise get it,
+  and COBOL with it), when a backup was last saved, and the screen choices.
+
+Each family's records live in a Supabase project (free plan), with rules that keep every family's data to itself.
+`supabase/README.md` explains the setup, who can see what, and how people get in; `supabase/001_foundation.sql` is the
+script; `tests/db.test.cjs` proves the rules on a scratch Postgres
+(`BOOKDUDE_TEST_DB=postgres://postgres:postgres@127.0.0.1:5432/postgres node --test tests/db.test.cjs`);
+`tests/browser/account.cjs` runs the app on two pretend devices against that same database script, with Supabase's API
+played by the test; `node tests/live/supabase.cjs` checks the real project from the outside; and
+`INVITE=... node tests/live/account.cjs` runs the app against the real project with a try-out family. The **Daily
+check-in** GitHub Action asks the database "are you there?" once a day, so the free project never pauses.
 
 A static, iPhone/iPad-friendly reading app for `DudebromanUT/Book-Dude`, hosted by the Book Dude from the Reading Room, an attic library full of books, with Maple the Welsh terrier, Fig the gray tabby, Bobby Joe the secretary bird, Reddy the red-tailed hawk, and BB the blanket.
 
@@ -81,7 +106,7 @@ Local data is not encrypted by this application. Anyone with access to the unloc
 
 The browser may decline a persistent-storage request. Clearing website data, deleting an installation, device loss, or storage eviction can lose records. Save backups periodically (the Progress tab reminds you after 30 days) and before changing devices or website address. Save backups in a private Files/iCloud Drive location. The backup file contains notes in plain text.
 
-Changing the site address/path or opening the app in another browser creates a separate journal. Save a backup from the old location and restore it in the new one. Backups are the transfer mechanism; there is no automatic sync.
+Changing the site address/path or opening the app in another browser creates a separate journal. Save a backup from the old location and restore it in the new one. For a device that isn't signed in, backups are the transfer mechanism. A reader signed in to a family account has her books in the account too (see **The family account** at the top): only her own family's sign-ins can read them, the publishable key in the site can't, and nothing is sent anywhere until someone signs in.
 
 ## Change the Dude's story, sayings, or the pets' names
 
@@ -160,7 +185,10 @@ In `docs/app/`:
 | Working offline, saving covers, and the "new version" banner | `offline.js` |
 | Switching tabs | `tabs.js` |
 | The book list as the screens use it, and the filter and sort choices | `books.js` |
-| The app's state and saving to the device (IndexedDB) | `state.js` |
+| The app's state and saving to the device (IndexedDB), with a database per reader and the list of changes waiting to go up | `state.js` |
+| The family account: who is signed in on this device, signing in and out, asking the account's API | `cloud.js`, `config.js` |
+| Saving a reader's books to her family's account and bringing changes back | `sync.js` |
+| The Family account panel: sign-in boxes, a grown-up's readers, passwords and invite codes | `account.js` |
 | Toasts, confetti, and the sheet and confirm boxes | `page.js` |
 | Shared helpers and icons | `util.js`, `icons.js` |
 | How taps, typing, and forms reach the right file | `events.js` |
@@ -171,7 +199,7 @@ Each file lists what it uses from the others at the top (`import`). A button's H
 
 **App version.** The small print at the top of the app ("App version 10.26") says which version a device is running. The first release of a month is MM.YY (10.26 = October 2026); each release after it that month adds .01, .02, .03 (10.26.01). It lives in `docs/app/version.js`: change it with every deploy, and `python3 scripts/build.py` checks its form. When the app opens and a new version has already downloaded (or finishes downloading in the first 30 seconds, with nothing open or being typed), it switches over by itself; after that, the "Update app" banner asks.
 
-Run `node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs`, `npx eslint docs/app`, `python3 scripts/build.py --check`, `node tests/browser/clickthrough.cjs`, `node tests/browser/history.cjs` (the built-in reading history lands once, keeps her own copies, and works offline), `node tests/browser/school-email.cjs` (quiz results from the school's emails land once, keep points typed by hand, and add books not in the app), `node tests/browser/update.cjs` (the app version shows, and a new version switches over), and `node tests/browser/dude-ai.cjs` (the jokes, picks and COBOL with its Library, tests and think-about-it bonus, with the Google script played by the test). The **Checks** GitHub Action runs all eight on every push.
+Run `node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs`, `npx eslint docs/app`, `python3 scripts/build.py --check`, `node tests/browser/clickthrough.cjs`, `node tests/browser/history.cjs` (the built-in reading history lands once, keeps her own copies, and works offline), `node tests/browser/school-email.cjs` (quiz results from the school's emails land once, keep points typed by hand, and add books not in the app), `node tests/browser/update.cjs` (the app version shows, and a new version switches over), and `node tests/browser/dude-ai.cjs` (the jokes, picks and COBOL with its Library, tests and think-about-it bonus, with the Google script played by the test). `node --test tests/sync.test.cjs` covers how saved things are written for the account and which copy wins, and, with a scratch Postgres (`BOOKDUDE_TEST_DB`, above), `node --test tests/db.test.cjs` and `node tests/browser/account.cjs` cover the database rules and the family account on two devices. The **Checks** GitHub Action runs all of them on every push.
 
 `tests/browser/clickthrough.cjs` opens the app on a phone-sized screen in Chromium and goes through every feature the way she would: the welcome story, the pets, search, every filter and sort, a book's page (shelf buttons, rating, notes, quiz points, the library link), adding, editing, photographing, and deleting her own book, goals, Secret Files, book money, backup and restore, and the update button. It writes down what each of its 138 steps shows and compares that with `tests/browser/clickthrough.expected.txt`; any difference fails and is listed line by line. Every run is the same (the clock starts at 9:30 a.m. on October 9, 2026 in Utah, and "random" picks repeat), so a difference means the app changed. After a deliberate change, run `UPDATE=1 node tests/browser/clickthrough.cjs` and check the diff of the `.txt` file before committing it; book data shows up in the results, so updating `docs/books.csv` or the ratings changes it too. It needs Playwright: `npm install --no-save playwright@1.56.1 && npx playwright install chromium`. `THROTTLE=4` runs it on a computer slowed down four times, to check it still passes on a slow one.
 

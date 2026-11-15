@@ -8,6 +8,7 @@ import { state } from './state.js';
 import { confirmBox, toast, showBox, showConfirm } from './page.js';
 import { saveReward } from './money.js';
 import { renderMore } from './more.js';
+import { isGrownup } from './cloud.js';
 
 // Once typed, the passcode stays open for 5 minutes after the last grown-up change, so a grown-up can do several in a row.
 const OPEN_FOR = 5 * 60 * 1000;
@@ -18,7 +19,8 @@ let openUntil = 0;
 let pending = null;
 
 export const hasCode = () => !!C.reward(state.settings.reward).code;
-export const isOpen = () => !hasCode() || Date.now() < openUntil;
+// A grown-up signed in to the family account has already shown who they are: the passcode is for a reader's device.
+export const isOpen = () => !hasCode() || isGrownup() || Date.now() < openUntil;
 export function keepOpen() { if (hasCode()) openUntil = Date.now() + OPEN_FOR; }
 
 // Runs fn now if there's no passcode or it was typed in the last 5 minutes; otherwise asks for it first.

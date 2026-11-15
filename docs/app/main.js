@@ -6,9 +6,9 @@
  * starts below. A value computed while a file loads (outside any function) may only use util.js,
  * icons.js, and books.js, which never import the others. */
 
-import { C, $, today } from './util.js';
+import { C, $, esc, today } from './util.js';
 import { BOOKS, BY_ID, rebuildBooks } from './books.js';
-import { state, db, loadUi, saveSetting } from './state.js';
+import { state, db, loadUi, saveSetting, takeSettings } from './state.js';
 import { main, toast } from './page.js';
 import { emptyState } from './cards.js';
 import { newDudeLine, openStory } from './dude-talk.js';
@@ -21,6 +21,8 @@ import { listen } from './events.js';
 import { HISTORY, addHistory } from './backup.js';
 import { syncSchool } from './school.js';
 import { APP_VERSION } from './version.js';
+import { account, activeKid, activeKidName, takeNotice } from './cloud.js';
+import { firstPull, startSync, checkAccount } from './sync.js';
 
 async function start() {
   $('#app-version').textContent = 'App version ' + APP_VERSION;
@@ -29,24 +31,31 @@ async function start() {
     return;
   }
   loadUi();
-  const loaded = await db.load();
+  let loaded = await db.load();
+  // A reader from a family account, opened on this device for the first time: everything she has in the account
+  // comes down before the app starts, so nothing here is made up fresh and sent over the top of what she has.
+  const kid = activeKid();
+  if (kid && loaded.ok && typeof loaded.settings.syncFullAt !== 'string') {
+    const name = activeKidName();
+    main.innerHTML = '<p class="loading">Getting ' + esc(name || 'the reader') + '’s books from the family account…</p>';
+    const got = await firstPull();
+    if (got !== 'ok') {
+      main.innerHTML = emptyState(got === 'out' ? 'This device isn’t signed in any more' : 'Could not reach the family account',
+        got === 'out' ? 'A grown-up may have signed it out. Sign in again from Farty Pants Central.' : 'Check the internet connection. ' + esc(name || 'The reader') + '’s books will load as soon as the account answers.',
+        '<div class="row-actions">' + (got === 'out' ? '' : '<button type="button" class="btn primary" data-act="acct-retry">Try again</button>') +
+        '<button type="button" class="btn" data-act="acct-giveup">' + (got === 'out' ? 'OK' : 'Sign out instead') + '</button></div>');
+      return;
+    }
+    loaded = await db.load();
+  }
   state.storage = loaded.ok ? 'ok' : 'memory';
   for (const r of loaded.records) if (r && C.safeId(r.id)) state.records[r.id] = C.entry(r);
   for (const b of loaded.books) if (b && C.isCustomId(b.id) && b.title) state.custom[b.id] = C.customBook(b);
   rebuildBooks(state.custom);
   const s = loaded.settings;
-  if (s.goals && typeof s.goals === 'object') state.settings.goals = s.goals;
-  if (typeof s.readerName === 'string') state.settings.readerName = s.readerName;
-  if (typeof s.accent === 'string') state.settings.accent = s.accent;
-  if (typeof s.lastExportAt === 'string') state.settings.lastExportAt = s.lastExportAt;
-  state.settings.storySeen = s.storySeen === true;
-  state.settings.pets = s.pets !== false;
-  if (typeof s.schoolLink === 'string') state.settings.schoolLink = s.schoolLink;
-  if (s.dudeChat === false) state.settings.dudeChat = false;
-  if (typeof s.reportAt === 'string') state.settings.reportAt = s.reportAt;
-  if (s.thinkReplies && typeof s.thinkReplies === 'object') state.settings.thinkReplies = s.thinkReplies;
-  if (Array.isArray(s.schoolSeen)) state.settings.schoolSeen = s.schoolSeen.filter(id => typeof id === 'string');
-  if (s.reward && typeof s.reward === 'object') state.settings.reward = C.reward(s.reward);
+  takeSettings(s);
+  // A reader from the account is called by the name her grown-up gave, until she picks her own.
+  if (kid && !state.settings.readerName) state.settings.readerName = activeKidName();
   // The first start with screen time on this device: extra minutes count for books finished from today on, and the
   // points she already earned stay in the jar, where every point went before she could choose screen time.
   const first = {};
@@ -83,8 +92,13 @@ async function start() {
   }
   startPets();
   registerWorker();
-  // Her reading history lands first, so a new school quiz for one of those books finds it.
-  (s.history !== HISTORY && state.storage === 'ok' ? addHistory() : Promise.resolve()).then(() => syncSchool(true));
+  const notice = takeNotice();
+  if (notice) toast(notice);
+  if (kid) startSync(s);
+  else if (account()) checkAccount();
+  // Her reading history lands first, so a new school quiz for one of those books finds it. It is Maddy's own history,
+  // built into the site, so it only lands on a device's own books: a reader from a family account has her books there.
+  (s.history !== HISTORY && state.storage === 'ok' && !kid ? addHistory() : Promise.resolve()).then(() => syncSchool(true));
 }
 
 listen();

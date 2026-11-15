@@ -8,7 +8,6 @@ import { BOOKS, rebuildBooks } from './books.js';
 import { state, db, rec, save, saveSetting } from './state.js';
 import { toast, celebrate } from './page.js';
 import { rewardPoints, pointsNews, saveReward } from './money.js';
-import { newCustomId } from './my-books.js';
 import { render } from './tabs.js';
 import { refreshBubble } from './dude-talk.js';
 import { refreshCobol } from './cobol.js';
@@ -25,7 +24,8 @@ export function findLink(text) {
 
 async function addBook(q) {
   const now = new Date().toISOString();
-  const id = newCustomId();
+  // Named after the quiz, so two of her devices that both hear about it make the same book, not two.
+  const id = C.CUSTOM_PREFIX + 'school-' + q.id;
   const book = C.customBook({
     id, title: q.title, author: q.author, ar_level: q.level === null ? '' : String(q.level), ar_points: q.possible === null ? '' : String(q.possible),
     description: 'Added from her AR quiz email on ' + q.date + '.', createdAt: now, updatedAt: now

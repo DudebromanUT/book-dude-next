@@ -611,7 +611,58 @@
     return [];
   }
 
+  /* ---- Saving to a family account ---- */
+
+  // The settings that travel with a reader between her devices. The others belong to one device: the school quiz
+  // link, when a backup was last saved, and what this device has already fetched.
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'dudeChat', 'thinkReplies'];
+
+  /**
+   * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
+   * or 'setting'; `value` is the record, the book or the setting's value, and null when she removed it (the account
+   * keeps an empty marker so her other devices hear about it). `at` is when this device saved it.
+   */
+  function cloudRow(kind, id, value, at) {
+    const gone = value === null || value === undefined;
+    return { kind, id, data: gone ? {} : kind === 'setting' ? { v: value } : value, client_at: stamp(at) || new Date(0).toISOString(), deleted: gone };
+  }
+
+  /**
+   * What a row from the account holds, checked the same way as anything else read from outside: { kind, id, value },
+   * with value null when it was removed. null when the row isn't something Book Dude saves (so it is ignored).
+   */
+  function cloudValue(row) {
+    if (!isPlain(row) || typeof row.id !== 'string') return null;
+    const gone = row.deleted === true;
+    const data = isPlain(row.data) ? row.data : {};
+    if (row.kind === 'record') {
+      if (!safeId(row.id)) return null;
+      return { kind: 'record', id: row.id, value: gone ? null : entry(Object.assign({}, data, { id: row.id })) };
+    }
+    if (row.kind === 'book') {
+      if (!isCustomId(row.id)) return null;
+      const book = gone ? null : customBook(Object.assign({}, data, { id: row.id }));
+      if (book && !book.title) return null;
+      return { kind: 'book', id: row.id, value: book };
+    }
+    if (row.kind === 'setting') {
+      if (!SYNCED_SETTINGS.includes(row.id) || gone || data.v === undefined || data.v === null) return null;
+      return { kind: 'setting', id: row.id, value: data.v };
+    }
+    return null;
+  }
+
+  /**
+   * Whether the account's copy replaces this device's. It does, unless this device has a change of its own to the
+   * same thing still waiting to be saved that is as new or newer (`pendingAt`): then this device's goes up instead.
+   */
+  function cloudWins(rowAt, pendingAt) {
+    if (!pendingAt) return true;
+    return Date.parse(rowAt) > Date.parse(pendingAt);
+  }
+
   return {
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

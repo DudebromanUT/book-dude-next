@@ -284,19 +284,41 @@ end $$;
 
 -- FOR THE OWNER, from the SQL Editor only (the website cannot call it):
 --   select bookdude.owner_invite('Our family', true);
--- Returns an invite code for an admin grown-up. If a family with that name exists the code joins it; otherwise the
--- code starts that family (with COBOL on or off). This is how the very first grown-up gets in, and the way back in
--- if every admin forgets their password.
-create or replace function bookdude.owner_invite(family_name text, cobol boolean default false) returns text
+-- Returns an invite code for a grown-up. If a family with that name exists the code joins it; otherwise the code
+-- starts that family (with COBOL on or off). The grown-up is an admin unless the third value is false. This is how
+-- the very first grown-up gets in, and the way back in if every admin forgets their password.
+drop function if exists bookdude.owner_invite(text, boolean);
+create or replace function bookdude.owner_invite(family_name text, cobol boolean default false, admin boolean default true) returns text
 language plpgsql security definer set search_path = '' as $$
 declare
   fam uuid;
 begin
   select f.id into fam from public.families f where f.name = btrim(owner_invite.family_name) order by f.created_at limit 1;
   if fam is not null then
-    return bookdude.new_invite(fam, null, true, false, null);
+    return bookdude.new_invite(fam, null, coalesce(owner_invite.admin, true), false, null);
   end if;
-  return bookdude.new_invite(null, btrim(owner_invite.family_name), true, owner_invite.cobol, null);
+  return bookdude.new_invite(null, btrim(owner_invite.family_name), coalesce(owner_invite.admin, true), coalesce(owner_invite.cobol, false), null);
+end $$;
+
+-- FOR THE OWNER, from the SQL Editor only:
+--   select bookdude.owner_remove_family('A family name');
+-- Removes a family and everything in it: its grown-ups' sign-ins, its readers, their devices and everything they
+-- saved. There is no undo. For a family that has left, or one made to try things out.
+create or replace function bookdude.owner_remove_family(family_name text) returns text
+language plpgsql security definer set search_path = '' as $$
+declare
+  fam uuid;
+  found int;
+begin
+  select count(*) into found from public.families f where f.name = btrim(owner_remove_family.family_name);
+  if found = 0 then return 'No family is called that. Nothing was removed.'; end if;
+  if found > 1 then return 'More than one family is called that. Nothing was removed.'; end if;
+  select f.id into fam from public.families f where f.name = btrim(owner_remove_family.family_name);
+  delete from auth.users u
+    where u.id in (select g.user_id from public.grownups g where g.family_id = fam)
+       or u.id in (select d.user_id from public.kid_devices d join public.kids k on k.id = d.kid_id where k.family_id = fam);
+  delete from public.families f where f.id = fam;
+  return 'Removed.';
 end $$;
 
 -- Nobody gets an account without a valid invite code. This runs inside Supabase's own sign-up, before the account
