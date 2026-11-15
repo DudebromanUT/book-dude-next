@@ -25,11 +25,13 @@ test('a row read back from the account is checked like anything from outside', (
   // Not Book Dude's: unknown kinds, unsafe ids, a book with no title, a book id on a catalog book, settings that stay on one device.
   for (const row of [null, 'x', { kind: 'score', id: 'a', data: {} }, { kind: 'record', id: '__proto__', data: {} }, { kind: 'record', id: 7, data: {} },
     { kind: 'book', id: 'mine:abc', data: { title: '' } }, { kind: 'book', id: 'hatchet--gary-paulsen', data: { title: 'Hatchet' } },
-    { kind: 'setting', id: 'schoolLink', data: { v: 'https://script.google.com/macros/s/X/exec?key=abc' } }, { kind: 'setting', id: 'lastExportAt', data: { v: 'x' } },
+    { kind: 'setting', id: 'reportAt', data: { v: '2026-11-01T10:00:00Z' } }, { kind: 'setting', id: 'lastExportAt', data: { v: 'x' } },
     { kind: 'setting', id: 'accent', data: {} }, { kind: 'setting', id: 'accent', data: { v: 'teal' }, deleted: true }]) {
     assert.equal(C.cloudValue(row), null, JSON.stringify(row));
   }
-  assert.ok(!C.SYNCED_SETTINGS.includes('schoolLink'), 'the school quiz link never leaves the device');
+  // The school quiz link travels with the reader: a grown-up pastes it once and every device she signs in on has it.
+  const link = 'https://script.google.com/macros/s/X/exec?key=abc';
+  assert.deepEqual(C.cloudValue(C.cloudRow('setting', 'schoolLink', link, '2026-11-01T10:00:00Z')), { kind: 'setting', id: 'schoolLink', value: link });
 });
 
 test('the account\'s copy wins unless this device has a change of its own, as new or newer, still waiting', () => {

@@ -613,9 +613,10 @@
 
   /* ---- Saving to a family account ---- */
 
-  // The settings that travel with a reader between her devices. The others belong to one device: the school quiz
-  // link, when a backup was last saved, and what this device has already fetched.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'dudeChat', 'thinkReplies'];
+  // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
+  // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
+  // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)

@@ -162,6 +162,9 @@ async function until(what, check, ms) {
         const out = handle(req.method(), req.url(), req.headers(), body || {});
         return route.fulfill({ status: out.status, headers: cors, contentType: 'application/json', body: out.json === null ? '' : JSON.stringify(out.json) });
       });
+      // The school's Google script, with nothing new to say (a reader's saved link makes her devices ask it).
+      await ctx.route('https://script.google.com/**', route => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify(route.request().method() === 'GET' ? { app: 'book-dude-school', quizzes: [] } : { ok: true }) }));
       const p = await ctx.newPage();
       p.on('pageerror', e => errors.push(kind + ': ' + e.message));
       await p.goto(BASE);
@@ -247,10 +250,9 @@ async function until(what, check, ms) {
     await until('Hatchet in the account', () => item(MIA, 'record', 'hatchet--gary-paulsen'));
     assert.equal(item(MIA, 'record', 'hatchet--gary-paulsen').data.note, 'Brian and the hatchet.');
     await until('the saved line', async () => (await status(dad.p)) === 'Everything is saved to the family account.');
-    // The school quiz link stays on the device it was pasted on.
+    // The school quiz link, pasted once by her dad, is saved with her: every device she signs in on will have it.
     await dad.p.evaluate(async () => { await (await import('/book-dude-next/app/state.js')).saveSetting('schoolLink', 'https://script.google.com/macros/s/AKfyTEST/exec?key=abc123'); });
-    await saveNow(dad.p);
-    assert.equal(owner('select count(*) from public.items where data::text like \'%script.google.com%\''), 0);
+    await until('the link in the account', () => item(MIA, 'setting', 'schoolLink'));
 
     /* ---- The reader signs in on her own iPad, which also has books of its own ---- */
     const pad = await device('iPad (gen 7)');
@@ -269,6 +271,7 @@ async function until(what, check, ms) {
     await pad.p.$eval('#account-panel', e => e.scrollIntoView({ block: 'center' }));
     await shot(pad.p, '4-reader-signed-in');
     assert.equal(owner('select count(*) from auth.users where is_anonymous'), 1, 'the wrong try and the right one used the same device sign-in');
+    assert.equal(await pad.p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.schoolLink), 'https://script.google.com/macros/s/AKfyTEST/exec?key=abc123', 'the school quiz link came with her');
 
     /* ---- Changes travel both ways ---- */
     await save(pad.p, 'hatchet--gary-paulsen', { rating: 3 });
@@ -366,7 +369,7 @@ async function until(what, check, ms) {
     await ready(pad.p);
     assert.deepEqual(await kidDbs(pad.p), []);
     assert.deepEqual(owner('select jsonb_agg(kind || \':\' || id order by kind, id) from public.items where kid_id = ' + lit(MIA) + ' and not deleted'),
-      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:reward', 'setting:storySeen'], 'nothing in the account was lost');
+      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
 
     /* ---- The grown-up signs out, and back in ---- */
     await more(dad.p);
@@ -377,7 +380,7 @@ async function until(what, check, ms) {
     assert.deepEqual(await kidDbs(dad.p), []);
     assert.equal(await dad.p.evaluate(() => Object.keys(localStorage).filter(k => /account$/.test(k)).length), 0);
     assert.equal((await rec(dad.p, 'frindle--andrew-clements')).note, 'The phone\'s own book.');
-    assert.equal(await dad.p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.schoolLink), '', 'the link was pasted while looking at Mia\'s books, so it went with her copy');
+    assert.equal(await dad.p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.schoolLink), '', 'the link is hers, not the phone\'s: it left with her copy');
     await more(dad.p);
     await dad.p.click('[data-act="acct-grownup"]');
     await dad.p.fill('#acct-email', 'dad@example.com'); await dad.p.fill('#acct-password', 'wrong-horse');

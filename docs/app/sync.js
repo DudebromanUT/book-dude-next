@@ -16,6 +16,7 @@ import { sheet, confirmBox } from './page.js';
 import { activeKid, call, refreshMe, account } from './cloud.js';
 import { render } from './tabs.js';
 import { applyAccent } from './more.js';
+import { syncSchool } from './school.js';
 
 const KID = activeKid();
 const PAGE = 500;
@@ -131,7 +132,12 @@ async function take(rows, last, markFull) {
   await db.applyRemote(put);
   rev = last;
   if (markFull) fullAt = markFull;
-  if (settings) { takeSettings(put.settings); applyAccent(); }
+  if (settings) {
+    takeSettings(put.settings);
+    applyAccent();
+    // A school quiz link that just arrived (a grown-up pasted it on another device) is used right away.
+    if (put.settings.schoolLink && !quiet) syncSchool(true);
+  }
   if (books) rebuildBooks(state.custom);
   return any;
 }

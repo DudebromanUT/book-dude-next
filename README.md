@@ -29,8 +29,9 @@ also saved to her family's account, so they are on every device she signs in on 
   grown-up passcode.
 - **Moving in from the live Book Dude:** save a backup there, open the reader here, and restore the backup. It goes
   into her account and onto her other devices.
-- **What stays on one device:** the school quiz link (anyone who learned a reader's password could otherwise get it,
-  and COBOL with it), when a backup was last saved, and the screen choices.
+- **The school quiz link is saved with the reader**, so a grown-up pastes it once and every device she signs in on
+  gets her quizzes and COBOL. That makes her password as private as the link: anyone who signs in as her gets it.
+  When a backup was last saved and the screen choices stay on each device.
 
 Each family's records live in a Supabase project (free plan), with rules that keep every family's data to itself.
 `supabase/README.md` explains the setup, who can see what, and how people get in; `supabase/001_foundation.sql` is the
