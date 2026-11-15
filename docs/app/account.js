@@ -85,7 +85,8 @@ export function accountPanelHtml() {
       : '<p class="hint">No readers yet. Add one to give them a username and password to sign in with on their own device.</p>') +
     '<div class="row-actions"><button type="button" class="btn small primary" data-act="acct-add-kid">Add a reader</button>' +
       (admin ? '<button type="button" class="btn small" data-act="acct-invite">Make an invite code</button>' : '') + '</div>' +
-    '<div class="row-actions">' + (kid ? '<button type="button" class="btn small" data-act="acct-own">Show this device’s own books</button>' : '') +
+    '<div class="row-actions">' + (kid ? '<button type="button" class="btn small" data-act="acct-sync">Save now</button>' +
+        '<button type="button" class="btn small" data-act="acct-own">Show this device’s own books</button>' : '') +
       '<button type="button" class="btn small" data-act="acct-signout">Sign out</button></div></section>';
 }
 

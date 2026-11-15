@@ -25,8 +25,10 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png' };
 const stamp = Date.now().toString(36);
 const EMAIL = process.env.TRY_EMAIL || 'dudenext.tryout.' + stamp + '@gmail.com';
-const PASSWORD = 'tryout-' + stamp + '-Pw9';
+const PASSWORD = process.env.TRY_PASSWORD || 'tryout-' + stamp + '-Pw9';
 const READER = 'tryout' + stamp;
+// Said first, so a run that stops halfway can be looked into by signing in as the try-out grown-up.
+console.log('Try-out grown-up: ' + EMAIL + ' / ' + PASSWORD + ', reader: ' + READER);
 
 function serve() {
   const server = http.createServer((req, res) => {
@@ -131,6 +133,7 @@ async function until(what, check, ms) {
     // Changes travel both ways, and wait while there's no internet.
     await save(pad.p, 'hatchet--gary-paulsen', { rating: 3, note: 'Changed on the iPad.' });
     await until('the saved line on the iPad', async () => (await status(pad.p)) === 'Everything is saved to the family account.');
+    await more(phone.p);
     await phone.p.click('[data-act="acct-sync"]');
     await until('the change on the phone', async () => (await rec(phone.p, 'hatchet--gary-paulsen')).note === 'Changed on the iPad.');
     await pad.ctx.setOffline(true);
@@ -138,6 +141,7 @@ async function until(what, check, ms) {
     await until('the waiting line', async () => /1 change is waiting/.test(await status(pad.p)), 40000);
     await pad.ctx.setOffline(false);
     await until('the saved line after coming back', async () => (await status(pad.p)) === 'Everything is saved to the family account.', 30000);
+    await more(phone.p);
     await phone.p.click('[data-act="acct-sync"]');
     await until('the offline change on the phone', async () => ((await rec(phone.p, 'frindle--andrew-clements')) || {}).status === 'reading');
     ok('changes travel both ways, and one made with no internet went up when it came back');

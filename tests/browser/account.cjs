@@ -189,7 +189,8 @@ async function until(what, check, ms) {
     const save = (p, id, patch) => p.evaluate(async ([id, patch]) => { await (await import('/book-dude-next/app/state.js')).save(id, patch); }, [id, patch]);
     const counts = p => p.evaluate(async () => { const s = (await import('/book-dude-next/app/state.js')).state; return { records: Object.keys(s.records).length, custom: Object.keys(s.custom).length }; });
     const status = async p => { await more(p); return clean(await p.textContent('#sync-status')); };
-    const saveNow = async p => { await more(p); await p.$eval('[data-act="acct-sync"], #account-panel', () => {}); await p.evaluate(async () => { await (await import('/book-dude-next/app/sync.js')).syncNow(); }); };
+    // Save now, the button a reader or a grown-up looking at her books taps: it waits for the pop-up that says how it went.
+    const saveNow = async p => { await more(p); await p.click('[data-act="acct-sync"]'); await says(p, 'Everything is saved to the family account.'); };
     const kidDbs = p => p.evaluate(async () => (await indexedDB.databases()).map(d => d.name).filter(n => n.includes('kid:')));
     // SHOTS=<folder> saves pictures of the account screens there, for a grown-up to look over.
     const shot = async (p, name) => { if (process.env.SHOTS) { await sleep(250); await p.screenshot({ path: path.join(process.env.SHOTS, name + '.png') }); } };
