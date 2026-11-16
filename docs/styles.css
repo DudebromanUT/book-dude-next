@@ -886,6 +886,17 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .game-card .row-actions { margin-top: 0; }
 .game-card a.btn { text-decoration: none; }
 .game-note { margin-top: 14px; }
+#scoreboard { margin-top: 14px; }
+.board { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 8px; }
+.board-level { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-2); }
+.board-level h4 { font-size: .95rem; margin: 0 0 6px; }
+.board-level ol { margin: 0; padding: 0 0 0 1.4em; display: grid; gap: 4px; }
+.board-level li { font-size: .9rem; }
+.board-level li.me { font-weight: 700; }
+.board-level .b-who { margin-right: 8px; }
+.board-level .b-stars { color: var(--accent-text); letter-spacing: .05em; margin-right: 8px; }
+.board-level .b-stars i { font-style: normal; opacity: .25; }
+.board-level .b-pts { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* ---------- The family account ---------- */
 .reader-list { display: grid; gap: 12px; margin: 8px 0 0; padding: 0; list-style: none; }

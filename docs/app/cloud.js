@@ -239,4 +239,14 @@ async function ask(name, args) {
 export const createKid = (name, username, password) => ask('create_kid', { name, username, password });
 export const setKidPassword = (kid, password) => ask('set_kid_password', { kid, password });
 export const signOutKid = kid => ask('sign_out_kid', { kid });
+/** Saves this player's game scores to the family's scoreboard; answers with their best everywhere, or null if it couldn't. */
+export async function saveScores(scores) {
+  const r = await rpc('save_scores', { scores });
+  return r.status === 200 && r.json && typeof r.json === 'object' ? r.json : null;
+}
+/** The family's scoreboard for one game: [{ name, me, level, stars, score }], or null if it couldn't be fetched. */
+export async function scoreboard(game) {
+  const r = await rpc('scoreboard', { game });
+  return r.status === 200 && Array.isArray(r.json) ? r.json : null;
+}
 export const createInvite = (newFamily, admin) => ask('create_invite', newFamily ? { new_family: newFamily } : { admin: !!admin });

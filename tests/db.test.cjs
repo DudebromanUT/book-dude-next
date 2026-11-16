@@ -9,6 +9,7 @@ const test = require('node:test'), assert = require('node:assert/strict'), fs = 
 
 const BASE = process.env.BOOKDUDE_TEST_DB;
 const MIGRATION = path.join(__dirname, '..', 'supabase', '001_foundation.sql');
+const SCORES = path.join(__dirname, '..', 'supabase', '002_scores.sql');
 const STUB = path.join(__dirname, 'db', 'supabase-stub.sql');
 const DB = 'bookdude_test_' + process.pid;
 
@@ -57,12 +58,13 @@ if (!BASE) {
     admin('create database ' + DB);
     let r = psql(DB, ['-f', STUB]); assert.ok(r.ok, r.err);
     r = psql(DB, ['-f', MIGRATION]); assert.ok(r.ok, r.err);
+    r = psql(DB, ['-f', SCORES]); assert.ok(r.ok, r.err);
   });
   test.after(() => { psql('postgres', ['-c', 'drop database if exists ' + DB + ' with (force)']); });
 
   test('the script can be run again without changing or losing anything', () => {
     assert.equal(changed('owner', 'insert into public.families (name) values (\'Keep me\')'), 1);
-    const r = psql(DB, ['-f', MIGRATION]); assert.ok(r.ok, r.err);
+    for (const file of [MIGRATION, SCORES]) { const r = psql(DB, ['-f', file]); assert.ok(r.ok, r.err); }
     assert.equal(rows('owner', 'select name from public.families').length, 1);
     assert.equal(changed('owner', 'delete from public.families'), 1);
   });
@@ -86,7 +88,7 @@ if (!BASE) {
     assert.deepEqual(can('anon', 'functions'), ['invite_ok', 'ping']);
     assert.deepEqual(can('anon', 'tables'), []);
     assert.deepEqual(can('authenticated', 'functions'), ['create_invite', 'create_kid', 'grownup_family', 'invite_ok', 'is_admin', 'kid_sign_in', 'kid_sign_out',
-      'me', 'my_family', 'my_kids', 'ping', 'reset_grownup', 'set_kid_password', 'sign_out_kid']);
+      'me', 'my_family', 'my_kids', 'ping', 'reset_grownup', 'save_scores', 'scoreboard', 'set_kid_password', 'sign_out_kid']);
     assert.deepEqual(can('authenticated', 'tables'), ['families:SELECT', 'grownups:SELECT', 'items:INSERT,SELECT,UPDATE', 'kid_devices:SELECT', 'kids:SELECT']);
     // Every table has its rules switched on, and every function that runs with the owner's rights pins where it looks things up.
     assert.deepEqual(rows('owner', 'select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in (\'public\', \'bookdude\') and c.relkind = \'r\' and not c.relrowsecurity'), []);
@@ -383,6 +385,48 @@ if (!BASE) {
     run('owner', 'update auth.users set created_at = now() - interval \'8 days\' where id = ' + lit(again));
     rpc('anon', 'ping()');
     assert.equal(left(again), 1);
+  });
+
+  test('arcade scores: each player saves only their own, a score only gets better, and the scoreboard shows the asker\'s own family by first name', () => {
+    const save = (who, scores) => rpc(who, 'save_scores(' + lit(JSON.stringify(scores)) + '::jsonb)');
+    const board = who => rpc(who, 'scoreboard(\'maple-madness\')');
+    // Mia on her iPad, her dad Ben as himself, and Zoe in the other family.
+    const zoePad = device();
+    assert.equal(rpc(zoePad, 'kid_sign_in(\'zoe\', \'tigger-55\')').ok, true);
+    assert.deepEqual(save(P.miaPad, { 'maple-madness': { poop: { stars: 2, score: 120 }, tug: { stars: 1, score: 8 } } }), { 'maple-madness': { poop: { stars: 2, score: 120 }, tug: { stars: 1, score: 8 } } });
+    assert.deepEqual(save(P.ben, { 'maple-madness': { poop: { stars: 3, score: 90 } } }), { 'maple-madness': { poop: { stars: 3, score: 90 } } });
+    save(zoePad, { 'maple-madness': { poop: { stars: 3, score: 999 } } });
+    // Worse results change nothing; better ones (more stars, or the same stars and a higher score) do. The answer is the player's best.
+    assert.deepEqual(save(P.miaPad, { 'maple-madness': { poop: { stars: 1, score: 5000 }, tug: { stars: 1, score: 12.345 }, chase: { stars: 3, score: 41 } } }),
+      { 'maple-madness': { poop: { stars: 2, score: 120 }, tug: { stars: 1, score: 12.35 }, chase: { stars: 3, score: 41 } } });
+    // Another of her devices starts with nothing to say and learns her best.
+    const second = device();
+    assert.equal(rpc(second, 'kid_sign_in(\'mia\', \'maple-123\')').ok, true);
+    assert.equal(save(second, {})['maple-madness'].chase.stars, 3);
+    // Junk is left out without stopping the rest.
+    assert.deepEqual(save(P.ben, { 'maple-madness': { poop: { stars: 9, score: 1 }, tug: { stars: 2, score: 'lots' }, 'Bad Level': { stars: 1, score: 1 }, water: 'won', chase: { stars: 2.5, score: 3 } }, 'Bad Game': { a: { stars: 1, score: 1 } }, other: 7 }),
+      { 'maple-madness': { poop: { stars: 3, score: 90 } } });
+    assert.deepEqual(save(P.ben, 'nonsense'), { 'maple-madness': { poop: { stars: 3, score: 90 } } });
+    // The board: the Home family only, best first on each level, and each asker is marked as "me".
+    const seen = board(P.miaPad);
+    assert.deepEqual(seen.map(r => [r.level, r.name, r.stars, r.score, r.me]), [['chase', 'Mia', 3, 41, true], ['poop', 'Ben', 3, 90, false], ['poop', 'Mia', 2, 120, true], ['tug', 'Mia', 1, 12.35, true]]);
+    assert.deepEqual(board(P.ben).filter(r => r.me).map(r => r.name), ['Ben']);
+    assert.deepEqual(board(P.ann).map(r => r.name).sort(), ['Ben', 'Mia', 'Mia', 'Mia'], 'a grown-up with no scores still sees the family\'s');
+    assert.deepEqual(board(zoePad).map(r => [r.name, r.stars]), [['Zoe', 3]], 'the other family has its own board');
+    assert.deepEqual(rpc(P.ben, 'scoreboard(\'no-such-game\')'), []);
+    // Nobody reaches the table itself, and someone who isn't a player has no scores to save.
+    for (const who of [P.miaPad, P.ben, P.cal]) {
+      refused(who, 'select * from public.scores', /permission denied/);
+      refused(who, 'insert into public.scores (kid_id, game, level, stars, score) values (' + lit(P.mia) + ', \'maple-madness\', \'poop\', 3, 99999)', /permission denied/);
+      refused(who, 'update public.scores set stars = 3', /permission denied/);
+    }
+    refused(device(), 'select public.save_scores(\'{}\'::jsonb)', /Only a signed-in reader or grown-up has scores/);
+    assert.deepEqual(rpc(device(), 'scoreboard(\'maple-madness\')'), []);
+    refused('anon', 'select public.save_scores(\'{}\'::jsonb)', /permission denied for function/);
+    refused('anon', 'select public.scoreboard(\'maple-madness\')', /permission denied for function/);
+    // A reader's scores go when the reader does, a grown-up's with their sign-in.
+    run('owner', 'delete from auth.users where id = ' + lit(zoePad));
+    assert.equal(rows('owner', 'select 1 from public.scores s join public.kids k on k.id = s.kid_id where k.username = \'zoe\'').length, 1, 'signing a device out keeps her scores');
   });
 
   test('the owner can make a family whose grown-up is not an admin, and remove a whole family, from the SQL Editor only', () => {

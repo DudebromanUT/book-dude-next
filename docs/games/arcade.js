@@ -1,12 +1,14 @@
 /* The Book Dude arcade, as a game sees it. Every game page loads this before its own code and asks for its place to
  * keep things:
  *     const ARCADE = window.BookDudeArcade.open('maple-madness');
- *     ARCADE.player          the signed-in reader's first name, or '' on a device that isn't signed in
+ *     ARCADE.player          the first name of whoever is signed in (a reader, or a grown-up playing as themselves),
+ *                            or '' on a device that isn't signed in
  *     ARCADE.get('records')  something this game saved earlier (null if nothing)
  *     ARCADE.set('records', value)
- * What a game saves is kept on the device, apart for each reader and for the device itself. When a reader is signed
- * in, Book Dude (docs/app/games.js) copies her best scores to her family's account and brings back the ones from her
- * other devices; for that, a game keeps its scores under 'records' as { playerName: { levelId: { stars, score } } }.
+ * What a game saves is kept on the device, apart for each player and for the device itself. When someone is signed
+ * in, Book Dude (docs/app/games.js) copies their best scores to the family's account, brings back the ones from their
+ * other devices, and shows the family's scoreboard; for that, a game keeps its scores under 'records' as
+ * { playerName: { levelId: { stars, score } } }.
  * A game never talks to the account itself, and needs nothing else from Book Dude. */
 (function () {
   'use strict';
@@ -17,13 +19,17 @@
 
   // Who is signed in on this device, as the app remembers it (docs/app/cloud.js).
   var account = read('reading-room:ui:' + BASE + ':account');
-  var kid = account && typeof account.kid === 'string' && /^[0-9a-f-]{36}$/.test(account.kid) ? account.kid : '';
-  var player = '';
-  if (kid && account.me) {
-    var list = (account.me.kid ? [account.me.kid] : []).concat(account.me.kids || []);
-    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === kid) player = String(list[i].name || '');
+  // A grown-up plays as themselves, whichever reader's books they have open; a reader's device plays as that reader.
+  var id = /^[0-9a-f-]{36}$/;
+  var who = 'device', player = '';
+  if (account && account.me && account.role === 'grownup' && account.me.grownup && account.session && id.test(account.session.user || '')) {
+    who = 'grownup:' + account.session.user;
+    player = String(account.me.grownup.name || '') || 'Grown-up';
+  } else if (account && account.me && account.role === 'reader' && account.me.kid && id.test(account.kid || '') && account.me.kid.id === account.kid) {
+    who = 'kid:' + account.kid;
+    player = String(account.me.kid.name || '');
   }
-  var prefix = 'book-dude:arcade:' + BASE + (kid ? 'kid:' + kid : 'device') + ':';
+  var prefix = 'book-dude:arcade:' + BASE + who + ':';
 
   // Scores from a game's life before the arcade (Maple Madness was its own site at this address), taken once.
   var BEFORE = { 'maple-madness': { records: 'maple-records', profile: 'maple-profile' } };
@@ -37,7 +43,7 @@
       if (profile && typeof profile === 'object') write(prefix + game + ':profile', profile);
       return;
     }
-    // A signed-in reader takes the old scores under her own name, or the only name there is. Anyone else's stay put.
+    // Someone signed in takes the old scores under their own name, or the only name there is. Anyone else's stay put.
     var names = Object.keys(records), mine = '';
     for (var n = 0; n < names.length; n++) if (names[n].toLowerCase() === player.toLowerCase()) mine = names[n];
     if (!mine && names.length === 1) mine = names[0];

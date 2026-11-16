@@ -216,9 +216,9 @@ async function wipeProfiles() {
 /** This device stops being signed in: the readers' copies kept here are removed, and it starts again on its own books. */
 export async function leaveAccount(notice) {
   await wipeProfiles();
-  // The readers' game scores kept on this device go too (they are in the account); the device's own stay.
+  // The game scores of whoever was signed in go too (they are in the account); the device's own stay.
   try {
-    Object.keys(localStorage).filter(k => k.indexOf('book-dude:arcade:' + BASE + 'kid:') === 0).forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.indexOf('book-dude:arcade:' + BASE + 'kid:') === 0 || k.indexOf('book-dude:arcade:' + BASE + 'grownup:') === 0).forEach(k => localStorage.removeItem(k));
   } catch (e) { /* ignore */ }
   forget();
   if (notice) leaveNotice(notice);

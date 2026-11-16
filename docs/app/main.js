@@ -57,8 +57,8 @@ async function start() {
   takeSettings(s);
   // A reader from the account is called by the name her grown-up gave, until she picks her own.
   if (kid && !state.settings.readerName) state.settings.readerName = activeKidName();
-  // A signed-in reader's game scores, from this device and from her account, become one set before anything shows them.
-  if (kid) await mirrorArcade();
+  // The signed-in player's game scores, from this device and from the account, become one set before anything shows them.
+  if (account()) await mirrorArcade();
   // The first start with screen time on this device: extra minutes count for books finished from today on, and the
   // points she already earned stay in the jar, where every point went before she could choose screen time.
   const first = {};

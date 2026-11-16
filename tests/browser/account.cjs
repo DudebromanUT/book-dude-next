@@ -52,7 +52,7 @@ function session(user, email, anonymous) {
   api.refreshes.set(refresh, { user, email, anonymous });
   return { access_token: access, refresh_token: refresh, expires_in: 3600, token_type: 'bearer', user: { id: user, email: email || '', is_anonymous: !!anonymous } };
 }
-const sqlValue = v => (v === null || v === undefined ? 'null' : typeof v === 'boolean' || typeof v === 'number' ? String(v) : lit(v));
+const sqlValue = v => (v === null || v === undefined ? 'null' : typeof v === 'boolean' || typeof v === 'number' ? String(v) : typeof v === 'object' ? lit(JSON.stringify(v)) + '::jsonb' : lit(v));
 // What PostgREST would answer for a database error.
 function refusal(err) {
   const denied = /permission denied|row-level security|Only a|Only an/.test(err);
@@ -140,7 +140,7 @@ async function until(what, check, ms) {
   const admin = sql => { const r = psql('postgres', ['-c', sql]); assert.ok(r.ok, r.err); };
   admin('drop database if exists ' + DB);
   admin('create database ' + DB);
-  for (const file of [path.join(ROOT, 'tests', 'db', 'supabase-stub.sql'), path.join(ROOT, 'supabase', '001_foundation.sql')]) {
+  for (const file of [path.join(ROOT, 'tests', 'db', 'supabase-stub.sql'), path.join(ROOT, 'supabase', '001_foundation.sql'), path.join(ROOT, 'supabase', '002_scores.sql')]) {
     const r = psql(DB, ['-f', file]); assert.ok(r.ok, r.err);
   }
   const server = await serve();
@@ -291,28 +291,38 @@ async function until(what, check, ms) {
     assert.equal((await counts(dad.p)).custom, 1);
     assert.equal(await dad.p.evaluate(() => document.documentElement.dataset.accent), 'teal', 'and so did her color');
 
-    /* ---- Game scores: hers on every device, the best of each level ---- */
+    /* ---- Game scores: hers on every device, the best of each level, and the family's scoreboard ---- */
     const scoresKey = 'book-dude:arcade:/book-dude-next/kid:' + MIA + ':maple-madness:records';
-    // The game on her iPad knows her as the player, and saves a score the way it does after a level.
-    await pad.p.goto(BASE + 'games/maple-madness/');
-    await pad.p.waitForSelector('#levels .lvl');
-    assert.equal(clean(await pad.p.textContent('#playerFixed')), 'Mia');
-    assert.equal(await pad.p.isHidden('#inPlayer'), true, 'a signed-in reader is the player: no name to type');
-    await pad.p.evaluate(() => { const a = window.BookDudeArcade.open('maple-madness'); a.set('records', { Mia: { poop: { stars: 2, score: 100 } } }); });
-    await Promise.all([pad.p.waitForNavigation(), pad.p.click('#homeLink')]);
-    await ready(pad.p);
-    assert.match(clean(await pad.p.textContent('#main')), /2 stars of 12 so far\..*Mia’s scores are saved to the family account/);
-    await until('her score in the account', () => { const row = item(MIA, 'setting', 'arcade'); return row && row.data.v['maple-madness'].poop.stars === 2; });
-    // On her dad's phone, playing as Mia, an older game left a worse score on that level and a good one on another.
-    await dad.p.evaluate(key => localStorage.setItem(key, JSON.stringify({ Mia: { poop: { stars: 1, score: 500 }, tug: { stars: 3, score: 9 } } })), scoresKey);
-    await dad.p.reload(); await ready(dad.p);
-    await until('the best of both in the account', () => { const v = item(MIA, 'setting', 'arcade').data.v['maple-madness']; return v.tug && v.tug.stars === 3 && v.poop.stars === 2; });
-    assert.deepEqual(await dad.p.evaluate(key => JSON.parse(localStorage.getItem(key)), scoresKey), { Mia: { poop: { stars: 2, score: 100 }, tug: { stars: 3, score: 9 } } }, 'the game on the phone now has her best');
-    await saveNow(pad.p);
-    await pad.p.$eval('.tab[data-tab="games"]', e => e.click());
-    await pad.p.waitForSelector('.game-card');
-    assert.match(clean(await pad.p.textContent('.game-card')), /5 stars of 12 so far\./, 'and so does her iPad');
-    assert.deepEqual(await pad.p.evaluate(key => JSON.parse(localStorage.getItem(key)), scoresKey), { Mia: { poop: { stars: 2, score: 100 }, tug: { stars: 3, score: 9 } } });
+    const play = async (p, name, records) => {
+      await p.goto(BASE + 'games/maple-madness/');
+      await p.waitForSelector('#levels .lvl');
+      assert.equal(clean(await p.textContent('#playerFixed')), name);
+      assert.equal(await p.isHidden('#inPlayer'), true, 'whoever is signed in is the player: no name to type');
+      // A score saved the way the game saves one after a level.
+      await p.evaluate(r => { window.BookDudeArcade.open('maple-madness').set('records', r); }, { [name]: records });
+      await Promise.all([p.waitForNavigation(), p.click('#homeLink')]);
+      await ready(p);
+    };
+    const boardText = async p => { await p.$eval('.tab[data-tab="games"]', e => e.click()); await p.waitForSelector('.board', { timeout: 15000 }); return clean(await p.textContent('#scoreboard')); };
+    // Mia plays on her iPad.
+    await play(pad.p, 'Mia', { poop: { stars: 2, score: 100 } });
+    assert.match(clean(await pad.p.textContent('#main')), /Playing as Mia\. 2 stars of 12 so far\..*Mia’s scores are saved to the family account/);
+    await until('her score in her account', () => { const row = item(MIA, 'setting', 'arcade'); return row && row.data.v['maple-madness'].poop.stars === 2; });
+    await until('her score on the scoreboard', () => owner('select count(*) from public.scores where kid_id = ' + lit(MIA)) === 1);
+    // An older, worse result on that level (and a good one on another) never takes a star away: the best of each stays.
+    await pad.p.evaluate(key => localStorage.setItem(key, JSON.stringify({ Mia: { poop: { stars: 1, score: 500 }, tug: { stars: 3, score: 9 } } })), scoresKey);
+    await pad.p.reload(); await ready(pad.p);
+    await until('the best of both in her account', () => { const v = item(MIA, 'setting', 'arcade').data.v['maple-madness']; return v.tug && v.tug.stars === 3 && v.poop.stars === 2; });
+    assert.deepEqual(await pad.p.evaluate(key => JSON.parse(localStorage.getItem(key)), scoresKey), { Mia: { poop: { stars: 2, score: 100 }, tug: { stars: 3, score: 9 } } }, 'and the game has her best');
+    // Her dad plays on his phone as himself (with her books open), and beats her at Poop Patrol.
+    await play(dad.p, 'Dad', { poop: { stars: 3, score: 90 } });
+    assert.match(clean(await dad.p.textContent('.game-card')), /Playing as Dad\. 3 stars of 12 so far\./);
+    await until('his score on the scoreboard', () => owner('select count(*) from public.scores where grownup_id is not null') === 1);
+    assert.equal(item(MIA, 'setting', 'arcade').data.v['maple-madness'].poop.stars, 2, 'his games are his, not hers');
+    assert.match(await boardText(dad.p), /Family scoreboard.*Poop Patrol\s*Dad \(you\)\s*★★★\s*90\s*Mia\s*★★★\s*100.*Catch Fig\s*No scores yet\..*Tug of War\s*Mia\s*★★★\s*9/);
+    await pad.p.reload(); await ready(pad.p);
+    if (process.env.SHOTS) { await pad.p.$eval('#scoreboard', e => e.scrollIntoView({ block: 'center' })); await shot(pad.p, '6-family-scoreboard'); }
+    assert.match(await boardText(pad.p), /Poop Patrol\s*Dad\s*★★★\s*90\s*Mia \(you\)\s*★★★\s*100.*Tug of War\s*Mia \(you\)/, 'she sees him ahead of her');
 
     /* ---- Offline: changes wait on the device, then go up ---- */
     await pad.offline(true);
