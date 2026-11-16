@@ -9,6 +9,47 @@ import { main, toast } from './page.js';
 import { greeting, revealChip, applySizes, row } from './cards.js';
 import { rewardPoints, choiceHtml, jarHtml, screenHtml, filesHtml } from './money.js';
 import { quizLine } from './shelves.js';
+import { examTitle } from './cobol.js';
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Where her points came from: every AR quiz, Book Dude test and home-points book, by school year (August to July), and
+// how the total that counts for book money and screen time is made. Every entry is shown, so anyone can check it.
+
+const KINDS = { ar: 'AR quizzes', test: 'Book Dude tests', home: 'Home points' };
+let ledgerYear = '';
+
+function ledgerHtml(total) {
+  const all = C.ledger(state.records);
+  const years = Array.from(new Set(all.map(e => e.year).filter(Boolean).concat(C.schoolYear(today())))).sort().reverse();
+  if (ledgerYear !== 'all' && !years.includes(ledgerYear)) ledgerYear = C.schoolYear(today());
+  const shown = ledgerYear === 'all' ? all : all.filter(e => e.year === ledgerYear);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const title = e => (e.kind === 'test' ? cap(examTitle(e.id)) : BY_ID.has(e.id) ? BY_ID.get(e.id).title : e.id);
+  const sum = list => list.reduce((s, e) => s + e.points, 0);
+  const groups = Object.keys(KINDS).map(kind => {
+    const list = shown.filter(e => e.kind === kind);
+    return '<div class="ledger-group"><h3><span>' + KINDS[kind] + '</span><span>' + plural(Math.round(sum(list) * 100) / 100, 'point') + '</span></h3>' + (list.length
+      ? '<ol class="ledger-list">' + list.map(e => '<li><span class="l-date">' + (e.date ? esc(fmtDay(e.date)) : 'No date') + '</span><span class="l-title">' + esc(title(e)) +
+          '</span><span class="l-pts">+' + fmtNum(e.points) + '</span></li>').join('') + '</ol>'
+      : '<p class="hint">None ' + (ledgerYear === 'all' ? 'yet' : 'this school year') + '.</p>') + '</div>';
+  }).join('');
+  // How the total is made (all time: book money and screen time count every point since the start).
+  const cfg = C.reward(state.settings.reward);
+  const tests = C.examPoints(state.records), home = C.homePoints(state.records);
+  const ar = Math.round((total - tests - home) * 100) / 100;
+  const how = cfg.school !== null
+    ? 'AR points from the school’s report (' + fmtNum(cfg.school) + (cfg.schoolNew && Object.keys(cfg.schoolNew).length ? ' plus quizzes from school emails since' : '') + ', above the starting line of ' + fmtNum(cfg.schoolStart) + '): <b>' + fmtNum(ar) + '</b>'
+    : 'AR quizzes entered in Book Dude: <b>' + fmtNum(ar) + '</b>';
+  return '<section class="panel ledger" id="ledger"><h2 class="section-title">Where your points came from</h2>' +
+    '<div class="chips" role="group" aria-label="School year">' + years.map(y =>
+      '<button type="button" class="chip" data-act="ledger-year" data-year="' + y + '" aria-pressed="' + (ledgerYear === y) + '">' + y + '</button>').join('') +
+      '<button type="button" class="chip" data-act="ledger-year" data-year="all" aria-pressed="' + (ledgerYear === 'all') + '">All time</button></div>' +
+    '<p class="ledger-total">' + (ledgerYear === 'all' ? 'All time' : 'School year ' + ledgerYear) + ': <b>' + plural(Math.round(sum(shown) * 100) / 100, 'point') + '</b> from ' + plural(shown.length, 'entry', 'entries') + '.</p>' +
+    groups +
+    '<div class="ledger-how"><h3>How your points are counted</h3><p>' + how + ' + Book Dude tests: <b>' + fmtNum(tests) + '</b> + home points: <b>' + fmtNum(home) + '</b> = <b>' + plural(total, 'point') + '</b>.</p>' +
+      (cfg.school !== null ? '<p class="hint">The AR part is the school’s own total, so it counts every AR quiz, including any Book Dude never heard about. The AR quizzes listed above are the ones that reached Book Dude from the school’s emails or were typed in.</p>' : '') +
+    '</div></section>';
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -91,6 +132,7 @@ export function renderProgress() {
     choiceHtml(total) +
     jarHtml(total) +
     screenHtml(total) +
+    ledgerHtml(total) +
     '<div class="chips" role="group" aria-label="Time period">' + years.map(y =>
       '<button type="button" class="chip" data-act="period" data-period="' + y + '" aria-pressed="' + (state.period === y) + '">' + y + '</button>').join('') +
       '<button type="button" class="chip" data-act="period" data-period="all" aria-pressed="' + (state.period === 'all') + '">All time</button></div>' +
@@ -121,6 +163,7 @@ export function renderProgress() {
 }
 
 export const actions = {
+  'ledger-year': el => { ledgerYear = el.dataset.year; const y = window.scrollY; renderProgress(); window.scrollTo(0, y); },
   period: el => { state.period = el.dataset.period; state.editingGoal = null; saveUi(); renderProgress(); },
   'edit-goal': () => { state.editingGoal = state.period; renderProgress(); const input = $('#goal-input'); if (input) input.focus(); },
   'remove-goal': async () => {

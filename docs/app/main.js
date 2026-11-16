@@ -15,7 +15,7 @@ import { newDudeLine, openStory } from './dude-talk.js';
 import { applyAccent, startPets } from './more.js';
 import { openBook } from './book.js';
 import { registerWorker } from './offline.js';
-import { rewardPoints } from './money.js';
+import { rewardPoints, tellPayouts } from './money.js';
 import { TABS, render } from './tabs.js';
 import { listen } from './events.js';
 import { HISTORY, addHistory } from './backup.js';
@@ -101,7 +101,7 @@ async function start() {
   else if (account()) checkAccount();
   // Her reading history lands first, so a new school quiz for one of those books finds it. It is Maddy's own history,
   // built into the site, so it only lands on a device's own books: a reader from a family account has her books there.
-  (s.history !== HISTORY && state.storage === 'ok' && !kid ? addHistory() : Promise.resolve()).then(() => syncSchool(true));
+  (s.history !== HISTORY && state.storage === 'ok' && !kid ? addHistory() : Promise.resolve()).then(() => syncSchool(true)).then(() => tellPayouts());
 }
 
 listen();

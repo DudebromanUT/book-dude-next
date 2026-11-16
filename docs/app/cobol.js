@@ -489,15 +489,17 @@ function redrawThink(a) {
 const articleText = a => [].concat(lines(a.intro), ...a.sections.map(f => [f.title].concat(f.text)), lines(a.closing)).join('\n');
 
 // Her passed tests and bonus points, for the weekly email's numbers.
+// A test record's name in a sentence: "test on Topaz Mountain: ...", "think-about-it question on ...", or a retired one's.
+export function examTitle(id) {
+  if (RETIRED[id]) return RETIRED[id];
+  const m = /^exam:(.+?)(:think)?$/.exec(id);
+  const a = m && BY_ARTICLE.get(m[1]);
+  return a ? (m[2] ? 'think-about-it question on ' : 'test on ') + a.title : id.slice(5);
+}
+
 export function examReport() {
-  const name = id => {
-    if (RETIRED[id]) return RETIRED[id];
-    const m = /^exam:(.+?)(:think)?$/.exec(id);
-    const a = m && BY_ARTICLE.get(m[1]);
-    return a ? (m[2] ? 'think-about-it question on ' : 'test on ') + a.title : id.slice(5);
-  };
   return Object.keys(state.records).filter(id => id.startsWith('exam:') && earned(id))
-    .map(id => ({ title: name(id), date: state.records[id].quizDate, score: state.records[id].quizScore || 0, points: state.records[id].earnedPoints }));
+    .map(id => ({ title: examTitle(id), date: state.records[id].quizDate, score: state.records[id].quizScore || 0, points: state.records[id].earnedPoints }));
 }
 
 // About the Dude's way in: a small green screen with the start of COBOL's history file.

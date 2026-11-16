@@ -240,7 +240,9 @@ const TAKE = {
   schoolSeen: v => { if (Array.isArray(v)) state.settings.schoolSeen = v.filter(id => typeof id === 'string'); },
   reward: v => { if (v && typeof v === 'object') state.settings.reward = C.reward(v); },
   // Arcade scores only ever get better: a copy from the account is put together with what is here, best of each.
-  arcade: v => { state.settings.arcade = C.arcadeBest(state.settings.arcade, v); }
+  arcade: v => { state.settings.arcade = C.arcadeBest(state.settings.arcade, v); },
+  // How many book-money payouts her parents have been emailed about (they only ever go up).
+  payoutTold: v => { if (Number.isInteger(v) && v >= 0) state.settings.payoutTold = Math.max(state.settings.payoutTold || 0, v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);

@@ -421,3 +421,31 @@ test('the weekly email: "What she thought" shows each answer once, with COBOL\'s
   assert.match(m.htmlBody, /COBOL: \(COBOL hasn't replied yet\.\)/);
   assert.match(m.body, /WHAT SHE THOUGHT\nThe Guard Dog, the Wise Owl, and Dopamine: What experiment would you design\?\nMaddy: I would ring/);
 });
+
+test('book money: her parents get one email per payout to add the money, with or without Claude, and never twice for the same one', () => {
+  const s = load({ props: { DIGEST_TO: 'adam@example.com, kristina@example.com' } });
+  assert.deepEqual(s.post({ action: 'payout', n: 3, amount: 10, where: 'your Greenlight account', waiting: 10 }), { ok: true });
+  assert.equal(s.sent.mail.length, 1);
+  const m = s.sent.mail[0];
+  assert.equal(m.to, 'adam@example.com, kristina@example.com');
+  assert.equal(m.subject, 'Book Dude: add $10 to Maddy\'s Greenlight account');
+  assert.match(m.body, /^Maddy put enough points in the Book Money Jar for a payout: \$10 to go into her Greenlight account\./);
+  assert.doesNotMatch(m.body, /Waiting in all/, 'one payout waiting says nothing more');
+  assert.match(m.body, /mark it in Book Dude: Progress tab, "Grown-up: mark as deposited"/);
+  // The same payout again (another device, or the app asking again) sends nothing; an older one neither.
+  assert.deepEqual(s.post({ action: 'payout', n: 3, amount: 10, where: 'your Greenlight account', waiting: 10 }), { ok: true, already: true });
+  assert.deepEqual(s.post({ action: 'payout', n: 2, amount: 10, where: 'your Greenlight account', waiting: 10 }), { ok: true, already: true });
+  assert.equal(s.sent.mail.length, 1);
+  // The next one does, and says how much is waiting in all when it's more than this one.
+  s.post({ action: 'payout', n: 4, amount: 10, where: 'your Greenlight account', waiting: 20 });
+  assert.equal(s.sent.mail.length, 2);
+  assert.match(s.sent.mail[1].body, /Waiting in all now: \$20\./);
+  // Nonsense is refused, and the wrong key gets nothing.
+  assert.deepEqual(s.post({ action: 'payout', n: 'lots' }), { error: 'bad' });
+  assert.deepEqual(s.post({ action: 'payout', n: 9, amount: 10 }, 'nope'), { error: 'That link is not right.' });
+  assert.equal(s.sent.mail.length, 2);
+  // At most five a day.
+  for (let n = 5; n < 12; n++) s.post({ action: 'payout', n, amount: 10, where: 'x', waiting: 10 });
+  assert.equal(s.sent.mail.length, 5);
+  assert.equal(s.sent.requests.length, 0, 'Claude is never asked');
+});

@@ -193,6 +193,31 @@
     return round(sum);
   }
 
+  /** The school year a day falls in, starting August 1: '2026-11-15' is '2026-27', '2026-07-31' is '2025-26'. '' for no day. */
+  function schoolYear(d) {
+    const m = DAY_RE.exec(String(d || ''));
+    if (!m) return '';
+    const start = Number(m[2]) >= 8 ? Number(m[1]) : Number(m[1]) - 1;
+    return start + '-' + String((start + 1) % 100).padStart(2, '0');
+  }
+
+  /**
+   * Every entry that earned her points, newest first: { kind: 'ar' | 'test' | 'home', id, date, points, year }.
+   * 'ar' is an AR quiz result entered in Book Dude (from a school email or typed by a grown-up), 'test' one of Book
+   * Dude's own tests or its think-about-it bonus, 'home' home points for a book with no AR quiz. A book can have both
+   * an AR result and home points: they are two entries. `year` is the school year ('' when the entry has no date).
+   */
+  function ledger(records) {
+    const out = [];
+    for (const id of Object.keys(records || {})) {
+      const r = records[id];
+      if (!r) continue;
+      if (typeof r.earnedPoints === 'number') out.push({ kind: isExam(id) ? 'test' : 'ar', id, date: r.quizDate || '', points: r.earnedPoints, year: schoolYear(r.quizDate) });
+      if (typeof r.homePoints === 'number' && !isExam(id)) out.push({ kind: 'home', id, date: r.homeDate || '', points: r.homePoints, year: schoolYear(r.homeDate) });
+    }
+    return out.sort((a, b) => b.date.localeCompare(a.date) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+
   /** Points from Book Dude's own tests (see EXAM_PREFIX). */
   function examPoints(records) {
     let sum = 0;
@@ -632,7 +657,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -706,7 +731,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

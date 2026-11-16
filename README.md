@@ -39,6 +39,16 @@ school total and the Library tests, never as AR points; the Progress tab says ho
 books, they are in the weekly numbers, and they travel in backups and the family account like the rest of a book's
 record. Changing them or taking them back asks for the grown-up passcode (a signed-in grown-up is never asked).
 
+**Where your points came from.** The Progress tab lists every entry that earned her points, by school year
+(August 1 to July 31) or all time: each AR quiz Book Dude knows about, each Library test and think-about-it bonus, and
+each home-points book, with dates and totals. Under it, **How your points are counted** adds up exactly what book money
+and screen time use: the school's AR total above the starting line (or the AR quizzes entered, without a school
+total), plus Book Dude tests, plus home points.
+
+**Asking for the money.** When she puts points in the jar for a payout, the app tells the Google script, which emails
+her parents to add the money to her account (once per payout; one earned offline is told the next time the app is
+online). This needs the version of `scripts/school-email/Code.gs` from this repo pasted into the Google script.
+
 **Find the cover.** A book you add yourself can get its cover from Open Library: **Find the cover** (in the add and
 edit form, or on the book's page) searches by title and author, and the cover you tap is saved into the book like a
 cover photo, so it works offline and is in backups and the family account. Only that search and the cover sent to

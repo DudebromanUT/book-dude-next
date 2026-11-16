@@ -8,6 +8,8 @@
  *      the Library tests' think-about-it questions (shown in the weekly email as "What she thought"). Every chat is logged in a
  *      Google Sheet her parents can read, and anything a parent should know about, or a tap of "Talk to a grown-up",
  *      is emailed to them right away.
+ *   5. Book money: when she puts enough points in the Book Money Jar for a payout, her parents get an email to add
+ *      the money to her account (no Claude needed).
  * Her name is never sent to Claude. Setup steps: scripts/school-email/README.md.
  *
  * Nothing secret is in this file. The link's key is made in your Google account by setup(), and the Claude API key is
@@ -756,6 +758,34 @@ function think(r) {
   return { reply: reply };
 }
 
+// Money from the Book Money Jar is due: she put enough points in the jar for a payout (her "ask" for the money).
+// Her parents (DIGEST_TO, like the weekly email) get one email per payout, telling them to add it to her account.
+// `n` is how many payouts she has earned in all; one already told about is never told again (so two devices, or the
+// app asking again, send one email). This works whether or not Claude is on.
+function payout(r) {
+  var n = Math.floor(Number(r.n));
+  if (!(n > 0) || n > 100000) return { error: 'bad' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (n <= (Number(props.getProperty('PAYOUT_TOLD')) || 0)) return { ok: true, already: true };
+    if (!countToday('payout', 5)) return { ok: true, later: true };
+    var amount = Number(r.amount) > 0 && Number(r.amount) < 100000 ? Math.round(Number(r.amount) * 100) / 100 : 0;
+    var money = amount ? '$' + (amount % 1 ? amount.toFixed(2) : amount) : 'Her reward';
+    var where = clip(r.where, 60) || 'her account';
+    var waiting = Number(r.waiting) > amount ? Math.round(Number(r.waiting) * 100) / 100 : 0;
+    MailApp.sendEmail({ to: parents(), subject: 'Book Dude: add ' + money + ' to Maddy\'s ' + where.replace(/^(your|her) /, ''),
+      body: 'Maddy put enough points in the Book Money Jar for a payout: ' + money + ' to go into ' + where.replace(/^your /, 'her ') + '.\n\n' +
+        (waiting ? 'Waiting in all now: $' + (waiting % 1 ? waiting.toFixed(2) : waiting) + '.\n\n' : '') +
+        'After you add it, mark it in Book Dude: Progress tab, "Grown-up: mark as deposited". That keeps the jar right.' });
+    props.setProperty('PAYOUT_TOLD', String(n));
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // She tapped "Talk to a grown-up" in COBOL. It works whether or not Claude or the chat is on: it goes in the chat log,
 // and her parents get an email right away with the last few messages (up to 10 emails a day).
 function grownup(r) {
@@ -800,5 +830,6 @@ function doPost(e) {
   if (r.action === 'report') return json(saveReport(r));
   if (r.action === 'grownup') return json(grownup(r));
   if (r.action === 'think') return json(think(r));
+  if (r.action === 'payout') return json(payout(r));
   return json({ error: 'bad' });
 }

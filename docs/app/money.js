@@ -12,6 +12,7 @@ import { asGrownup, isOpen, keepOpen, codePanelHtml } from './grownup.js';
 import { findLink, syncSchool } from './school.js';
 import { refreshBubble } from './dude-talk.js';
 import { hoursText } from './cobol.js';
+import { post } from './dude-ai.js';
 
 // "A trip to the bookstore" reads as "earned a trip to the bookstore" mid-sentence.
 const prizeText = prize => String(prize).replace(/^(A|An|The)\b/, w => w.toLowerCase());
@@ -47,6 +48,19 @@ function schoolNewText(cfg) {
   if (!ids.length) return '';
   const pts = ids.reduce((sum, id) => sum + cfg.schoolNew[id], 0);
   return ', plus ' + plural(pts, 'point') + ' from ' + plural(ids.length, 'new quiz', 'new quizzes');
+}
+
+// Tells her parents (through the Google script, which emails them) about each book-money payout she has earned and
+// they haven't heard about: the money to add to her account. A payout she earned while offline is told the next time
+// the app can reach the script. The first time this runs on a device, payouts already earned count as told.
+export async function tellPayouts() {
+  const cfg = C.reward(state.settings.reward);
+  if (!cfg.on || !(cfg.perPoint > 0)) return;
+  const st = C.rewardStatus(C.choices(rewardPoints(), cfg).jarPoints, cfg);
+  if (typeof state.settings.payoutTold !== 'number') { await saveSetting('payoutTold', st.earned); return; }
+  if (st.earned <= state.settings.payoutTold || st.owed < 1) return;
+  const r = await post({ action: 'payout', n: st.earned, amount: st.payout, where: cfg.where, waiting: st.owedMoney });
+  if (r && r.ok) await saveSetting('payoutTold', st.earned);
 }
 
 // One choice for 10 points, the jar side: "$10 in the jar", or "10 points in the jar" for a reward that isn't money.
@@ -350,6 +364,7 @@ export const actions = {
     const payout = jar && C.rewardStatus(C.choices(total, state.settings.reward).jarPoints, cfg).earned > before;
     renderProgress();
     celebrate();
+    if (payout) tellPayouts();
     toast(payout ? fill(DUDE.jarFull, { prize: rewardLabel(cfg) })
       : jar ? (cfg.perPoint > 0 ? money(10 * cfg.perPoint) : '10 points') + ' went into the jar. ' + DUDE.dog + ' heard it clink.'
       : cfg.minutes + ' minutes of screen time saved. Cash them in on the weekend.');
@@ -372,7 +387,7 @@ export const actions = {
     await saveReward({ toJar: ch.toJar + 1, toMinutes: ch.toMinutes - 1 });
     const payout = C.rewardStatus(C.choices(total, state.settings.reward).jarPoints, cfg).earned > before;
     renderProgress();
-    if (payout) celebrate();
+    if (payout) { celebrate(); tellPayouts(); }
     toast(payout ? fill(DUDE.jarFull, { prize: rewardLabel(cfg) })
       : cfg.minutes + ' minutes moved into the jar: ' + (cfg.perPoint > 0 ? money(10 * cfg.perPoint) : '10 points') + '. ' + DUDE.dog + ' heard it clink.');
   },

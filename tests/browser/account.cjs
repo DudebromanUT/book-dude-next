@@ -404,7 +404,7 @@ async function until(what, check, ms) {
     await ready(pad.p);
     assert.deepEqual(await kidDbs(pad.p), []);
     assert.deepEqual(owner('select jsonb_agg(kind || \':\' || id order by kind, id) from public.items where kid_id = ' + lit(MIA) + ' and not deleted'),
-      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:arcade', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
+      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:arcade', 'setting:payoutTold', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
 
     /* ---- The grown-up signs out, and back in ---- */
     await more(dad.p);

@@ -67,6 +67,11 @@ once, and COBOL replies to it through this script (action `think`), with the sam
 and alert email as the chat. After hours her answer is logged right away and COBOL replies the next time it is open.
 The Sunday email shows each answer with COBOL's reply under **What she thought**.
 
+**Book money emails.** When she puts enough points in the Book Money Jar for a payout (her "ask" for the money),
+the script emails everyone in `DIGEST_TO` (the weekly email's list): "Add $10 to Maddy's Greenlight account", once per
+payout, even if two devices both report it. It doesn't need Claude. To include Kristina, add her address to
+`DIGEST_TO` with a comma between addresses (she then also gets the weekly email and COBOL's alerts).
+
 ### Setup (about 10 minutes, on a computer)
 
 1. In the [Claude Console](https://platform.claude.com/), create an API key named **Book Dude**. While you're there, set

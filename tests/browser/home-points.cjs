@@ -1,7 +1,9 @@
 /* Home points and finding a cover, the way a grown-up uses them for a series with no AR quizzes (here, the Lottie
  * Brooks books): add the book, find its cover on Open Library and pick it, mark it finished, and give it 4 home
  * points. The points count on top of a school total, are said on the Progress tab, can be changed and taken back, ask
- * for the grown-up passcode, and travel in a backup. Open Library is played by this test.
+ * for the grown-up passcode, and travel in a backup. The Progress tab's ledger lists every entry by school year and
+ * shows how the total is counted, and when she puts points in the jar for a payout her parents are told through the
+ * Google script, once. Open Library and the script are played by this test.
  *
  *   Run:  node tests/browser/home-points.cjs
  *
@@ -54,11 +56,19 @@ const COVER = fs.readFileSync(path.join(DOCS, 'img', 'dude.jpg'));
       route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ docs }) });
     });
     await ctx.route('https://covers.openlibrary.org/**', route => route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'Access-Control-Allow-Origin': '*' }, body: COVER }));
+    // The Google script at the school quiz link: no quizzes, and it hears about payouts.
+    const told = [];
+    await ctx.route('https://script.google.com/**', route => {
+      const req = route.request();
+      if (req.method() === 'POST') { const body = JSON.parse(req.postData()); if (body.action === 'payout') told.push(body); }
+      route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify(req.method() === 'GET' ? { app: 'book-dude-school', quizzes: [] } : { ok: true }) });
+    });
     const p = await ctx.newPage();
-    p.on('pageerror', e => errors.push(e.message));
+    p.on('pageerror', e => errors.push(e.message + ' ' + String(e.stack).split('\n').slice(1, 4).join(' ')));
     p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     const toast = async text => {
-      try { await p.waitForFunction(t => { const el = document.querySelector('#toast'); return el.classList.contains('show') && el.textContent.replace(/\s+/g, ' ').trim() === t; }, text, { timeout: 8000 }); }
+      try { await p.waitForFunction(t => { const el = document.querySelector('#toast'); return !!el && el.classList.contains('show') && el.textContent.replace(/\s+/g, ' ').trim() === t; }, text, { timeout: 8000 }); }
       catch (e) { assert.equal(clean(await p.textContent('#toast')), text); }
     };
     const points = () => p.evaluate(async () => (await import('/book-dude-next/app/money.js')).rewardPoints());
@@ -67,8 +77,12 @@ const COVER = fs.readFileSync(path.join(DOCS, 'img', 'dude.jpg'));
     await p.goto(BASE);
     await p.waitForSelector('#sheet[open] .story');
     await p.click('.story .btn[data-act="close-sheet"]');
-    // Her points come from a school total, like Maddy's.
-    await p.evaluate(async () => { const m = await import('/book-dude-next/app/money.js'); await m.saveReward({ school: 52.5, schoolStart: 40, schoolDate: '2026-11-10' }); });
+    // Her points come from a school total, like Maddy's, and the school quiz link is set.
+    await p.evaluate(async () => {
+      const m = await import('/book-dude-next/app/money.js'), s = await import('/book-dude-next/app/state.js');
+      await m.saveReward({ school: 52.5, schoolStart: 40, schoolDate: '2026-11-10' });
+      await s.saveSetting('schoolLink', 'https://script.google.com/macros/s/AKfyTEST/exec?key=abc123');
+    });
     assert.equal(await points(), 12.5);
 
     // Add the first book, and find its cover.
@@ -141,14 +155,60 @@ const COVER = fs.readFileSync(path.join(DOCS, 'img', 'dude.jpg'));
     const backup = await p.evaluate(async () => { const s = (await import('/book-dude-next/app/state.js')).state; return window.ReadingCore.exportBackup(s.records, s.settings, undefined, s.custom); });
     assert.equal(backup.records[id].homePoints, 5);
 
+    // The ledger on the Progress tab: every entry this school year, and how the total is made.
+    await p.evaluate(async () => {
+      const s = await import('/book-dude-next/app/state.js');
+      await s.save('hatchet--gary-paulsen', { status: 'finished', earnedPoints: 7, quizDate: '2026-10-01' });
+      await s.save('frindle--andrew-clements', { status: 'finished', earnedPoints: 3, quizDate: '2026-05-20' });
+      await s.save('exam:topaz-mountain', { earnedPoints: 4, quizScore: 100, quizDate: '2026-11-14' });
+      await s.save('exam:topaz-mountain:think', { earnedPoints: 1, quizDate: '2026-11-14' });
+    });
+    await p.click('[data-act="close-sheet"]');
+    await p.$eval('.tab[data-tab="games"]', e => e.click());
+    await p.$eval('.tab[data-tab="progress"]', e => e.click());
+    await p.waitForSelector('#ledger');
+    const ledger = async () => clean(await p.textContent('#ledger'));
+    let text = await ledger();
+    assert.match(text, /^Where your points came from\s*2026-27\s*2025-26\s*All time\s*School year 2026-27: 17 points from 4 entries\./);
+    assert.match(text, /AR quizzes7 points\s*Oct 1, 2026\s*Hatchet\s*\+7/);
+    assert.match(text, /Book Dude tests5 points\s*Nov 14, 2026\s*Test on Topaz Mountain: Rocks, People, and Memory\s*\+4\s*Nov 14, 2026\s*Think-about-it question on Topaz Mountain: Rocks, People, and Memory\s*\+1/);
+    assert.match(text, /Home points5 points\s*[A-Z][a-z]{2} \d{1,2}, 2026\s*The Extremely Embarrassing Life of Lottie Brooks\s*\+5/);
+    assert.match(text, /How your points are counted\s*AR points from the school’s report \(52\.5, above the starting line of 40\): 12\.5 \+ Book Dude tests: 5 \+ home points: 5 = 22\.5 points\./);
+    await p.click('[data-act="ledger-year"][data-year="2025-26"]');
+    text = await ledger();
+    assert.match(text, /School year 2025-26: 3 points from 1 entry\./);
+    assert.match(text, /Frindle\s*\+3/);
+    assert.match(text, /Book Dude tests0 points\s*None this school year\./);
+    await p.click('[data-act="ledger-year"][data-year="all"]');
+    assert.match(await ledger(), /All time: 20 points from 5 entries\./);
+
+    // A payout: 22.5 points is two choices; the first into the jar is a $10 payout, and her parents are told once.
+    assert.equal(told.length, 0, 'payouts earned before are counted as told');
+    await p.evaluate(async () => { const m = await import('/book-dude-next/app/money.js'); await m.saveReward({ toJar: 0, toMinutes: 0, paid: 0 }); await m.tellPayouts(); });
+    await p.evaluate(async () => { (await import('/book-dude-next/app/progress.js')).renderProgress(); });
+    await p.click('[data-act="choose"][data-to="jar"]');
+    await p.waitForFunction(() => document.querySelectorAll('.jar-owed').length > 0);
+    await sleep(800);
+    assert.equal(told.length, 1, 'her parents are told about the payout');
+    assert.deepEqual([told[0].n, told[0].amount, told[0].where, told[0].waiting], [1, 10, 'your Greenlight account', 10]);
+    assert.equal(await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.payoutTold), 1);
+    await p.reload(); await p.waitForSelector('.view-head'); await sleep(1500);
+    assert.equal(told.length, 1, 'opening the app again doesn\'t tell them twice');
+    await p.evaluate(async () => { const m = await import('/book-dude-next/app/money.js'); await m.saveReward({ toJar: 0, toMinutes: 0 }); });
+    await p.evaluate(async id => (await import('/book-dude-next/app/book.js')).openBook(id), id);
+    await p.waitForSelector('.home-points .big');
+
     // And can be taken back.
+    await p.click('[data-act="home-change"]');
+    if (await p.$('#passcode')) { await p.fill('#passcode', '1234'); await p.$eval('form[data-form="passcode"] button[type="submit"]', e => e.click()); }
+    await p.click('#confirm [data-act="close-confirm"]');
     await p.click('[data-act="home-clear"]');
     await p.click('#confirm [data-act="confirm-ok"]');
     await toast('Home points taken back.');
-    assert.equal(await points(), 12.5);
+    assert.equal(await points(), 17.5, 'the school total and the two Topaz points, without the home points');
     assert.match(clean(await p.textContent('.home-points')), /Give points for this book/);
 
-    assert.deepStrictEqual(errors, []);
+    assert.deepStrictEqual(errors, [], JSON.stringify(errors));
     console.log('A book with no AR quiz gets its cover from Open Library and home points that count on top of the school total, ask for the passcode, travel in a backup, and can be taken back.');
   } finally {
     await browser.close();

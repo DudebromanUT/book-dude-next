@@ -879,6 +879,19 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .code-input { max-width: 10ch; font-size: 1.4rem; letter-spacing: .5em; font-variant-numeric: tabular-nums; }
 .panel-sub { margin-top: 10px; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------- Where your points came from ---------- */
+.ledger .chips { margin: 4px 0 10px; }
+.ledger-total { margin: 0 0 10px; }
+.ledger-group { margin-top: 12px; }
+.ledger-group h3 { display: flex; justify-content: space-between; font-size: .95rem; margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.ledger-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ledger-list li { display: grid; grid-template-columns: 6.5em 1fr auto; gap: 10px; align-items: baseline; font-size: .9rem; }
+.ledger-list .l-date { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.ledger-list .l-pts { font-weight: 700; font-variant-numeric: tabular-nums; }
+.ledger-how { margin-top: 16px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.ledger-how h3 { font-size: .95rem; margin: 0 0 6px; }
+.ledger-how p { margin: 0 0 6px; }
+
 /* ---------- Finding a cover ---------- */
 .cover-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; margin-top: 10px; }
 .cover-pick { display: grid; gap: 4px; justify-items: center; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font-size: .72rem; line-height: 1.2; text-align: center; }

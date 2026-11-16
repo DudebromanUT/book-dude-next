@@ -216,3 +216,31 @@ test('home points: a grown-up\'s points for a book with no AR quiz count on top 
   assert.equal(parsed.records['mine:lottie-3'].homePoints, 4);
   assert.throws(() => C.parseBackup(JSON.stringify({ app: 'reading-room', version: 1, records: { x: { homePoints: 'lots' } } }), []), /invalid homePoints/);
 });
+
+test('the points ledger: every AR quiz, test and home-points book, by school year starting August 1', () => {
+  assert.equal(C.schoolYear('2026-11-15'), '2026-27');
+  assert.equal(C.schoolYear('2026-08-01'), '2026-27');
+  assert.equal(C.schoolYear('2026-07-31'), '2025-26');
+  assert.equal(C.schoolYear('2099-12-31'), '2099-00');
+  assert.equal(C.schoolYear(''), '');
+  const records = {
+    'hatchet--gary-paulsen': C.entry({ id: 'hatchet--gary-paulsen', status: 'finished', earnedPoints: 7, quizDate: '2026-10-01' }),
+    'frindle--andrew-clements': C.entry({ id: 'frindle--andrew-clements', status: 'finished', earnedPoints: 0, quizDate: '2026-06-02' }),
+    'holes--louis-sachar': C.entry({ id: 'holes--louis-sachar', status: 'finished', quizScore: 90 }),
+    'mine:lottie-1': C.entry({ id: 'mine:lottie-1', status: 'finished', homePoints: 4, homeDate: '2026-11-16' }),
+    'mine:both': C.entry({ id: 'mine:both', earnedPoints: 2, quizDate: '2026-09-01', homePoints: 1, homeDate: '2026-09-02' }),
+    'exam:topaz-mountain': C.entry({ id: 'exam:topaz-mountain', earnedPoints: 4, quizScore: 100, quizDate: '2026-11-14' }),
+    'exam:topaz-mountain:think': C.entry({ id: 'exam:topaz-mountain:think', earnedPoints: 1, quizDate: '2026-11-14' }),
+    'mine:undated': C.entry({ id: 'mine:undated', earnedPoints: 3 })
+  };
+  assert.deepEqual(C.ledger(records).map(e => [e.kind, e.id, e.points, e.year]), [
+    ['home', 'mine:lottie-1', 4, '2026-27'],
+    ['test', 'exam:topaz-mountain', 4, '2026-27'],
+    ['test', 'exam:topaz-mountain:think', 1, '2026-27'],
+    ['ar', 'hatchet--gary-paulsen', 7, '2026-27'],
+    ['home', 'mine:both', 1, '2026-27'],
+    ['ar', 'mine:both', 2, '2026-27'],
+    ['ar', 'frindle--andrew-clements', 0, '2025-26'],
+    ['ar', 'mine:undated', 3, '']
+  ], 'a history score with no points is not an entry; a 0 is');
+});
