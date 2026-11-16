@@ -152,7 +152,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     const btn = await p.$eval(V + ' .grownup-btn', e => ({ bg: getComputedStyle(e).backgroundColor, h: e.getBoundingClientRect().height }));
     assert.equal(btn.bg, 'rgb(242, 181, 58)', 'yellow');
     assert.ok(btn.h <= 44, 'small: ' + btn.h);
-    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 2 ARTICLES TO READ', '3 TESTS 5 POINTS UP FOR GRABS']);
+    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 3 ARTICLES TO READ', '3 TESTS 10 POINTS UP FOR GRABS']);
     assert.deepEqual(await pfKeys(), ['PF1 LIBRARY', 'PF3 EXIT', 'PF5 SOUND ON']);
     // Typing an option: a number that isn't one says so; 1 opens the chat.
     await p.fill('#cobol-option', '9'); await p.$eval('form[data-form="cobol-option"] button', e => e.click()); await sleep(200);
@@ -202,7 +202,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await key(1);
     assert.equal(await screenName(), 'LIBRARY');
     await shot('1-library');
-    assert.deepEqual(await options(), ['1 COBOL’S HISTORY FILE READING ONLY', '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST']);
+    assert.deepEqual(await options(), ['1 COBOL’S HISTORY FILE READING ONLY', '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '3 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST']);
     await p.click(V + ' [data-act="cobol-read"][data-id="cobol-history"]'); await sleep(200);
     const file = (await txt(p, V + ' .t-file'));
     assert.match(file, /^PROCESSING\.\.\. HISTORY FILE LOADED\. I AM COBOL\. MY NAME MEANS COMMON BUSINESS-ORIENTED LANGUAGE\./);
@@ -216,7 +216,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS 5 POINTS UP FOR GRABS');
+    assert.equal((await options())[2], '3 TESTS 10 POINTS UP FOR GRABS');
     await option(1);
     assert.equal((await lines()).length, 4, 'the conversation is still there');
 
@@ -313,11 +313,11 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS ALL POINTS EARNED');
+    assert.equal((await options())[2], '3 TESTS 5 POINTS UP FOR GRABS');
     // Option 3 lists the tests; PF3 from a test goes back to the list.
     await option(3);
     assert.equal(await screenName(), 'TESTS');
-    assert.deepEqual(await options(), ['1 THE GUARD DOG, THE WISE OWL, AND DOPAMINE PASSED · BONUS EARNED']);
+    assert.deepEqual((await options()).slice(0, 1), ['1 THE GUARD DOG, THE WISE OWL, AND DOPAMINE PASSED · BONUS EARNED']);
     await p.click(V + ' .t-opt[data-act="cobol-test"]'); await sleep(200);
     assert.equal(await screenName(), 'TEST');
     await key(3);

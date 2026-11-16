@@ -134,6 +134,102 @@ export const ARTICLES = [
       ],
       think: "If you were a scientist, what experiment would you design to learn more about the guard dog, the wise owl, or dopamine?"
     }
+  },
+  {
+    id: 'topaz-mountain',
+    title: 'Topaz Mountain: Rocks, People, and Memory',
+    voice: 'plain',
+    intro: "Topaz Mountain is a volcanic peak in Utah's west desert where anyone can still pick up Utah's state gem right off the ground. This one mountain holds three stories: one about rocks, one about the first people who lived nearby, and one about a hard time in American history.",
+    sections: [
+      { title: 'Where It Is', text: [
+        'Topaz Mountain sits at the south end of the Thomas Range in Juab County, about 36 miles northwest of the town of Delta. It is on public land, which means it belongs to everyone. The Bureau of Land Management takes care of it.',
+        'Delta is about a two hour drive from Salt Lake City, so the mountain makes a good day trip.'
+      ] },
+      { title: 'Lava Full of Bubbles', text: [
+        'Topaz Mountain is made of a rock called rhyolite (say RYE-oh-lite), which is lava that cooled into stone. It erupted about 6 to 7 million years ago. That is long after the dinosaurs were gone, but still a very, very long time ago.',
+        'This was the second round of volcanoes in the area. An older set of eruptions built nearby Spor Mountain about 21 million years ago. Both batches of lava were full of fluorine, a chemical element. Fluorine is the secret ingredient, because topaz cannot form without it.'
+      ] },
+      { title: 'How a Crystal Grows in a Bubble', text: [
+        'First, thick, sticky lava poured out of cracks in the ground and began to cool. Next, gas trapped inside the lava left holes, like the holes in a slice of bread. Geologists, the scientists who study rocks, call these holes vugs.',
+        'Last, hot gas full of fluorine kept drifting through the cooling rock. Topaz crystals grew straight out of that gas inside the holes. That is unusual. Most topaz in the world grows slowly deep underground, in a rock called granite.'
+      ] },
+      { title: 'Gems You Can Find', text: [
+        "Topaz from this mountain is a golden brown color, a little like honey. But sunlight slowly bleaches it clear, so collectors keep their crystals in the dark. Most crystals are smaller than an inch long. Topaz has been Utah's state gem since 1969.",
+        'The same gas grew other minerals too, like garnet, opal, and shiny black cubes called bixbyite. The rarest is red beryl, a raspberry red cousin of emerald. Experts estimate that only one red beryl crystal is found for every 150,000 diamonds.'
+      ] },
+      { title: 'A Giant Ice Age Lake', text: [
+        'Millions of years later, during the last ice age, a huge lake called Lake Bonneville filled the valleys of western Utah. As the lake shrank, a river flowed north past these mountains and made a marshy area full of water and plants.',
+        'The flat desert around Topaz Mountain today is the bottom of that old lake. Its clay soil turns to dust when it is dry and to sticky mud when it rains.'
+      ] },
+      { title: 'The First People', text: [
+        'People have lived in this part of Utah for about 13,000 years. Back then the desert was wetter and greener. The first people hunted and gathered food near the marshes left by the shrinking lake.',
+        'In 2015, archaeologists, the scientists who study how people lived long ago, dug up a 12,300 year old fire pit called the Wishbone site. Inside were tobacco seeds. That find showed people used tobacco thousands of years earlier than anyone knew.',
+        'Nearby, a person walking barefoot through a stream about 12,000 years ago left footprints in the mud that can still be seen today.'
+      ] },
+      { title: 'Archaic, Fremont, and the Tribes', text: [
+        "The Archaic period came next and lasted about 8,000 years. It is the longest chapter in Utah's human history. Archaic people moved with the seasons, gathering seeds and roots and hunting animals.",
+        'Later came the Fremont people, from about AD 500 to 1300. They are known for farming corn and making pottery. At a desert spot called Topaz Slough, an archaeologist found small brush shelters, Fremont pottery, and a single corn cob. It showed that some Fremont people moved around to find food instead of staying on farms.',
+        'After the Fremont, the land became home to the Goshute, Ute, and Paiute peoples. Their lands met in this part of Utah, and they knew every spring and seed patch in the desert.'
+      ] },
+      { title: 'A Camp Named After the Mountain', text: [
+        'During World War II, after Japan attacked Pearl Harbor, the United States government forced about 120,000 people of Japanese ancestry to leave their homes on the West Coast. Most of them were American citizens who had done nothing wrong. They were sent to ten camps, and one was built in the desert 9 miles southeast of Topaz Mountain.',
+        'The camp was first called Central Utah, then Abraham. Both names were too long for postal forms, so officials renamed it Topaz, after the mountain people could see on the horizon. Its streets were even named after gemstones. Many people today call it an incarceration camp, which means a place where people are locked up.'
+      ] },
+      { title: 'Life at Topaz', text: [
+        'From 1942 to 1945, 11,212 people were held at Topaz. Nearly all of them came from the San Francisco Bay Area. They lived in plain wooden barracks covered in tar paper, inside barbed wire fences. Summers reached 106°F, and winters dropped below zero.',
+        'At its biggest, in 1943, 8,130 people lived there. For a short time that made Topaz the fifth largest city in Utah.',
+        'Life there could also be dangerous. On April 11, 1943, a guard shot and killed James Hatsuki Wakasa, a 63 year old man, for walking too close to the fence. About 1,700 people came to his funeral.'
+      ] },
+      { title: 'Building a Community', text: [
+        'The people at Topaz made the best of a hard place. They ran schools, two libraries, newspapers, bands, and sports teams. An art professor named Chiura Obata started an art school with over 600 students. Artist Miné Okubo drew daily camp life and later turned her drawings into a book called Citizen 13660.',
+        'In 1944, two men from the camp found a 1,164 pound meteorite, a rock that fell from space, in the nearby mountains. It now belongs to the Smithsonian.'
+      ] },
+      { title: 'How the Camp Ended', text: [
+        'In December 1944, the Supreme Court ruled in favor of Mitsuye Endo, a woman held at Topaz. The court said the government could not keep loyal citizens locked up. The camp closed on October 31, 1945, and its buildings were sold and hauled away.',
+        'Years later, the U.S. government formally apologized and paid money to the people who had been held in the camps. The Topaz camp site became a National Historic Landmark in 2007.'
+      ] },
+      { title: 'Visiting Today', text: [
+        'At Topaz Mountain, anyone can collect rocks for free with no permit. Visitors look for crystals in holes in the rock or loose in dry stream beds called washes. It is smart to bring water, eye protection, and a grown up.',
+        "In Delta, the Topaz Museum tells the camp's story. The camp site itself has a monument and old building foundations. There the rule flips: visitors must leave every rock, plant, and object exactly where they found it."
+      ] }
+    ],
+    closing: 'One mountain, three stories: crystals grown from volcanic gas, people who lived here for thousands of years, and a camp whose history people now work hard to remember.',
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: 'Who takes care of the public land where Topaz Mountain sits?', ref: 'Where It Is',
+          choices: ['The Bureau of Land Management', 'The National Park Service', 'The Utah State Parks office', 'The U.S. Forest Service'] },
+        { q: 'About how old is the lava rock that makes up Topaz Mountain?', ref: 'Lava Full of Bubbles',
+          choices: ['6 to 7 million years', '12,000 years', '21 million years', '150 million years'] },
+        { q: 'Which element is the secret ingredient topaz needs to form?', ref: 'Lava Full of Bubbles',
+          choices: ['Fluorine', 'Iron', 'Carbon', 'Sodium'] },
+        { q: 'What do geologists call the gas holes where the topaz crystals grew?', ref: 'How a Crystal Grows in a Bubble',
+          choices: ['Vugs', 'Vents', 'Geodes', 'Craters'] },
+        { q: 'What happens to golden brown Topaz Mountain topaz when it sits in sunlight?', ref: 'Gems You Can Find',
+          choices: ['It bleaches clear', 'It turns dark green', 'It glows at night', 'It gets darker brown'] },
+        { q: 'Which mineral is found only about once for every 150,000 diamonds?', ref: 'Gems You Can Find',
+          choices: ['Red beryl', 'Garnet', 'Opal', 'Bixbyite'] },
+        { q: 'What giant ice age lake once filled the valleys of western Utah?', ref: 'A Giant Ice Age Lake',
+          choices: ['Lake Bonneville', 'Lake Powell', 'Lake Tahoe', 'Lake Mead'] },
+        { q: 'What surprising thing was found in the 12,300 year old Wishbone fire pit?', ref: 'The First People',
+          choices: ['Tobacco seeds', 'A clay pot', 'A gold necklace', "A dinosaur's lunch"] },
+        { q: "Which period was the longest in Utah's human history, lasting about 8,000 years?", ref: 'Archaic, Fremont, and the Tribes',
+          choices: ['The Archaic period', 'The Fremont period', 'The Ice Age period', 'The Pioneer period'] },
+        { q: 'Besides brush shelters and pottery, what single food item was found at Topaz Slough?', ref: 'Archaic, Fremont, and the Tribes',
+          choices: ['A corn cob', 'A pine nut', 'A fish bone', 'A wheat stalk'] },
+        { q: "Why was the camp's name changed to Topaz?", ref: 'A Camp Named After the Mountain',
+          choices: ['The earlier names were too long for postal forms', 'The people in the camp voted for the name', 'Topaz crystals were found under the camp', 'The army named every camp after a gem'] },
+        { q: 'Where did nearly everyone held at Topaz come from?', ref: 'Life at Topaz',
+          choices: ['The San Francisco Bay Area', 'Hawaii', 'Seattle', 'Los Angeles'] },
+        { q: 'What did two men from the camp find in the nearby mountains in 1944?', ref: 'Building a Community',
+          choices: ['A 1,164 pound meteorite', 'A cave full of red beryl', 'An ancient spear point', 'A Fremont village'] },
+        { q: "What did the Supreme Court decide in Mitsuye Endo's case?", ref: 'How the Camp Ended',
+          choices: ['Loyal citizens could not be kept locked up', 'The camp needed bigger buildings', 'The camp had to change its name', 'Topaz Mountain should become a park'] },
+        { q: 'What is the rule for visitors at the Topaz camp site?', ref: 'Visiting Today',
+          choices: ['Leave every rock, plant, and object where it is', 'Visitors may keep up to five rocks', 'Collecting is allowed with a free permit', 'Only topaz crystals may be taken'] }
+      ],
+      think: 'If you found a red beryl or a perfect topaz crystal at Topaz Mountain, what would you do with it, and why?'
+    }
   }
 ];
 
