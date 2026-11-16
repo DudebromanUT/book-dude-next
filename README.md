@@ -42,6 +42,11 @@ code in `game.js` and its two fonts shipped in the app, so it loads nothing from
   device itself. A signed-in reader is the player, and her scores are saved to her family's account with her other
   settings. Scores are never "newest wins": two sets are always put together, the best of each level, so playing on
   the iPad and on a phone never loses a star. On a device that isn't signed in, anyone types a name, as before.
+- **The family scoreboard.** Whoever is signed in is the player: a reader on her own device, or a grown-up playing
+  as themselves (their games never count as a reader's). Each player's best goes to the scoreboard
+  (`supabase/002_scores.sql`), and the Games tab lists the family's results on every level by first name, more stars
+  first, then the higher score. Only your own family is on it for now; widening it to every invited family later is
+  a change to one database function.
 - **Scores from the old Maple Madness site** on a device come along the first time the game opens here.
 - **Adding a game:** make `docs/games/<name>/` with its page, have it load `../arcade.js` and ask
   `window.BookDudeArcade.open('<name>')` for its player and its place to save (the file explains it in a few lines),

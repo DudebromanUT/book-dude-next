@@ -9,6 +9,9 @@ this repo, a chat or the app.
 
 - `001_foundation.sql`: the tables, the rules for who can see and change what, and the functions the website calls.
   It explains itself in plain words at the top and beside each part.
+- `002_scores.sql`: the arcade scoreboard: each player's best on each level, and the family's board. Run it after
+  `001_foundation.sql`, the same way. Scores can only be saved for yourself and only get better; the board shows
+  first names, stars and scores for your own family.
 - `project.json`: the project's public address and publishable key.
 
 ## Setting up (the owner, once)
