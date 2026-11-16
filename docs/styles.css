@@ -879,6 +879,12 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .code-input { max-width: 10ch; font-size: 1.4rem; letter-spacing: .5em; font-variant-numeric: tabular-nums; }
 .panel-sub { margin-top: 10px; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------- Finding a cover ---------- */
+.cover-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; margin-top: 10px; }
+.cover-pick { display: grid; gap: 4px; justify-items: center; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font-size: .72rem; line-height: 1.2; text-align: center; }
+.cover-pick img { width: 90px; height: 135px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
+.cover-pick:disabled { opacity: .5; }
+
 /* ---------- Games ---------- */
 .game-list { display: grid; gap: 14px; }
 .game-card { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; justify-content: space-between; }

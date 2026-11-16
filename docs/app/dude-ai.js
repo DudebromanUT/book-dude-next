@@ -53,7 +53,8 @@ export function sendReport() {
     action: 'report',
     points,
     pointsWeek: all.reduce((sum, [, r]) => sum + (r.earnedPoints !== null && r.quizDate > week ? r.earnedPoints : 0), 0) +
-      exams.reduce((sum, x) => sum + (x.date > week ? x.points : 0), 0),
+      exams.reduce((sum, x) => sum + (x.date > week ? x.points : 0), 0) +
+      all.reduce((sum, [, r]) => sum + (r.homePoints !== null && r.homeDate > week ? r.homePoints : 0), 0),
     choices: spent.open,
     moneyWaiting: cfg.on && cfg.perPoint > 0 ? C.rewardStatus(spent.jarPoints, cfg).owedMoney : 0,
     minutesWaiting: cfg.screen ? screenStatus(points).owed : 0,

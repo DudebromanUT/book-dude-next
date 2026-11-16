@@ -23,7 +23,7 @@ export const rewardLabel = cfg => (cfg.perPoint > 0 ? money(cfg.every * cfg.perP
 // The points that count for book money, screen time and the Secret Files: her school total above the starting
 // line once a grown-up has typed it in, otherwise the quiz results entered in this app; plus Book Dude's own tests.
 export function rewardPoints() {
-  return C.rewardPoints(C.metrics(BOOKS, state.records, '').earned, state.settings.reward, C.examPoints(state.records));
+  return C.rewardPoints(C.metrics(BOOKS, state.records, '').earned, state.settings.reward, C.examPoints(state.records) + C.homePoints(state.records));
 }
 
 // Screen time: what she has earned, and the extra a book earns when she finishes it (0 for books she added).
@@ -32,6 +32,13 @@ export function bookExtra(b) {
   const cfg = C.reward(state.settings.reward);
   if (!cfg.screen || !b || b._custom) return 0;
   return Object.prototype.hasOwnProperty.call(cfg.special, b.book_id) ? cfg.special[b.book_id] : cfg.bonus;
+}
+
+// Home points (for books with no AR quiz) in a sentence: " Plus 12 home points from 3 books." or ''.
+function homeText() {
+  const books = Object.keys(state.records).filter(id => !C.isExam(id) && state.records[id].homePoints);
+  if (!books.length) return '';
+  return ' Plus ' + plural(C.homePoints(state.records), 'home point') + ' from ' + plural(books.length, 'book') + ' with no AR quiz.';
 }
 
 // The quizzes from school emails counted on top of the last typed school total: ", plus 4 points from 2 new quizzes".
@@ -118,9 +125,9 @@ export function jarHtml(total) {
       '<p class="jar-fact">' + esc(factLine(total)) + '</p>' +
       '<p class="jar-tally">' + fmtNum(total) + counted + (jarPoints !== total ? ' · ' + fmtNum(jarPoints) + ' in the jar' : '') + (st.money
         ? ' = ' + money(st.totalMoney) + ' · payouts earned: ' + st.earned + (cfg.paid ? ', deposited: ' + cfg.paid : '')
-        : ' · rewards earned: ' + st.earned + (cfg.paid ? ', given: ' + cfg.paid : '')) + '</p>' +
+        : ' · rewards earned: ' + st.earned + (cfg.paid ? ', given: ' + cfg.paid : '')) + (school ? '' : homeText()) + '</p>' +
       (school ? '<p class="jar-tally">Points from the school’s AR report' + (cfg.schoolDate ? ', updated ' + esc(fmtDay(cfg.schoolDate)) : '') +
-        schoolNewText(cfg) + '.</p>' +
+        schoolNewText(cfg) + '.' + homeText() + '</p>' +
         '<div class="row-actions"><button type="button" class="btn small" data-act="school-update">Grown-up: update school points</button></div>' : '') +
     '</div></section>';
 }

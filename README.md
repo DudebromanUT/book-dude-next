@@ -33,6 +33,17 @@ also saved to her family's account, so they are on every device she signs in on 
   gets her quizzes and COBOL. That makes her password as private as the link: anyone who signs in as her gets it.
   When a backup was last saved and the screen choices stay on each device.
 
+**Home points.** For a book with no AR quiz (the Lottie Brooks books, say), a grown-up opens the finished book and
+taps **Give points for this book**. Home points count for book money, screen time and the Secret Files on top of the
+school total and the Library tests, never as AR points; the Progress tab says how many there are and from how many
+books, they are in the weekly numbers, and they travel in backups and the family account like the rest of a book's
+record. Changing them or taking them back asks for the grown-up passcode (a signed-in grown-up is never asked).
+
+**Find the cover.** A book you add yourself can get its cover from Open Library: **Find the cover** (in the add and
+edit form, or on the book's page) searches by title and author, and the cover you tap is saved into the book like a
+cover photo, so it works offline and is in backups and the family account. Only that search and the cover sent to
+Open Library, and only when someone taps the button.
+
 **The arcade.** The **Games** tab lists the games, and each one is a page of its own in `docs/games/<its name>/`,
 free to play any time. The first is **Maple's Big Day** (Maple Madness, from `DudebromanUT/MapleMadness`): four levels
 starring Maple and Fig, in English and Spanish, exactly as it played on its own site, with its look in `game.css`, its

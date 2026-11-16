@@ -5,7 +5,7 @@ import { C, $, $$, esc, today, fmtNum, plural, fold, fmtDay, safeUrl, DUDE } fro
 import { icon } from './icons.js';
 import { STATUS, INTEREST, BY_ID } from './books.js';
 import { state, rec, save } from './state.js';
-import { sheet, toast, celebrate, sheetBar, showConfirm } from './page.js';
+import { sheet, confirmBox, toast, celebrate, sheetBar, showBox, showConfirm } from './page.js';
 import { cover, levelTag, pointsTag, mineTag, ratingSays, dl } from './cards.js';
 import { rewardPoints, screenStatus, bookExtra, pointsNews } from './money.js';
 import { customDetailsHtml } from './my-books.js';
@@ -59,6 +59,46 @@ function quizBox(b, r) {
       (hasCode() ? ' Saving it asks for the grown-up passcode.' : '') + '</p></div>';
 }
 
+// Home points: for a book with no AR quiz (a series the school doesn't quiz, say), a grown-up gives the points here.
+// They count for book money, screen time and the Secret Files on top of everything else, and never as AR points.
+function homeBox(b, r) {
+  const ask = hasCode() ? ' A grown-up gives them.' : '';
+  if (r.homePoints !== null) {
+    return '<div class="box home-points"><h3>Home points</h3><div class="earned"><span class="big">' + fmtNum(r.homePoints) + '</span><span><b>home ' + (r.homePoints === 1 ? 'point' : 'points') + '</b><br>' +
+      '<span class="hint">' + (r.homeDate ? 'Given ' + esc(fmtDay(r.homeDate)) + '. ' : '') + 'They count like AR points for book money and screen time.</span></span></div>' +
+      '<div class="row-actions"><button type="button" class="btn small" data-act="home-change">Change</button><button type="button" class="btn small ghost" data-act="home-clear">Take them back</button></div></div>';
+  }
+  return '<div class="box home-points"><h3>Home points</h3><p class="hint">No AR quiz for this book? Give points for it here, and they count like AR points for book money and screen time.' + ask + '</p>' +
+    '<div class="row-actions"><button type="button" class="btn small" data-act="home-change">Give points for this book</button></div></div>';
+}
+
+function homeForm(id) {
+  const r = rec(id), b = BY_ID.get(id);
+  showBox('Home points', '<form class="stack" data-form="home-points" novalidate>' +
+    '<p>For <b>' + esc(b ? b.title : '') + '</b>.</p>' +
+    '<label class="field"><span>Points (up to 99)</span><input id="home-input" class="input" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 4" value="' + (r.homePoints !== null ? esc(r.homePoints) : '') + '"></label>' +
+    '<p class="error" id="home-error" role="alert" hidden></p>' +
+    '<div class="row-actions"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-act="close-confirm">Cancel</button></div></form>');
+  const input = $('#home-input', confirmBox);
+  if (input) input.focus();
+}
+
+async function saveHome(form) {
+  const id = state.openId;
+  const raw = $('#home-input', form).value.trim().replace(',', '.');
+  const err = $('#home-error', form);
+  if (!/^\d+(\.\d+)?$/.test(raw) || Number(raw) > 99) { err.textContent = 'Points must be a number from 0 to 99, like 4.'; err.hidden = false; return; }
+  const pts = Number(raw);
+  const r = rec(id);
+  const before = rewardPoints();
+  await save(id, { homePoints: pts, homeDate: r.homeDate || today() });
+  confirmBox.close();
+  refreshShelf();
+  const news = pointsNews(before, rewardPoints());
+  if (pts > 0 && r.homePoints === null) celebrate();
+  toast((r.homePoints === null ? plural(pts, 'home point') + ' for this book!' : 'Home points updated.') + (news ? ' ' + news : ''));
+}
+
 // The screen-time extra for finishing a book from the list, while screen time is on.
 function extraLine(b, r) {
   const minutes = bookExtra(b);
@@ -81,6 +121,7 @@ function shelfHtml(b) {
     extra += '<div class="box"><label class="field"><span>Finished on</span><input id="finished-date" class="input" type="date" value="' + esc(r.finishedDate) + '" max="' + today() + '"></label></div>';
   }
   if (r.status === 'finished' || r.earnedPoints !== null) extra += quizBox(b, r);
+  if (r.status === 'finished' || r.homePoints !== null) extra += homeBox(b, r);
   return '<div class="shelf-head"><h3 class="label">My shelf</h3><button type="button" class="fav-btn" data-act="fav" aria-pressed="' + r.favorite + '">' + icon('heart') + '<span>Favorite</span></button></div>' +
     '<div class="status-grid" role="group" aria-label="Shelf">' + statusButtons(r) + '</div>' + extraLine(b, r) +
     '<div class="rating-row"><span class="label" id="rating-label">My rating</span>' +
@@ -239,6 +280,14 @@ export const actions = {
     if (says) says.textContent = r.rating ? ratingSays(r.rating) : 'Rating cleared.';
     if (r.rating === 5) celebrate();
   },
+  'home-change': () => asGrownup(() => homeForm(state.openId)),
+  'home-clear': () => asGrownup(() => {
+    showConfirm('Take back the home points?', '<p>The book stays on her shelf. Its home points stop counting.</p>', 'Take them back', async () => {
+      await save(state.openId, { homePoints: null, homeDate: '' });
+      refreshShelf();
+      toast('Home points taken back.');
+    });
+  }),
   'clear-quiz': () => asGrownup(() => {
     showConfirm('Clear this quiz result?', '<p>The book stays Finished. It will show as awaiting a quiz entry again.</p>', 'Clear result', async () => {
       await save(state.openId, { earnedPoints: null, quizDate: '' });
@@ -266,4 +315,4 @@ export const changes = {
 };
 
 // With a grown-up passcode set, only a grown-up enters quiz results.
-export const submits = { quiz: form => asGrownup(() => saveQuiz(form)) };
+export const submits = { quiz: form => asGrownup(() => saveQuiz(form)), 'home-points': form => asGrownup(() => saveHome(form)) };

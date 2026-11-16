@@ -12,8 +12,9 @@
   const DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   const NUMBER_RE = /^\s*\d+(\.\d+)?\s*$/;
   // quizScore is the percent from an AR quiz, for books from her reading history (which have no points earned here).
-  const LIMITS = { earnedPoints: 999, progress: 100, rating: 5, quizScore: 100 };
-  const DATE_FIELDS = ['startedDate', 'finishedDate', 'quizDate'];
+  // homePoints: points a grown-up gave for a book with no AR quiz (counted on top, like Book Dude's own tests).
+  const LIMITS = { earnedPoints: 999, progress: 100, rating: 5, quizScore: 100, homePoints: 99 };
+  const DATE_FIELDS = ['startedDate', 'finishedDate', 'quizDate', 'homeDate'];
   // Books the reader adds herself get IDs with this prefix; the catalog never uses it.
   const CUSTOM_PREFIX = 'mine:';
   // Book Dude's own tests (COBOL's history test is "exam:cobol") are records with this prefix: earnedPoints, quizScore
@@ -71,6 +72,8 @@
       earnedPoints: num('earnedPoints'),
       quizScore: num('quizScore'),
       quizDate: day(o.quizDate),
+      homePoints: num('homePoints'),
+      homeDate: day(o.homeDate),
       updatedAt: stamp(o.updatedAt)
     };
   }
@@ -78,7 +81,7 @@
   /** True when a record holds nothing worth keeping. */
   function isBlank(r) {
     return !r.status && !r.favorite && !r.note.trim() && r.progress === null && r.rating === null &&
-      !r.startedDate && !r.finishedDate && r.earnedPoints === null && r.quizScore === null && !r.quizDate;
+      !r.startedDate && !r.finishedDate && r.earnedPoints === null && r.quizScore === null && !r.quizDate && r.homePoints === null;
   }
 
   function safeId(id) {
@@ -176,6 +179,19 @@
   }
 
   const isExam = id => String(id).startsWith(EXAM_PREFIX);
+
+  /**
+   * Home points: points a grown-up gave for books with no AR quiz. They count for book money, screen time and the
+   * Secret Files on top of everything else (a school total doesn't know about them), and never as AR points.
+   */
+  function homePoints(records) {
+    let sum = 0;
+    for (const id of Object.keys(records || {})) {
+      const r = records[id];
+      if (r && typeof r.homePoints === 'number' && !isExam(id)) sum += r.homePoints;
+    }
+    return round(sum);
+  }
 
   /** Points from Book Dude's own tests (see EXAM_PREFIX). */
   function examPoints(records) {
@@ -690,7 +706,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

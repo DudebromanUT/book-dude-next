@@ -192,3 +192,27 @@ test('she can move tens between the jar and screen time until they are deposited
   assert.equal(C.screenTime(35, {}, [], { toMinutes: 3, on: false }).minutesToMove, 0);
   assert.equal(C.choices(35, { toJar: 2, minutes: 0 }).jarToMove, 0);
 });
+
+test('home points: a grown-up\'s points for a book with no AR quiz count on top of everything, and never as AR points', () => {
+  const records = {
+    'mine:lottie-1': C.entry({ id: 'mine:lottie-1', status: 'finished', finishedDate: '2026-11-01', homePoints: 4, homeDate: '2026-11-16' }),
+    'mine:lottie-2': C.entry({ id: 'mine:lottie-2', status: 'finished', homePoints: '4' }),
+    'hatchet--gary-paulsen': C.entry({ id: 'hatchet--gary-paulsen', status: 'finished', earnedPoints: 7, quizDate: '2026-10-01' }),
+    'exam:topaz-mountain': C.entry({ id: 'exam:topaz-mountain', earnedPoints: 4, homePoints: 50 })
+  };
+  assert.equal(C.homePoints(records), 8, 'a test record never carries home points');
+  assert.equal(records['mine:lottie-1'].homeDate, '2026-11-16');
+  assert.equal(C.metrics([], records, '').earned, 7, 'not AR points');
+  // On top of the app's own quiz results, or of a school total.
+  assert.equal(C.rewardPoints(7, {}, C.examPoints(records) + C.homePoints(records)), 19);
+  assert.equal(C.rewardPoints(7, { school: 52.5, schoolStart: 40 }, C.examPoints(records) + C.homePoints(records)), 24.5);
+  // Checked like any number: over 99 or junk is no points.
+  assert.equal(C.entry({ id: 'x', homePoints: 500 }).homePoints, null);
+  assert.equal(C.entry({ id: 'x', homePoints: 'lots' }).homePoints, null);
+  // A record with only home points is worth keeping, and a backup carries them.
+  const only = C.entry({ id: 'mine:lottie-3', homePoints: 4 });
+  assert.equal(C.isBlank(only), false);
+  const parsed = C.parseBackup(JSON.stringify(C.exportBackup({ 'mine:lottie-3': only }, {}, '2026-11-16T00:00:00Z', {})), []);
+  assert.equal(parsed.records['mine:lottie-3'].homePoints, 4);
+  assert.throws(() => C.parseBackup(JSON.stringify({ app: 'reading-room', version: 1, records: { x: { homePoints: 'lots' } } }), []), /invalid homePoints/);
+});

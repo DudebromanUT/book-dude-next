@@ -4,7 +4,7 @@ import { C, $, $$, esc, today, fmtNum, fmtDay, localDay } from './util.js';
 import { icon } from './icons.js';
 import { STATUS, BOOKS, BY_ID, rebuildBooks } from './books.js';
 import { state, db, requestPersistence, save } from './state.js';
-import { sheet, toast, sheetBar, closeSheet, showConfirm } from './page.js';
+import { sheet, confirmBox, toast, sheetBar, closeSheet, showBox, showConfirm } from './page.js';
 import { dl } from './cards.js';
 import { levelMeaning, openBook, flushNote } from './book.js';
 
@@ -21,6 +21,7 @@ export function customDetailsHtml(b) {
       ]) +
       '<p class="small-print">You added this book, so these details came from you. Check AR numbers with your teacher or AR BookFinder.</p>' +
       '<div class="row-actions"><button type="button" class="btn" data-act="quick-photo">' + icon('camera') + (b.photo ? 'New cover photo' : 'Take a cover photo') + '</button>' +
+      '<button type="button" class="btn" data-act="quick-cover">' + icon('search') + 'Find the cover</button>' +
       '<button type="button" class="btn" data-act="edit-book">' + icon('pencil') + 'Edit book</button>' +
       '<button type="button" class="btn ghost danger" data-act="delete-book">' + icon('trash') + 'Delete book</button></div></section>';
 }
@@ -52,6 +53,49 @@ function pickPhoto(done) {
   input.click();
 }
 
+// Finding a cover on Open Library (only when a grown-up or she taps Find the cover): the title and author go to Open
+// Library's search, the covers it has are shown, and the one picked is fetched and shrunk like a cover photo, so it
+// is kept with the book, works offline, and is in backups and the family account like any photo.
+let coverDone = null;
+async function findCover(title, author, done) {
+  if (!title) { toast('Type the book’s title first.'); return; }
+  coverDone = done;
+  showBox('Find the cover', '<p class="hint" id="cover-status">Looking on Open Library for “' + esc(title) + '”…</p><div class="cover-results" id="cover-results"></div>');
+  let docs = [];
+  try {
+    const q = new URLSearchParams({ title, fields: 'title,author_name,cover_i,first_publish_year', limit: '20' });
+    if (author) q.set('author', author);
+    const res = await fetch('https://openlibrary.org/search.json?' + q.toString());
+    docs = res.ok ? ((await res.json()).docs || []) : null;
+  } catch (e) { docs = null; }
+  const status = $('#cover-status', confirmBox);
+  if (!status) return;
+  if (docs === null) { status.textContent = 'Couldn’t reach Open Library. Check the internet connection and try again.'; return; }
+  const seen = new Set();
+  const found = docs.filter(d => Number.isInteger(d.cover_i) && d.cover_i > 0 && !seen.has(d.cover_i) && seen.add(d.cover_i)).slice(0, 12);
+  if (!found.length) { status.textContent = 'Open Library has no cover for that title. Try a shorter title, or take a photo of the cover instead.'; return; }
+  status.textContent = 'Tap the right cover.';
+  $('#cover-results', confirmBox).innerHTML = found.map(d => '<button type="button" class="cover-pick" data-act="cover-pick" data-cover="' + d.cover_i + '">' +
+    '<img src="https://covers.openlibrary.org/b/id/' + d.cover_i + '-M.jpg" alt="" width="90" height="135" loading="lazy"><span>' + esc(d.title || '') +
+    (d.first_publish_year ? ' (' + d.first_publish_year + ')' : '') + '</span></button>').join('');
+}
+
+async function pickCover(el) {
+  const id = el.dataset.cover;
+  if (!/^\d{1,12}$/.test(id || '')) return;
+  el.disabled = true;
+  try {
+    const res = await fetch('https://covers.openlibrary.org/b/id/' + id + '-L.jpg');
+    if (!res.ok) throw new Error('no cover');
+    const photo = await shrinkPhoto(await res.blob());
+    confirmBox.close();
+    if (coverDone) coverDone(photo);
+  } catch (e) {
+    el.disabled = false;
+    toast('That cover didn’t come through. Try again, or pick another.');
+  }
+}
+
 function shrinkPhoto(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -79,6 +123,7 @@ function shrinkPhoto(file) {
 function photoPickHtml() {
   return (formPhoto ? '<img class="photo-preview" src="' + esc(formPhoto) + '" alt="Your cover photo" width="72" height="108">' : '<span class="photo-empty" aria-hidden="true">' + icon('camera') + '</span>') +
     '<div class="row-actions"><button type="button" class="btn small" data-act="form-photo">' + icon('camera') + (formPhoto ? 'Take a new one' : 'Take a photo of the cover') + '</button>' +
+    '<button type="button" class="btn small" data-act="form-cover">' + icon('search') + 'Find the cover</button>' +
     (formPhoto ? '<button type="button" class="btn small ghost" data-act="form-photo-remove">Remove</button>' : '') + '</div>';
 }
 
@@ -187,6 +232,13 @@ export const actions = {
   'quick-photo': () => { flushNote(); const id = state.openId; pickPhoto(photo => setPhoto(id, photo)); },
   'form-photo': () => pickPhoto(photo => { formPhoto = photo; refreshPhotoPick(); }),
   'form-photo-remove': () => { formPhoto = ''; refreshPhotoPick(); },
+  'form-cover': () => findCover($('#bk-title', sheet).value.trim(), $('#bk-author', sheet).value.trim(), photo => { formPhoto = photo; refreshPhotoPick(); toast('Cover found. Save the book to keep it.'); }),
+  'quick-cover': () => {
+    flushNote();
+    const id = state.openId, c = state.custom[id];
+    if (c) findCover(c.title, c.author, photo => setPhoto(id, photo));
+  },
+  'cover-pick': el => pickCover(el),
   'cancel-edit': () => openBook(state.openId),
   'pick-status': el => {
     const form = el.closest('form');
