@@ -33,6 +33,21 @@ also saved to her family's account, so they are on every device she signs in on 
   gets her quizzes and COBOL. That makes her password as private as the link: anyone who signs in as her gets it.
   When a backup was last saved and the screen choices stay on each device.
 
+**The arcade.** The **Games** tab lists the games, and each one is a page of its own in `docs/games/<its name>/`,
+free to play any time. The first is **Maple's Big Day** (Maple Madness, from `DudebromanUT/MapleMadness`): four levels
+starring Maple and Fig, in English and Spanish, exactly as it played on its own site, with its look in `game.css`, its
+code in `game.js` and its two fonts shipped in the app, so it loads nothing from anywhere else and works offline.
+
+- **Scores.** A game keeps its scores on the device through `docs/games/arcade.js`, apart for each reader and for the
+  device itself. A signed-in reader is the player, and her scores are saved to her family's account with her other
+  settings. Scores are never "newest wins": two sets are always put together, the best of each level, so playing on
+  the iPad and on a phone never loses a star. On a device that isn't signed in, anyone types a name, as before.
+- **Scores from the old Maple Madness site** on a device come along the first time the game opens here.
+- **Adding a game:** make `docs/games/<name>/` with its page, have it load `../arcade.js` and ask
+  `window.BookDudeArcade.open('<name>')` for its player and its place to save (the file explains it in a few lines),
+  keep scores as `{ player: { level: { stars, score } } }`, and add one line to `GAMES` in `docs/app/games.js`.
+  `python3 scripts/build.py` picks the files up for offline use.
+
 Each family's records live in a Supabase project (free plan), with rules that keep every family's data to itself.
 `supabase/README.md` explains the setup, who can see what, and how people get in; `supabase/001_foundation.sql` is the
 script; `tests/db.test.cjs` proves the rules on a scratch Postgres
@@ -189,6 +204,7 @@ In `docs/app/`:
 | The app's state and saving to the device (IndexedDB), with a database per reader and the list of changes waiting to go up | `state.js` |
 | The family account: who is signed in on this device, signing in and out, asking the account's API | `cloud.js`, `config.js` |
 | Saving a reader's books to her family's account and bringing changes back | `sync.js` |
+| The Games tab, the list of games, and keeping a reader's scores in her account | `games.js` (the games are in `docs/games/`) |
 | The Family account panel: sign-in boxes, a grown-up's readers, passwords and invite codes | `account.js` |
 | Toasts, confetti, and the sheet and confirm boxes | `page.js` |
 | Shared helpers and icons | `util.js`, `icons.js` |
@@ -200,7 +216,7 @@ Each file lists what it uses from the others at the top (`import`). A button's H
 
 **App version.** The small print at the top of the app ("App version 10.26") says which version a device is running. The first release of a month is MM.YY (10.26 = October 2026); each release after it that month adds .01, .02, .03 (10.26.01). It lives in `docs/app/version.js`: change it with every deploy, and `python3 scripts/build.py` checks its form. When the app opens and a new version has already downloaded (or finishes downloading in the first 30 seconds, with nothing open or being typed), it switches over by itself; after that, the "Update app" banner asks.
 
-Run `node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs`, `npx eslint docs/app`, `python3 scripts/build.py --check`, `node tests/browser/clickthrough.cjs`, `node tests/browser/history.cjs` (the built-in reading history lands once, keeps her own copies, and works offline), `node tests/browser/school-email.cjs` (quiz results from the school's emails land once, keep points typed by hand, and add books not in the app), `node tests/browser/update.cjs` (the app version shows, and a new version switches over), and `node tests/browser/dude-ai.cjs` (the jokes, picks and COBOL with its Library, tests and think-about-it bonus, with the Google script played by the test). `node --test tests/sync.test.cjs` covers how saved things are written for the account and which copy wins, and, with a scratch Postgres (`BOOKDUDE_TEST_DB`, above), `node --test tests/db.test.cjs` and `node tests/browser/account.cjs` cover the database rules and the family account on two devices. The **Checks** GitHub Action runs all of them on every push.
+Run `node --test tests/core.test.cjs tests/offline.test.cjs tests/custom-books.test.cjs tests/rewards.test.cjs tests/covers.test.cjs tests/modules.test.cjs tests/school-email.test.cjs tests/school-script.test.cjs tests/library.test.cjs`, `npx eslint docs/app`, `python3 scripts/build.py --check`, `node tests/browser/clickthrough.cjs`, `node tests/browser/history.cjs` (the built-in reading history lands once, keeps her own copies, and works offline), `node tests/browser/school-email.cjs` (quiz results from the school's emails land once, keep points typed by hand, and add books not in the app), `node tests/browser/update.cjs` (the app version shows, and a new version switches over), and `node tests/browser/dude-ai.cjs` (the jokes, picks and COBOL with its Library, tests and think-about-it bonus, with the Google script played by the test). `node tests/browser/games.cjs` covers the Games tab and Maple's Big Day (it opens, plays, keeps scores and works offline). `node --test tests/sync.test.cjs` covers how saved things are written for the account and which copy wins, and, with a scratch Postgres (`BOOKDUDE_TEST_DB`, above), `node --test tests/db.test.cjs` and `node tests/browser/account.cjs` cover the database rules and the family account on two devices. The **Checks** GitHub Action runs all of them on every push.
 
 `tests/browser/clickthrough.cjs` opens the app on a phone-sized screen in Chromium and goes through every feature the way she would: the welcome story, the pets, search, every filter and sort, a book's page (shelf buttons, rating, notes, quiz points, the library link), adding, editing, photographing, and deleting her own book, goals, Secret Files, book money, backup and restore, and the update button. It writes down what each of its 138 steps shows and compares that with `tests/browser/clickthrough.expected.txt`; any difference fails and is listed line by line. Every run is the same (the clock starts at 9:30 a.m. on October 9, 2026 in Utah, and "random" picks repeat), so a difference means the app changed. After a deliberate change, run `UPDATE=1 node tests/browser/clickthrough.cjs` and check the diff of the `.txt` file before committing it; book data shows up in the results, so updating `docs/books.csv` or the ratings changes it too. It needs Playwright: `npm install --no-save playwright@1.56.1 && npx playwright install chromium`. `THROTTLE=4` runs it on a computer slowed down four times, to check it still passes on a slow one.
 

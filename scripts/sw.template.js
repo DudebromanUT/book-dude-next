@@ -76,6 +76,9 @@ self.addEventListener('fetch', event => {
   let key = null;
   if (request.mode === 'navigate') {
     if (clean === SCOPE || clean === SHELL) key = SHELL;
+    // A game's own page (games/<its name>/), so the arcade works offline too.
+    else if (URLS.includes(clean)) key = clean;
+    else if (URLS.includes(clean + 'index.html')) key = clean + 'index.html';
   } else if (URLS.includes(clean)) {
     key = clean;
   } else if (COVER_SET.has(clean)) {

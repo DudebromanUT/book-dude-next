@@ -616,7 +616,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -654,6 +654,33 @@
   }
 
   /**
+   * Arcade scores from two places, put together: { game: { level: { stars, score } } }, keeping for each level the
+   * better result (more stars, then the higher score). Anything that isn't a score is left out, so this is also how
+   * scores from outside are checked. A score never goes down by saving.
+   */
+  function arcadeBest(a, b) {
+    const out = {};
+    const name = s => typeof s === 'string' && /^[a-z0-9][a-z0-9-]{0,39}$/.test(s);
+    for (const side of [a, b]) {
+      if (!isPlain(side)) continue;
+      for (const game of Object.keys(side).slice(0, 50)) {
+        if (!name(game) || !isPlain(side[game])) continue;
+        for (const level of Object.keys(side[game]).slice(0, 100)) {
+          const r = side[game][level];
+          if (!name(level) || !isPlain(r)) continue;
+          const stars = Number(r.stars), score = Number(r.score);
+          if (!Number.isInteger(stars) || stars < 0 || stars > 3 || !Number.isFinite(score)) continue;
+          const had = out[game] && out[game][level];
+          if (had && (had.stars > stars || (had.stars === stars && had.score >= score))) continue;
+          out[game] = out[game] || {};
+          out[game][level] = { stars, score: round(score) };
+        }
+      }
+    }
+    return out;
+  }
+
+  /**
    * Whether the account's copy replaces this device's. It does, unless this device has a change of its own to the
    * same thing still waiting to be saved that is as new or newer (`pendingAt`): then this device's goes up instead.
    */
@@ -663,7 +690,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

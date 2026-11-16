@@ -291,6 +291,29 @@ async function until(what, check, ms) {
     assert.equal((await counts(dad.p)).custom, 1);
     assert.equal(await dad.p.evaluate(() => document.documentElement.dataset.accent), 'teal', 'and so did her color');
 
+    /* ---- Game scores: hers on every device, the best of each level ---- */
+    const scoresKey = 'book-dude:arcade:/book-dude-next/kid:' + MIA + ':maple-madness:records';
+    // The game on her iPad knows her as the player, and saves a score the way it does after a level.
+    await pad.p.goto(BASE + 'games/maple-madness/');
+    await pad.p.waitForSelector('#levels .lvl');
+    assert.equal(clean(await pad.p.textContent('#playerFixed')), 'Mia');
+    assert.equal(await pad.p.isHidden('#inPlayer'), true, 'a signed-in reader is the player: no name to type');
+    await pad.p.evaluate(() => { const a = window.BookDudeArcade.open('maple-madness'); a.set('records', { Mia: { poop: { stars: 2, score: 100 } } }); });
+    await Promise.all([pad.p.waitForNavigation(), pad.p.click('#homeLink')]);
+    await ready(pad.p);
+    assert.match(clean(await pad.p.textContent('#main')), /2 stars of 12 so far\..*Mia’s scores are saved to the family account/);
+    await until('her score in the account', () => { const row = item(MIA, 'setting', 'arcade'); return row && row.data.v['maple-madness'].poop.stars === 2; });
+    // On her dad's phone, playing as Mia, an older game left a worse score on that level and a good one on another.
+    await dad.p.evaluate(key => localStorage.setItem(key, JSON.stringify({ Mia: { poop: { stars: 1, score: 500 }, tug: { stars: 3, score: 9 } } })), scoresKey);
+    await dad.p.reload(); await ready(dad.p);
+    await until('the best of both in the account', () => { const v = item(MIA, 'setting', 'arcade').data.v['maple-madness']; return v.tug && v.tug.stars === 3 && v.poop.stars === 2; });
+    assert.deepEqual(await dad.p.evaluate(key => JSON.parse(localStorage.getItem(key)), scoresKey), { Mia: { poop: { stars: 2, score: 100 }, tug: { stars: 3, score: 9 } } }, 'the game on the phone now has her best');
+    await saveNow(pad.p);
+    await pad.p.$eval('.tab[data-tab="games"]', e => e.click());
+    await pad.p.waitForSelector('.game-card');
+    assert.match(clean(await pad.p.textContent('.game-card')), /5 stars of 12 so far\./, 'and so does her iPad');
+    assert.deepEqual(await pad.p.evaluate(key => JSON.parse(localStorage.getItem(key)), scoresKey), { Mia: { poop: { stars: 2, score: 100 }, tug: { stars: 3, score: 9 } } });
+
     /* ---- Offline: changes wait on the device, then go up ---- */
     await pad.offline(true);
     await save(pad.p, 'hatchet--gary-paulsen', { note: 'Written on the bus.' });
@@ -350,6 +373,7 @@ async function until(what, check, ms) {
     await ready(pad.p);
     await says(pad.p, 'This device was signed out of the family account.');
     assert.deepEqual(await kidDbs(pad.p), [], 'her copy is gone from the iPad');
+    assert.equal(await pad.p.evaluate(key => localStorage.getItem(key), scoresKey), null, 'and her game scores with it (they are in the account)');
     assert.equal((await rec(pad.p, 'holes--louis-sachar')).note, 'The iPad\'s own book.', 'the iPad\'s own books were never touched');
     assert.notEqual(((await rec(pad.p, 'hatchet--gary-paulsen')) || {}).note, 'Dad fixed a typo.', 'her Hatchet is not here (the iPad\'s own shelves have the built-in history\'s)');
     assert.match(await more(pad.p), /This device isn’t signed in/);
@@ -370,7 +394,7 @@ async function until(what, check, ms) {
     await ready(pad.p);
     assert.deepEqual(await kidDbs(pad.p), []);
     assert.deepEqual(owner('select jsonb_agg(kind || \':\' || id order by kind, id) from public.items where kid_id = ' + lit(MIA) + ' and not deleted'),
-      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
+      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:arcade', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
 
     /* ---- The grown-up signs out, and back in ---- */
     await more(dad.p);

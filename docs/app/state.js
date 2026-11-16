@@ -28,7 +28,7 @@ export const state = {
   limit: PAGE,
   records: {},
   custom: {},
-  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {} },
+  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {} },
   dudeLine: null,
   dudePs: '',
   offline: 'checking',
@@ -216,6 +216,10 @@ async function wipeProfiles() {
 /** This device stops being signed in: the readers' copies kept here are removed, and it starts again on its own books. */
 export async function leaveAccount(notice) {
   await wipeProfiles();
+  // The readers' game scores kept on this device go too (they are in the account); the device's own stay.
+  try {
+    Object.keys(localStorage).filter(k => k.indexOf('book-dude:arcade:' + BASE + 'kid:') === 0).forEach(k => localStorage.removeItem(k));
+  } catch (e) { /* ignore */ }
   forget();
   if (notice) leaveNotice(notice);
   location.reload();
@@ -234,7 +238,9 @@ const TAKE = {
   reportAt: v => { if (typeof v === 'string') state.settings.reportAt = v; },
   thinkReplies: v => { if (v && typeof v === 'object') state.settings.thinkReplies = v; },
   schoolSeen: v => { if (Array.isArray(v)) state.settings.schoolSeen = v.filter(id => typeof id === 'string'); },
-  reward: v => { if (v && typeof v === 'object') state.settings.reward = C.reward(v); }
+  reward: v => { if (v && typeof v === 'object') state.settings.reward = C.reward(v); },
+  // Arcade scores only ever get better: a copy from the account is put together with what is here, best of each.
+  arcade: v => { state.settings.arcade = C.arcadeBest(state.settings.arcade, v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);

@@ -1,4 +1,4 @@
-/* Switching tabs (Explore, My Shelves, Progress, COBOL, More) and redrawing the one on screen. */
+/* Switching tabs (Explore, My Shelves, Progress, COBOL, Games, More) and redrawing the one on screen. */
 
 import { $, $$, reducedMotion } from './util.js';
 import { state } from './state.js';
@@ -9,8 +9,9 @@ import { renderShelves } from './shelves.js';
 import { renderProgress } from './progress.js';
 import { renderMore } from './more.js';
 import { renderCobol } from './cobol.js';
+import { renderGames } from './games.js';
 
-export const TABS = ['explore', 'shelves', 'progress', 'cobol', 'more'];
+export const TABS = ['explore', 'shelves', 'progress', 'cobol', 'games', 'more'];
 
 function setTabs() {
   $$('.tab').forEach(t => {
@@ -32,6 +33,7 @@ export function render(keepScroll) {
   } else if (state.tab === 'shelves') renderShelves();
   else if (state.tab === 'progress') renderProgress();
   else if (state.tab === 'cobol') renderCobol(keepScroll);
+  else if (state.tab === 'games') renderGames();
   else renderMore();
   if (keepScroll) window.scrollTo(0, y);
 }

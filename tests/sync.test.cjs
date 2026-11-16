@@ -41,3 +41,18 @@ test('the account\'s copy wins unless this device has a change of its own, as ne
   assert.equal(C.cloudWins('2026-11-05T10:00:00Z', '2026-11-06T10:00:00Z'), false, 'this device is newer: its copy goes up');
   assert.equal(C.cloudWins('not a time', '2026-11-06T10:00:00Z'), false);
 });
+
+test('arcade scores: two sets become one with the better result on each level, and junk is left out', () => {
+  const here = { 'maple-madness': { poop: { stars: 2, score: 140 }, fig: { stars: 1, score: 30 } } };
+  const there = { 'maple-madness': { poop: { stars: 3, score: 90 }, fig: { stars: 1, score: 55 }, tug: { stars: 3, score: 12.5 } } };
+  const best = { 'maple-madness': { poop: { stars: 3, score: 90 }, fig: { stars: 1, score: 55 }, tug: { stars: 3, score: 12.5 } } };
+  assert.deepEqual(C.arcadeBest(here, there), best, 'more stars wins, then the higher score');
+  assert.deepEqual(C.arcadeBest(there, here), best, 'whichever side it comes from');
+  assert.deepEqual(C.arcadeBest(best, {}), best);
+  assert.deepEqual(C.arcadeBest(undefined, null), {});
+  // Only real scores for properly named games and levels get in.
+  assert.deepEqual(C.arcadeBest({}, { 'maple-madness': { poop: { stars: 9, score: 1 }, fig: { stars: 2, score: 'lots' }, 'Bad Name': { stars: 1, score: 1 }, tug: 'won', water: { stars: 2, score: 71 } },
+    __proto__: { x: { stars: 1, score: 1 } }, '<script>': { a: { stars: 1, score: 1 } }, other: 'x' }), { 'maple-madness': { water: { stars: 2, score: 71 } } });
+  // They travel with the reader like her other settings.
+  assert.deepEqual(C.cloudValue(C.cloudRow('setting', 'arcade', best, '2026-11-15T10:00:00Z')).value, best);
+});

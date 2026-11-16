@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#9FD3F0">
+<title>Maple's Big Day</title>
+<link rel="icon" href="../../icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="game.css">
+<script src="../arcade.js" defer></script>
+<script src="game.js" defer></script>
+</head>
+<body>
+
+
+<canvas id="c" aria-label="Maple's Big Day game area"></canvas>
+
+<div class="hud" id="hud" hidden>
+  <button class="icon-btn" id="exitBtn" aria-label="Back to levels">&#x2715;</button>
+  <div class="hud-mid"><div class="hud-title" id="hudTitle"></div><div class="hud-time" id="hudTime">45</div></div>
+  <div class="hud-right"><div class="hud-score" id="hudScore"></div><button class="icon-btn" id="mute" aria-label="Toggle sound">SND</button></div>
+</div>
+
+<div class="overlay dim" id="menu">
+  <div class="card">
+    <a class="home-link" id="homeLink" href="../../#games">&larr; Book Dude</a>
+    <div class="kicker" id="mKicker">Millcreek, Utah</div>
+    <h1 id="mTitle">Maple's <em>Big Day</em></h1>
+    <canvas id="hero" aria-label="Maple leaping across the grass"></canvas>
+    <p class="player-fixed" id="playerFixed" hidden></p>
+    <div class="field" id="playerField">
+      <label for="inPlayer" id="lPlayer">Who's playing?</label>
+      <input id="inPlayer" maxlength="14" autocomplete="off">
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Language">
+        <button id="langEn" aria-pressed="true">English</button>
+        <button id="langEs" aria-pressed="false">Español</button>
+      </div>
+      <button class="ghost" id="menuSound" aria-pressed="true">Sound on</button>
+    </div>
+    <div class="levels" id="levels"></div>
+    <p class="foot" id="mFoot"></p>
+  </div>
+</div>
+
+<div class="overlay bottom" id="intro" hidden>
+  <div class="card">
+    <div class="kicker" id="iKicker"></div>
+    <h2 id="iTitle"></h2>
+    <p class="how" id="iHow"></p>
+    <div class="row">
+      <button class="play" id="goBtn">Start</button>
+      <button class="ghost" id="backBtn">Levels</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay dim" id="end" hidden>
+  <div class="card">
+    <div class="bigstars" id="eStars"></div>
+    <h2 id="eTitle"></h2>
+    <div class="banner-new" id="eNew" hidden></div>
+    <p class="stat" id="eStat"></p>
+    <p class="fam" id="eFam"></p>
+    <div class="row">
+      <button class="play" id="nextBtn">Next level</button>
+      <button class="ghost" id="retryBtn">Try again</button>
+      <button class="ghost" id="levelsBtn">Levels</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

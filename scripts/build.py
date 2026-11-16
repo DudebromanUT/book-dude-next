@@ -43,6 +43,8 @@ ASSETS = [
     'catalog.js',
     'history.json',
     'manifest.webmanifest',
+    'games/arcade.js',
+    *sorted(str(p.relative_to(DOCS)).replace('\\', '/') for p in (DOCS / 'games').glob('*/**/*') if p.is_file() and p.suffix != '.md'),
     'img/dude.jpg',
     'img/dude-face.jpg',
     'img/dog.jpg',

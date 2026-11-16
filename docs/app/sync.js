@@ -3,20 +3,22 @@
  * The device is always the working copy: every change is saved here first (state.js), so the app works offline and
  * never waits for the internet. While this device is showing a reader from a family account, each change also joins
  * a waiting list (the "outbox"), and this file sends the list up and asks the account for anything newer:
- *   up    the waiting changes, a batch at a time. The account keeps whichever copy of a thing was saved last.
  *   down  everything the account changed since this device last looked (each change there has a number that only
  *         goes up), taken unless this device has a newer change of its own to the same thing still waiting.
+ *   up    the waiting changes, a batch at a time. The account keeps whichever copy of a thing was saved last.
+ * Game scores are the exception to "newest wins": two sets are always put together, the best of each level.
  * It runs when the app opens, a moment after any change, when the app comes back to the front, and when the internet
  * returns. Once a week it reads everything again, in case a change slipped past. */
 
 import { C, plural } from './util.js';
 import { rebuildBooks } from './books.js';
-import { state, db, onLocalChange, takeSettings, leaveAccount } from './state.js';
+import { state, db, onLocalChange, takeSettings, leaveAccount, saveSetting } from './state.js';
 import { sheet, confirmBox } from './page.js';
 import { activeKid, call, refreshMe, account } from './cloud.js';
 import { render } from './tabs.js';
 import { applyAccent } from './more.js';
 import { syncSchool } from './school.js';
+import { mirrorArcade } from './games.js';
 
 const KID = activeKid();
 const PAGE = 500;
@@ -111,12 +113,20 @@ async function push() {
 async function take(rows, last, markFull) {
   const waiting = new Map((await db.outbox()).map(e => [e.key, e.at]));
   const put = { records: [], dropRecords: [], books: [], dropBooks: [], settings: {}, dropOutbox: [], rev: last, fullAt: markFull };
-  let books = false, settings = false, any = false;
+  let books = false, settings = false, any = false, better = null;
   const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   for (const row of rows) {
     const v = C.cloudValue(row);
     if (!v) continue;
     const key = v.kind + ':' + v.id;
+    // Game scores are never "newest wins": the account's and this device's are put together, the best of each level.
+    // If that is better than what the account has, it goes back up.
+    if (key === 'setting:arcade') {
+      const best = C.arcadeBest(state.settings.arcade, v.value);
+      if (!same(best, state.settings.arcade)) { put.settings.arcade = best; settings = any = true; }
+      if (!same(best, v.value)) better = best;
+      continue;
+    }
     if (!C.cloudWins(row.client_at, waiting.get(key))) continue;
     if (waiting.has(key)) put.dropOutbox.push(key);
     if (v.kind === 'record') {
@@ -137,8 +147,11 @@ async function take(rows, last, markFull) {
     applyAccent();
     // A school quiz link that just arrived (a grown-up pasted it on another device) is used right away.
     if (put.settings.schoolLink && !quiet) syncSchool(true);
+    // Game scores from her other devices: put together with this device's, and handed to the games here.
+    if (put.settings.arcade && !quiet) mirrorArcade();
   }
   if (books) rebuildBooks(state.custom);
+  if (better) await saveSetting('arcade', better);
   return any;
 }
 
@@ -180,8 +193,10 @@ async function stillHers(force) {
 async function round(check) {
   setState('busy');
   if (await stillHers(check)) return;
-  let result = await push();
-  if (result === 'ok') result = await pull();
+  // Down first, then up: what her other devices saved is taken in (and game scores put together) before this device
+  // sends its own, so nothing here is sent over the top of something newer or better.
+  let result = await pull();
+  if (result === 'ok') result = await push();
   if (result === 'out') {
     if (await stillHers(true)) return;
     result = 'offline';

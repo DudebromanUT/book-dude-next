@@ -1,0 +1,60 @@
+/* The Book Dude arcade, as a game sees it. Every game page loads this before its own code and asks for its place to
+ * keep things:
+ *     const ARCADE = window.BookDudeArcade.open('maple-madness');
+ *     ARCADE.player          the signed-in reader's first name, or '' on a device that isn't signed in
+ *     ARCADE.get('records')  something this game saved earlier (null if nothing)
+ *     ARCADE.set('records', value)
+ * What a game saves is kept on the device, apart for each reader and for the device itself. When a reader is signed
+ * in, Book Dude (docs/app/games.js) copies her best scores to her family's account and brings back the ones from her
+ * other devices; for that, a game keeps its scores under 'records' as { playerName: { levelId: { stars, score } } }.
+ * A game never talks to the account itself, and needs nothing else from Book Dude. */
+(function () {
+  'use strict';
+  // The app's address on this site, e.g. /book-dude-next/ (a game lives two folders down, in games/<its name>/).
+  var BASE = new URL('../../', location.href).pathname;
+  var read = function (key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } };
+  var write = function (key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage blocked: scores last until the game closes */ } };
+
+  // Who is signed in on this device, as the app remembers it (docs/app/cloud.js).
+  var account = read('reading-room:ui:' + BASE + ':account');
+  var kid = account && typeof account.kid === 'string' && /^[0-9a-f-]{36}$/.test(account.kid) ? account.kid : '';
+  var player = '';
+  if (kid && account.me) {
+    var list = (account.me.kid ? [account.me.kid] : []).concat(account.me.kids || []);
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === kid) player = String(list[i].name || '');
+  }
+  var prefix = 'book-dude:arcade:' + BASE + (kid ? 'kid:' + kid : 'device') + ':';
+
+  // Scores from a game's life before the arcade (Maple Madness was its own site at this address), taken once.
+  var BEFORE = { 'maple-madness': { records: 'maple-records', profile: 'maple-profile' } };
+  function moveIn(game) {
+    var old = BEFORE[game];
+    if (!old || read(prefix + game + ':records') !== null) return;
+    var records = read(old.records), profile = read(old.profile);
+    if (!records || typeof records !== 'object') return;
+    if (!player) {
+      write(prefix + game + ':records', records);
+      if (profile && typeof profile === 'object') write(prefix + game + ':profile', profile);
+      return;
+    }
+    // A signed-in reader takes the old scores under her own name, or the only name there is. Anyone else's stay put.
+    var names = Object.keys(records), mine = '';
+    for (var n = 0; n < names.length; n++) if (names[n].toLowerCase() === player.toLowerCase()) mine = names[n];
+    if (!mine && names.length === 1) mine = names[0];
+    var out = {};
+    if (mine) out[player] = records[mine];
+    write(prefix + game + ':records', out);
+    if (profile && typeof profile === 'object' && (profile.lang === 'en' || profile.lang === 'es')) write(prefix + game + ':profile', { lang: profile.lang });
+  }
+
+  window.BookDudeArcade = {
+    open: function (game) {
+      moveIn(game);
+      return {
+        player: player,
+        get: function (name) { return read(prefix + game + ':' + name); },
+        set: function (name, value) { write(prefix + game + ':' + name, value); }
+      };
+    }
+  };
+})();
