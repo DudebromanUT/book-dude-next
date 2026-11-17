@@ -1130,6 +1130,606 @@ export const ARTICLES = [
     }
   },
   {
+    id: "world-at-war-part-1",
+    title: "The World at War, Part I: The World Goes to War",
+    voice: "plain",
+    intro: "World War II was the biggest war in human history. It was fought on almost every continent and on every ocean, and it changed the world we live in today. This is Part I of a seven part series, and it covers how the war began and the dark first years when it looked like no one could stop Germany.",
+    sections: [
+      { title: "Three Powers on the March", text: [
+        "By the late 1930s, three countries were ruled by leaders who wanted to build empires by force. In Germany, Adolf Hitler and his Nazi party had taken total control. In Italy, a dictator named Benito Mussolini ruled. In Japan, military leaders held great power.",
+        "Japan had already invaded part of China in 1931 and launched a full war against China in 1937. In Europe, Hitler broke the Treaty of Versailles again and again, taking over Austria and then Czechoslovakia. Germany, Italy, and Japan later signed an agreement and became known as the Axis powers."
+      ]},
+      { title: "A Surprising Deal", text: [
+        "In August 1939, the world got a shock. Germany and the Soviet Union, two countries that hated each other's ideas, signed a promise not to attack each other. The Soviet Union was ruled by a dictator named Joseph Stalin.",
+        "Secretly, the two dictators also agreed to split Poland between them. Now Hitler didn't have to worry about fighting the Soviet Union while he attacked in the west, at least for a while."
+      ]},
+      { title: "Poland Falls", text: [
+        "On September 1, 1939, German forces invaded Poland. Two days later, Britain and France, who had promised to protect Poland, declared war on Germany. World War II had begun.",
+        "Germany attacked with a new way of fighting called blitzkrieg (say BLITS-kreeg), which means lightning war in German. Fast tanks, trucks, and airplanes struck together and raced deep into enemy land. Two weeks later, the Soviet Union invaded Poland from the east. Poland fought bravely but was defeated in about five weeks."
+      ]},
+      { title: "The Phony War", text: [
+        "After Poland fell, something strange happened. Britain and France were at war with Germany, but for months there was very little fighting in western Europe. People called this quiet time the Phony War.",
+        "It ended in the spring of 1940. Germany suddenly conquered Denmark and Norway. Then, on May 10, 1940, German forces swept into the Netherlands, Belgium, Luxembourg, and France all at once."
+      ]},
+      { title: "The Miracle of Dunkirk", text: [
+        "German tanks moved so fast that they trapped hundreds of thousands of British and French soldiers against the sea near a French town called Dunkirk. It looked like they would all be captured.",
+        "Britain gathered every boat it could find. Navy ships were joined by hundreds of small civilian boats, including fishing boats, ferries, and private yachts, which people called the little ships. Between May 26 and June 4, 1940, more than 338,000 soldiers were carried across the English Channel to safety in Britain. People called it the Miracle of Dunkirk."
+      ]},
+      { title: "France Surrenders", text: [
+        "France was defeated in about six weeks. In June 1940, Italy joined the war on Germany's side, and on June 22, France signed an armistice with Germany.",
+        "Hitler chose the place on purpose. He made the French sign in the very same railroad car where Germany had signed the armistice that ended World War I in 1918. Germany now controlled most of western Europe."
+      ]},
+      { title: "Britain Stands Alone", text: [
+        "Now Britain was the only major country still fighting Germany. Its new prime minister, Winston Churchill, refused to give up. In his famous speeches, he promised that Britain would keep fighting no matter what.",
+        "Britain had help from the countries of its empire and Commonwealth, such as Canada, Australia, India, and New Zealand, and from soldiers who had escaped from conquered countries like Poland and France. The United States was not yet in the war, but it began sending supplies."
+      ]},
+      { title: "The Battle of Britain", text: [
+        "Hitler planned to invade Britain, but first he needed to control the skies. In the summer and fall of 1940, German planes battled British fighter pilots of the Royal Air Force, or RAF, high above England. This was the Battle of Britain, the first major battle fought almost entirely in the air.",
+        "The British had an important new invention called radar, which used radio waves to spot enemy planes coming from far away. The RAF won the battle, and Hitler gave up his invasion plan. Churchill praised the pilots, saying, \"Never in the field of human conflict was so much owed by so many to so few.\""
+      ]},
+      { title: "The Blitz", text: [
+        "Unable to win in the air, Germany began bombing British cities at night, especially London. These attacks, called the Blitz, lasted from September 1940 until May 1941.",
+        "Londoners slept in underground train stations and backyard shelters. Windows were covered at night so no light would help enemy pilots find their targets, a rule called the blackout. People cleaned up each morning and went back to work, and their calm courage became famous."
+      ]},
+      { title: "Sent Away for Safety", text: [
+        "To keep children safe from the bombs, Britain sent many of them away from the big cities to live with families in the countryside. Children arrived at train stations with a small suitcase, a gas mask, and a name tag, often not knowing who they would live with.",
+        "Some children were away for years. A famous book series begins with this real experience: The Lion, the Witch and the Wardrobe starts with four children sent away from London during the war, to stay in a big old house in the country."
+      ]}
+    ],
+    closing: "By the end of 1940, Germany ruled most of Europe and Britain stood alone, but the RAF had won the skies, and the next year would bring two giant new countries into the war.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "Which three countries became known as the Axis powers?", ref: "Three Powers on the March",
+          choices: ["Germany, Italy, and Japan", "Britain, France, and Poland", "The United States, Canada, and Mexico", "Russia, China, and India"] },
+        { q: "Who ruled the Soviet Union?", ref: "A Surprising Deal",
+          choices: ["Joseph Stalin", "Benito Mussolini", "Winston Churchill", "Adolf Hitler"] },
+        { q: "What did Germany and the Soviet Union secretly agree to do?", ref: "A Surprising Deal",
+          choices: ["Split Poland between them", "Attack Britain together", "Build a giant navy", "Move to Africa"] },
+        { q: "What event started World War II on September 1, 1939?", ref: "Poland Falls",
+          choices: ["Germany invaded Poland", "Japan attacked Pearl Harbor", "Italy invaded France", "Britain attacked Germany"] },
+        { q: "What does blitzkrieg mean?", ref: "Poland Falls",
+          choices: ["Lightning war", "Quiet war", "Slow war", "Snow war"] },
+        { q: "What was the quiet time after Poland fell called?", ref: "The Phony War",
+          choices: ["The Phony War", "The Blitz", "The Great War", "The Little War"] },
+        { q: "Who helped rescue soldiers at Dunkirk besides navy ships?", ref: "The Miracle of Dunkirk",
+          choices: ["Hundreds of small civilian boats", "Submarines from America", "Giant airplanes from Canada", "Hot air balloons"] },
+        { q: "About how many soldiers were rescued at Dunkirk?", ref: "The Miracle of Dunkirk",
+          choices: ["More than 338,000", "About 338", "About 3,000", "More than 33 million"] },
+        { q: "Where did Hitler make France sign its armistice?", ref: "France Surrenders",
+          choices: ["The same railroad car used in 1918", "The Hall of Mirrors", "A ship in the English Channel", "The top of the Eiffel Tower"] },
+        { q: "Who was Britain's prime minister who refused to give up?", ref: "Britain Stands Alone",
+          choices: ["Winston Churchill", "Neville Chamberlain", "Joseph Stalin", "David Lloyd George"] },
+        { q: "What was the Battle of Britain fought almost entirely in?", ref: "The Battle of Britain",
+          choices: ["The air", "The ocean", "Underground tunnels", "The desert"] },
+        { q: "What invention helped the British spot enemy planes from far away?", ref: "The Battle of Britain",
+          choices: ["Radar", "The telephone", "The television", "The telescope"] },
+        { q: "Where did many Londoners sleep during the Blitz?", ref: "The Blitz",
+          choices: ["In underground train stations", "In the countryside castles", "On ships in the river", "In airplanes"] },
+        { q: "What was the blackout?", ref: "The Blitz",
+          choices: ["Covering windows so no light showed at night", "A power failure across Europe", "A type of German bomb", "Painting buildings black"] },
+        { q: "Which famous book begins with four children sent away from London during the war?", ref: "Sent Away for Safety",
+          choices: ["The Lion, the Witch and the Wardrobe", "Charlotte's Web", "Harry Potter and the Sorcerer's Stone", "The Wizard of Oz"] }
+      ],
+      think: "Children sent away from London could bring only one small suitcase. If you had to pack for a long trip like that, what three things would you bring, and why?"
+    }
+  },
+  {
+    id: "world-at-war-part-2",
+    title: "The World at War, Part II: Pearl Harbor",
+    voice: "plain",
+    intro: "In 1941, two of the biggest countries in the world were pulled into World War II, one by a giant invasion and the other by a surprise attack on a Sunday morning in Hawaii. This is Part II of a seven part series about World War II.",
+    sections: [
+      { title: "The Arsenal of Democracy", text: [
+        "At the start of 1941, the United States was still not fighting, but President Franklin Roosevelt wanted to help Britain. He said America should be the great arsenal of democracy, which means a storehouse of weapons for countries fighting dictators.",
+        "In March 1941, Congress passed a law called Lend-Lease. It let the United States send Britain, and later other Allies, huge amounts of ships, planes, tanks, food, and supplies, to be paid back later or returned after the war."
+      ]},
+      { title: "Hitler Turns East", text: [
+        "On June 22, 1941, Hitler broke his promise to Stalin. German armies invaded the Soviet Union in the largest invasion in history, with millions of soldiers attacking along a front more than a thousand miles long.",
+        "At first, the Germans raced forward and came close to the Soviet capital, Moscow. But the Soviet Union was enormous, and its people fought fiercely. When the bitter Russian winter arrived, the German army was stopped just short of Moscow. Now the Soviet Union was fighting on the same side as Britain."
+      ]},
+      { title: "Japan's Empire", text: [
+        "On the other side of the world, Japan wanted to build an empire across Asia and the Pacific. It needed oil, rubber, and metal, which it didn't have enough of at home. Japan had been at war with China for years, and in 1941 it moved troops into Southeast Asia.",
+        "To stop Japan, the United States cut off its supply of oil. Japan's leaders decided to take the oil fields of Southeast Asia by force. They believed the American navy in the Pacific was the only thing that could stop them, so they planned to knock it out with one surprise blow."
+      ]},
+      { title: "A Navy Base in Paradise", text: [
+        "The home of the American Pacific Fleet was Pearl Harbor, on the island of Oahu in Hawaii. Hawaii was an American territory then, not yet a state. Dozens of warships were tied up in the harbor, and nearby airfields held hundreds of airplanes.",
+        "Many of the battleships were lined up side by side along Ford Island, in the middle of the harbor. Sailors called that spot Battleship Row."
+      ]},
+      { title: "December 7, 1941", text: [
+        "Early on the morning of Sunday, December 7, 1941, Japanese aircraft carriers secretly sailed close to Hawaii. Just before 8 o'clock, more than 350 Japanese planes attacked Pearl Harbor in two waves.",
+        "Bombs and torpedoes hit Battleship Row. The battleship USS Arizona exploded and sank, and the USS Oklahoma rolled over. In less than two hours, 2,403 Americans were killed, and many ships and airplanes were destroyed or damaged."
+      ]},
+      { title: "The USS Utah", text: [
+        "One of the ships sunk that morning was named after our state. The USS Utah was an old battleship being used as a training ship, tied up on the other side of Ford Island. It was hit by torpedoes in the first minutes of the attack, rolled over, and sank.",
+        "Fifty eight of its crew died. The USS Utah was never raised. It still lies where it sank in Pearl Harbor, and a memorial stands beside it."
+      ]},
+      { title: "Fixing the Planes", text: [
+        "The Japanese planes didn't only attack ships. They also struck the airfields around Pearl Harbor, destroying or damaging hundreds of American airplanes, many of them parked close together on the ground.",
+        "Aircraft mechanics were some of the most important people at Pearl Harbor. They kept planes ready to fly by fixing engines, patching holes, and checking every part. After the attack, mechanics worked around the clock to repair damaged planes and get new ones ready for the war ahead."
+      ]},
+      { title: "Your Great Grandfather J Lloyd", text: [
+        "Your great grandfather J Lloyd was an aircraft mechanic at Pearl Harbor. Mechanics like him didn't get much attention in the newspapers, but no pilot could fly without them.",
+        "A pilot trusts the mechanic with their life every time they take off. It is a job that takes skill, patience, and care, and it was one of the many jobs that helped America win the war."
+      ]},
+      { title: "A Date Which Will Live in Infamy", text: [
+        "The next day, President Roosevelt spoke to Congress. He called December 7, 1941, \"a date which will live in infamy.\" Infamy means being famous for something terrible. Congress declared war on Japan that same day.",
+        "Three days later, Germany and Italy declared war on the United States. Now America was fighting in both Europe and the Pacific. The attack that Japan hoped would weaken America instead united the country, and millions of Americans rushed to join the military."
+      ]},
+      { title: "A Truly World War", text: [
+        "The main countries fighting Germany, Italy, and Japan were called the Allies. Their three most powerful leaders were Roosevelt of the United States, Churchill of Britain, and Stalin of the Soviet Union, sometimes called the Big Three. China, which had been fighting Japan for years, was an important ally too.",
+        "Before Pearl Harbor, much of the war had been in Europe. Now it truly stretched across the whole world."
+      ]},
+      { title: "Remembering Pearl Harbor", text: [
+        "Today, a white memorial stands over the sunken USS Arizona, and more than a million people visit Pearl Harbor every year. Oil still slowly leaks from the Arizona and rises to the surface in small drops that some people call black tears.",
+        "Every December 7, Americans pause to remember Pearl Harbor and everyone who was there."
+      ]}
+    ],
+    closing: "Pearl Harbor turned a war far away into America's war, and from mechanics to sailors to pilots, millions of Americans would now be part of the fight.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What law let the United States send ships, planes, and supplies to Britain?", ref: "The Arsenal of Democracy",
+          choices: ["Lend-Lease", "The New Deal", "The Marshall Plan", "The Treaty of Versailles"] },
+        { q: "What did Germany do on June 22, 1941?", ref: "Hitler Turns East",
+          choices: ["Invaded the Soviet Union", "Attacked Pearl Harbor", "Surrendered to Britain", "Invaded the United States"] },
+        { q: "What helped stop the German army just short of Moscow?", ref: "Hitler Turns East",
+          choices: ["The bitter Russian winter and fierce fighting", "A peace treaty with Britain", "A flood in Germany", "American soldiers in Russia"] },
+        { q: "What did the United States cut off to try to stop Japan?", ref: "Japan's Empire",
+          choices: ["Japan's supply of oil", "Japan's rice and fish", "Japan's mail service", "Japan's radio stations"] },
+        { q: "What was Battleship Row?", ref: "A Navy Base in Paradise",
+          choices: ["Battleships lined up along Ford Island", "A street of shops in Honolulu", "A row of airplanes", "A line of Japanese ships"] },
+        { q: "On what day was Pearl Harbor attacked?", ref: "December 7, 1941",
+          choices: ["Sunday, December 7, 1941", "Monday, June 6, 1944", "Friday, September 1, 1939", "Tuesday, November 11, 1918"] },
+        { q: "About how many Americans were killed in the attack on Pearl Harbor?", ref: "December 7, 1941",
+          choices: ["2,403", "24", "240,000", "2 million"] },
+        { q: "Which sunken ship at Pearl Harbor was named after our state?", ref: "The USS Utah",
+          choices: ["The USS Utah", "The USS Arizona", "The USS Oklahoma", "The USS Missouri"] },
+        { q: "Besides ships, what did the Japanese planes attack?", ref: "Fixing the Planes",
+          choices: ["The airfields and airplanes", "Schools in Honolulu", "Farms in California", "Volcanoes"] },
+        { q: "What job did great grandfather J Lloyd do at Pearl Harbor?", ref: "Your Great Grandfather J Lloyd",
+          choices: ["Aircraft mechanic", "Telephone operator", "Railroad engineer", "Battleship captain"] },
+        { q: "What did President Roosevelt call December 7, 1941?", ref: "A Date Which Will Live in Infamy",
+          choices: ["A date which will live in infamy", "The only thing we have to fear", "Peace for our time", "The war to end all wars"] },
+        { q: "What does infamy mean?", ref: "A Date Which Will Live in Infamy",
+          choices: ["Being famous for something terrible", "Being very happy", "Being a secret", "Being brand new"] },
+        { q: "Which countries declared war on the United States three days after Pearl Harbor?", ref: "A Date Which Will Live in Infamy",
+          choices: ["Germany and Italy", "Britain and France", "China and Russia", "Canada and Mexico"] },
+        { q: "Who were the Big Three Allied leaders?", ref: "A Truly World War",
+          choices: ["Roosevelt, Churchill, and Stalin", "Hitler, Mussolini, and Stalin", "Wilson, Hoover, and Truman", "Churchill, Chamberlain, and Hitler"] },
+        { q: "What do some people call the oil drops rising from the USS Arizona?", ref: "Remembering Pearl Harbor",
+          choices: ["Black tears", "Ocean diamonds", "Sailor's ink", "Navy rain"] }
+      ],
+      think: "More than a million people visit the Pearl Harbor memorials every year. Why do you think it matters for people to visit places like this and remember what happened there?"
+    }
+  },
+  {
+    id: "world-at-war-part-3",
+    title: "The World at War, Part III: The Home Front",
+    voice: "plain",
+    intro: "World War II wasn't only fought by soldiers. Back home, almost every American, including kids, had a job to do. This is Part III of a seven part series about World War II, and it's about the home front, the war effort at home, including right here in Utah.",
+    sections: [
+      { title: "Factories Go to War", text: [
+        "After Pearl Harbor, American factories changed almost overnight. Car companies stopped making cars for families and started making tanks, trucks, and airplanes instead. One giant Ford factory in Michigan, called Willow Run, built B-24 bombers so fast that at its peak, it finished about one every hour.",
+        "By the end of the war, American factories had built hundreds of thousands of airplanes, along with huge numbers of ships, tanks, and trucks. This flood of supplies was one of the biggest reasons the Allies won."
+      ]},
+      { title: "Rosie the Riveter", text: [
+        "With millions of men away in the military, factories needed workers. Millions of women took jobs building ships, airplanes, and weapons, doing work many people had said only men could do. Women also worked on military bases as clerks, drivers, mechanics, and telephone operators, like your great grandmother Lucille, whom you will meet in the final chapter of this series.",
+        "These workers became known by a nickname, Rosie the Riveter. A rivet is a metal pin that holds pieces of an airplane or ship together. A famous poster of a woman in a red bandanna flexing her arm under the words \"We Can Do It!\" became a symbol of these women, though it actually became famous many years after the war."
+      ]},
+      { title: "Rationing", text: [
+        "The military needed huge amounts of food, rubber, metal, and gasoline, so the government limited how much people at home could buy. This is called rationing. Each family got ration books full of stamps, and you needed the right stamps, along with money, to buy things like sugar, coffee, meat, butter, shoes, and gasoline.",
+        "People drove less and fixed things instead of buying new ones. A popular saying was \"Use it up, wear it out, make it do, or do without.\""
+      ]},
+      { title: "Victory Gardens", text: [
+        "To leave more food for soldiers, Americans were asked to grow their own vegetables. Families planted gardens in backyards, empty lots, schoolyards, and even on rooftops. They were called victory gardens.",
+        "Millions of families grew tomatoes, beans, carrots, and squash, and many learned to can their extra vegetables in glass jars to eat in winter. Victory gardens grew a large share of the vegetables Americans ate during the war."
+      ]},
+      { title: "Kids Help Win the War", text: [
+        "Kids were a big part of the home front. They collected scrap metal, old tires, rubber, tin cans, and newspapers in scrap drives, so those materials could be turned into war supplies. Schools held contests to see which class could collect the most.",
+        "Children also bought war stamps with their pennies and dimes, which added up to war bonds that helped pay for the war. In some places, kids even gathered fluffy milkweed pods, because the fluff was used to fill life jackets for sailors."
+      ]},
+      { title: "Keeping the Trains Running", text: [
+        "Trains were the lifeline of the war at home. They carried soldiers to their bases and ports, and moved tanks, airplane parts, fuel, food, and weapons from factories to the coasts. Railroads ran day and night, carrying more than ever before.",
+        "Running a train safely took great skill, so the government kept many experienced railroad workers on the job instead of sending them to fight. Your great grandfather Chet was a railroad engineer, the person who drives the train. He wanted to join the military, but his job was so important that he had to stay home and keep the trains moving. Without workers like him, the soldiers overseas would not have had what they needed."
+      ]},
+      { title: "Utah Goes to War", text: [
+        "Utah played a surprisingly big part in the war. The government built more than a dozen new military bases and depots in the state, including Wendover, Dugway, Tooele, and Kearns. Utah was a good spot because it sat in the middle between the big West Coast ports, and it had lots of open land.",
+        "Hill Field, near Ogden, repaired and supplied military airplanes. At its busiest, it was the largest employer in Utah, with about 15,000 civilian workers and 6,000 military members. In Utah County, the government built the giant Geneva Steel plant, which made steel for ships and other war needs."
+      ]},
+      { title: "Topaz", text: [
+        "The home front also had a dark side. After Pearl Harbor, the government forced about 120,000 people of Japanese ancestry living on the West Coast to leave their homes, even though most of them were American citizens who had done nothing wrong. They were sent to ten camps surrounded by barbed wire.",
+        "One of those camps, called Topaz, was built in the desert of Millard County, Utah, near the town of Delta. More than 11,000 people were held there. Decades later, in 1988, the United States government formally apologized and paid money to the people who had been held in the camps."
+      ]},
+      { title: "The 442nd", text: [
+        "Even while many of their families were held in camps, thousands of young Japanese American men joined the army to prove their loyalty. Many of them served in a unit called the 442nd Regimental Combat Team, which fought in Italy and France.",
+        "The 442nd became the most decorated unit for its size in American military history. Its motto was \"Go for Broke,\" which means to risk everything."
+      ]},
+      { title: "Fighting for Fairness", text: [
+        "During the war, the American military was segregated, which means Black soldiers were kept in separate units from white soldiers. Many Black Americans served bravely anyway.",
+        "Black newspapers started a campaign called Double Victory. It meant winning two fights at once: victory over the enemy overseas, and victory over unfair treatment at home. In 1948, a few years after the war, President Harry Truman ordered the military to end segregation."
+      ]}
+    ],
+    closing: "From factories and victory gardens to scrap drives and railroads, the home front proved that winning a war takes everyone, including the people who stay home.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What did car companies build during the war instead of family cars?", ref: "Factories Go to War",
+          choices: ["Tanks, trucks, and airplanes", "Bicycles and wagons", "Toys and games", "Boats for vacations"] },
+        { q: "What did the Willow Run factory build?", ref: "Factories Go to War",
+          choices: ["B-24 bombers", "Battleships", "Railroad engines", "Radios"] },
+        { q: "What nickname was given to women who worked in war factories?", ref: "Rosie the Riveter",
+          choices: ["Rosie the Riveter", "Victory Vera", "Factory Fran", "Wendy the Welder"] },
+        { q: "What is a rivet?", ref: "Rosie the Riveter",
+          choices: ["A metal pin that holds pieces together", "A type of factory hat", "A small airplane", "A kind of garden tool"] },
+        { q: "What is rationing?", ref: "Rationing",
+          choices: ["Limiting how much people can buy", "Giving away free food", "Building new factories", "Planting vegetable gardens"] },
+        { q: "What did families need to buy rationed things like sugar and gasoline?", ref: "Rationing",
+          choices: ["Stamps from ration books", "A note from a soldier", "A train ticket", "A library card"] },
+        { q: "What were victory gardens?", ref: "Victory Gardens",
+          choices: ["Home vegetable gardens to save food for soldiers", "Flower gardens for parades", "Gardens planted on battlefields", "Gardens owned by the army"] },
+        { q: "What were milkweed pods collected for?", ref: "Kids Help Win the War",
+          choices: ["To fill life jackets for sailors", "To make sugar", "To feed soldiers", "To build airplanes"] },
+        { q: "Why were many experienced railroad workers kept at home?", ref: "Keeping the Trains Running",
+          choices: ["Their jobs were too important to the war", "They were too old to fight", "Trains had stopped running", "They were needed to plant gardens"] },
+        { q: "What job did great grandfather Chet do during the war?", ref: "Keeping the Trains Running",
+          choices: ["Railroad engineer", "Aircraft mechanic", "Telephone operator", "Factory riveter"] },
+        { q: "What Utah base was the largest employer in the state during the war?", ref: "Utah Goes to War",
+          choices: ["Hill Field", "Wendover", "Dugway", "Topaz"] },
+        { q: "What did the Geneva Steel plant in Utah County make?", ref: "Utah Goes to War",
+          choices: ["Steel for ships and other war needs", "Cars for families", "Candy for soldiers", "Uniforms for pilots"] },
+        { q: "What was Topaz?", ref: "Topaz",
+          choices: ["A camp in Utah where Japanese Americans were held", "A steel factory near Ogden", "An air base in Wendover", "A ship sunk at Pearl Harbor"] },
+        { q: "What was the motto of the 442nd Regimental Combat Team?", ref: "The 442nd",
+          choices: ["Go for Broke", "We Can Do It", "Make It Do", "Double Victory"] },
+        { q: "What did the Double Victory campaign mean?", ref: "Fighting for Fairness",
+          choices: ["Winning overseas and against unfair treatment at home", "Winning two battles in one day", "Collecting twice as much scrap", "Growing two gardens"] }
+      ],
+      think: "If you were a kid on the home front during World War II, which job would you most want to do to help, and why?"
+    }
+  },
+  {
+    id: "world-at-war-part-4",
+    title: "The World at War, Part IV: Turning the Tide",
+    voice: "plain",
+    intro: "At the start of 1942, the Axis powers seemed to be winning everywhere. By the end of 1943, the tide had turned. This is Part IV of a seven part series about World War II, and it tells how secret codebreakers, a frozen city, and a desert army helped the Allies start winning.",
+    sections: [
+      { title: "A Dark Beginning", text: [
+        "The first months of 1942 were frightening for the Allies. Japan swept across the Pacific and Southeast Asia, capturing the Philippines, Singapore, and many islands. German armies pushed deep into the Soviet Union, and German submarines sank ships right off the American coast.",
+        "Turning a war around takes time. It would take good intelligence, huge amounts of supplies, and some of the hardest fighting in history."
+      ]},
+      { title: "Breaking the Codes", text: [
+        "Armies send secret messages in code, and both sides worked hard to crack each other's codes. Germany used a machine called Enigma, which scrambled messages in billions of possible ways. The Germans believed it could never be broken.",
+        "Polish codebreakers had first figured out how to read early Enigma messages before the war, and they shared their discoveries with Britain. At a secret center called Bletchley Park, British codebreakers, including a brilliant mathematician named Alan Turing, built machines that helped crack Enigma messages. Their work was kept secret for decades, and many historians believe it helped shorten the war."
+      ]},
+      { title: "The Battle of Midway", text: [
+        "American codebreakers in Hawaii cracked part of Japan's naval code, too. In the spring of 1942, they learned that Japan was planning to attack Midway, a tiny American island in the Pacific.",
+        "Because they knew the plan, American aircraft carriers were waiting. From June 4 to June 7, 1942, American pilots sank four Japanese aircraft carriers, while the Americans lost one. Japan never recovered from losing so many carriers and skilled pilots. Midway was the turning point of the war in the Pacific."
+      ]},
+      { title: "The Battle of the Atlantic", text: [
+        "Britain needed food, fuel, and weapons shipped across the Atlantic Ocean, and German U-boats hunted the ships in groups called wolf packs. For years, this was one of the most important fights of the war.",
+        "To protect themselves, cargo ships sailed together in big groups called convoys, guarded by warships and airplanes. With better radar, cracked Enigma codes, and new long range planes, the Allies began sinking more and more U-boats. By the middle of 1943, the Allies were winning the Battle of the Atlantic."
+      ]},
+      { title: "Stalingrad", text: [
+        "In the summer of 1942, German armies attacked the Soviet city of Stalingrad, on the Volga River. The fighting went on for months, street by street and building by building, through a freezing winter.",
+        "In November 1942, Soviet forces circled around the German army and trapped it inside the city. On February 2, 1943, what was left of the German army there surrendered. Stalingrad was one of the largest and deadliest battles in history, and it was the turning point of the war in the east. After it, the German army was mostly pushed backward."
+      ]},
+      { title: "The Desert War", text: [
+        "In North Africa, British forces had been battling German and Italian armies for control of Egypt and the Suez Canal. The German commander, Erwin Rommel, was so clever in the desert that he was nicknamed the Desert Fox.",
+        "In late 1942, British forces under General Bernard Montgomery defeated Rommel at the Battle of El Alamein in Egypt. Churchill later said that before El Alamein the Allies never had a victory, and after it they never had a defeat."
+      ]},
+      { title: "Americans Land in Africa", text: [
+        "In November 1942, American and British troops landed in Morocco and Algeria, on the other side of North Africa. It was America's first big ground attack against Germany, and it was led by an American general named Dwight Eisenhower.",
+        "The fighting was hard, and the new American army learned many difficult lessons. By May 1943, the Allies had trapped the German and Italian armies in Tunisia, and about a quarter of a million Axis soldiers surrendered."
+      ]},
+      { title: "The Tuskegee Airmen", text: [
+        "At the time, the American military kept Black soldiers in separate units, and many people wrongly believed Black Americans couldn't be pilots. A group of Black pilots trained at Tuskegee, Alabama, proved them wrong.",
+        "The Tuskegee Airmen flew in North Africa and Italy starting in 1943. Many of their fighter planes had tails painted bright red, so other pilots nicknamed them the Red Tails. Bomber crews were glad to see the Red Tails flying beside them for protection."
+      ]},
+      { title: "Into Italy", text: [
+        "From Africa, the Allies crossed the Mediterranean Sea and invaded the island of Sicily in July 1943. That same month, Italians fed up with the war removed Mussolini from power. In September 1943, Italy surrendered to the Allies.",
+        "But German troops took over most of Italy and kept fighting. The Allies had to battle slowly north through Italy's mountains for the rest of the war."
+      ]},
+      { title: "The Big Three Meet", text: [
+        "In November 1943, Roosevelt, Churchill, and Stalin met together for the first time, in the city of Tehran, Iran. Stalin had long asked the other two to open a new front in western Europe to take pressure off the Soviet Union.",
+        "At Tehran, they agreed that American and British forces would cross the English Channel and invade France in 1944. That plan would become D-Day."
+      ]}
+    ],
+    closing: "Codebreakers, convoys, a frozen city, and desert armies turned the tide in 1942 and 1943, and the Allies began planning the biggest invasion the world had ever seen.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What was the name of Germany's code machine?", ref: "Breaking the Codes",
+          choices: ["Enigma", "Midway", "Radar", "Overlord"] },
+        { q: "Which country's codebreakers first figured out early Enigma messages?", ref: "Breaking the Codes",
+          choices: ["Poland", "Italy", "Japan", "Brazil"] },
+        { q: "What was the secret British codebreaking center called?", ref: "Breaking the Codes",
+          choices: ["Bletchley Park", "Tuskegee", "Willow Run", "Battleship Row"] },
+        { q: "How did the Americans know Japan was planning to attack Midway?", ref: "The Battle of Midway",
+          choices: ["Codebreakers cracked part of Japan's code", "A Japanese pilot told them", "They read it in a newspaper", "A spy sent a postcard"] },
+        { q: "How many Japanese aircraft carriers were sunk at Midway?", ref: "The Battle of Midway",
+          choices: ["Four", "One", "Forty", "None"] },
+        { q: "What were groups of hunting German U-boats called?", ref: "The Battle of the Atlantic",
+          choices: ["Wolf packs", "Convoys", "Red Tails", "Little ships"] },
+        { q: "How did cargo ships protect themselves from U-boats?", ref: "The Battle of the Atlantic",
+          choices: ["They sailed together in convoys", "They sailed only at noon", "They painted themselves gold", "They stayed in port"] },
+        { q: "What happened to the German army trapped in Stalingrad?", ref: "Stalingrad",
+          choices: ["It surrendered in February 1943", "It captured Moscow", "It escaped by airplane", "It sailed down the Volga to safety"] },
+        { q: "What was German commander Erwin Rommel nicknamed?", ref: "The Desert War",
+          choices: ["The Desert Fox", "The Red Baron", "The Iron Wolf", "The Sand Snake"] },
+        { q: "Where did the British defeat Rommel in late 1942?", ref: "The Desert War",
+          choices: ["El Alamein", "Stalingrad", "Midway", "Dunkirk"] },
+        { q: "Which American general led the landings in North Africa?", ref: "Americans Land in Africa",
+          choices: ["Dwight Eisenhower", "Paul Tibbets", "John Pershing", "Harry Truman"] },
+        { q: "Why were the Tuskegee Airmen called the Red Tails?", ref: "The Tuskegee Airmen",
+          choices: ["Their planes' tails were painted red", "They wore red scarves", "They came from the Red River", "They flew only at sunset"] },
+        { q: "What happened to Mussolini in July 1943?", ref: "Into Italy",
+          choices: ["He was removed from power", "He became king of France", "He joined the Allies", "He moved to America"] },
+        { q: "Where did Roosevelt, Churchill, and Stalin first meet together?", ref: "The Big Three Meet",
+          choices: ["Tehran, Iran", "Paris, France", "Washington, D.C.", "Berlin, Germany"] },
+        { q: "What did the Big Three agree to at Tehran?", ref: "The Big Three Meet",
+          choices: ["Invade France in 1944", "End the war right away", "Split Poland in half", "Build a new navy base"] }
+      ],
+      think: "Codebreakers helped win the war by cracking secret messages. If you invented your own secret code, how would it work?"
+    }
+  },
+  {
+    id: "world-at-war-part-5",
+    title: "The World at War, Part V: D-Day and Victory in Europe",
+    voice: "plain",
+    intro: "On June 6, 1944, the largest invasion from the sea in history landed on the beaches of France. Less than a year later, the war in Europe was over. This is Part V of a seven part series about World War II, and it also tells the hardest part of the war's story, the Holocaust.",
+    sections: [
+      { title: "Planning the Invasion", text: [
+        "After the Big Three agreed to invade France, the Allies spent many months getting ready in Britain. Millions of soldiers, thousands of ships, and thousands of airplanes gathered for an attack code named Operation Overlord. General Dwight Eisenhower was put in charge.",
+        "The Allies chose the beaches of Normandy, in northern France. They also tricked the Germans into expecting the attack somewhere else, using a fake army led by American General George Patton, fake radio messages, and decoys like inflatable rubber tanks."
+      ]},
+      { title: "D-Day", text: [
+        "Bad weather delayed the invasion by a day. Just after midnight on June 6, 1944, thousands of paratroopers dropped behind the German lines. At dawn, landing craft carried soldiers onto five beaches, code named Utah, Omaha, Gold, Juno, and Sword. Americans landed at Utah and Omaha, British soldiers at Gold and Sword, and Canadians at Juno.",
+        "By the end of the day, about 156,000 Allied soldiers had come ashore. The fighting was especially hard at Omaha Beach, and thousands of Allied soldiers died that day. But the Allies had a foothold in France, and they never let go."
+      ]},
+      { title: "Utah Beach", text: [
+        "One of the D-Day beaches shares a name with our state. Utah Beach was the westernmost of the five beaches, where American soldiers came ashore.",
+        "Strong currents pushed the first wave of landing craft about a mile away from where they were supposed to land. It turned out to be lucky, because that part of the beach was less heavily defended. Utah Beach was taken faster and with fewer losses than Omaha."
+      ]},
+      { title: "Paris Is Free", text: [
+        "After weeks of hard fighting in the fields and hedgerows of Normandy, the Allies broke out and raced across France. More Allied forces landed in southern France in August.",
+        "On August 25, 1944, Paris was freed after four years of German control. Crowds filled the streets, cheering, waving flags, and hugging the soldiers."
+      ]},
+      { title: "The Battle of the Bulge", text: [
+        "By December 1944, many people hoped the war would be over by Christmas. Then Germany launched a surprise attack in the snowy Ardennes forest of Belgium and Luxembourg. The German push made a big bulge in the Allied lines on the map, so it was called the Battle of the Bulge.",
+        "American soldiers fought in deep snow and freezing cold. At a town called Bastogne, surrounded American troops refused to surrender. When the Germans demanded they give up, the American general sent back a one word answer: \"Nuts!\" By January 1945, the Germans were pushed back. It was the largest battle the American army fought in the war."
+      ]},
+      { title: "The Holocaust", text: [
+        "As Allied soldiers moved into Germany and Poland, they discovered the worst crime of the war. The Nazis believed some groups of people were less human than others, and they targeted Jewish people above all. First the Nazis took away Jewish people's rights, homes, and jobs. Then they forced them into crowded neighborhoods called ghettos and into camps.",
+        "During the war, the Nazis murdered about six million Jewish people, along with millions of others, including Roma people, disabled people, and many Poles and Soviet prisoners. This is called the Holocaust. When Allied soldiers freed the camps in 1945, they were shocked by what they found, and General Eisenhower made sure photographers and reporters recorded it, so no one could ever say it didn't happen."
+      ]},
+      { title: "Anne Frank", text: [
+        "One of the most famous people of the Holocaust is a girl named Anne Frank. She was a Jewish girl living in Amsterdam, in the Netherlands. When she was 13, her family went into hiding in a secret set of rooms behind her father's office. Friends brought them food. They hid there for about two years.",
+        "Anne kept a diary, writing about her life, her family, her hopes, and her dream of becoming a writer. In 1944, the family was discovered and sent to camps. Anne died in a camp in early 1945, only weeks before it was freed. Her father survived and published her diary. Today, The Diary of a Young Girl is one of the most widely read books in the world."
+      ]},
+      { title: "Closing In on Berlin", text: [
+        "In early 1945, Germany was squeezed from both sides. American, British, and Canadian armies crossed the Rhine River from the west, and Soviet armies pushed toward Berlin from the east. In April 1945, American and Soviet soldiers met at the Elbe River in Germany and shook hands.",
+        "That same month, President Roosevelt died, and Vice President Harry Truman became president. A few weeks later, as Soviet soldiers fought their way into Berlin, Hitler died in his underground bunker there."
+      ]},
+      { title: "Victory in Europe", text: [
+        "On May 7, 1945, Germany surrendered. May 8 was celebrated as V-E Day, which stands for Victory in Europe Day. Huge crowds packed the streets of London, New York, Paris, and many other cities, singing, dancing, and cheering.",
+        "But the celebration was only half complete. The war against Japan was still being fought in the Pacific."
+      ]},
+      { title: "Never Forget", text: [
+        "After the war, Allied countries put many Nazi leaders on trial in the German city of Nuremberg, the first time leaders were tried before an international court for crimes against humanity.",
+        "Today, museums around the world, including the United States Holocaust Memorial Museum in Washington, D.C., help people remember. Their message is never forget, because remembering what happened is one way to make sure it never happens again."
+      ]}
+    ],
+    closing: "D-Day began the end of Hitler's Germany, and the victory in Europe came at an enormous cost, which is why the world still promises to remember the soldiers who fought and the millions of people who were lost.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What was the code name for the invasion of France?", ref: "Planning the Invasion",
+          choices: ["Operation Overlord", "Operation Enigma", "Operation Midway", "Operation Blitz"] },
+        { q: "How did the Allies trick the Germans about where they would attack?", ref: "Planning the Invasion",
+          choices: ["A fake army with decoys and fake radio messages", "By sending a letter to Hitler", "By attacking at night in Italy", "By hiding the ships under water"] },
+        { q: "On what date was D-Day?", ref: "D-Day",
+          choices: ["June 6, 1944", "December 7, 1941", "May 8, 1945", "September 1, 1939"] },
+        { q: "About how many Allied soldiers came ashore on D-Day?", ref: "D-Day",
+          choices: ["About 156,000", "About 1,560", "About 15 million", "About 156"] },
+        { q: "Which two D-Day beaches did Americans land on?", ref: "D-Day",
+          choices: ["Utah and Omaha", "Gold and Sword", "Juno and Gold", "Sword and Juno"] },
+        { q: "Why did landing in the wrong spot turn out lucky at Utah Beach?", ref: "Utah Beach",
+          choices: ["That part of the beach was less defended", "It had a hidden road to Paris", "The water was warmer there", "It was closer to England"] },
+        { q: "When was Paris freed?", ref: "Paris Is Free",
+          choices: ["August 25, 1944", "June 6, 1944", "May 8, 1945", "December 25, 1944"] },
+        { q: "Why was it called the Battle of the Bulge?", ref: "The Battle of the Bulge",
+          choices: ["The German attack made a bulge in the Allied lines", "Soldiers ate too much at Christmas", "It was fought on a round hill", "The tanks were very round"] },
+        { q: "What one word answer did the American general at Bastogne send the Germans?", ref: "The Battle of the Bulge",
+          choices: ["Nuts!", "Never!", "Maybe!", "Goodbye!"] },
+        { q: "What is the Holocaust?", ref: "The Holocaust",
+          choices: ["The Nazis' murder of millions of Jewish people and others", "A battle in the Pacific", "A famous bombing of London", "A peace treaty after the war"] },
+        { q: "Why did General Eisenhower have photographers record the freed camps?", ref: "The Holocaust",
+          choices: ["So no one could say it didn't happen", "To make a movie for fun", "To sell the pictures", "To send them to Hitler"] },
+        { q: "Where did Anne Frank and her family hide?", ref: "Anne Frank",
+          choices: ["Secret rooms behind her father's office", "A castle in the countryside", "A ship in the harbor", "A cave in the mountains"] },
+        { q: "Who published Anne Frank's diary after the war?", ref: "Anne Frank",
+          choices: ["Her father", "General Eisenhower", "Winston Churchill", "Her teacher"] },
+        { q: "Where did American and Soviet soldiers meet and shake hands in April 1945?", ref: "Closing In on Berlin",
+          choices: ["The Elbe River in Germany", "The beaches of Normandy", "The streets of London", "The island of Midway"] },
+        { q: "What does V-E Day stand for?", ref: "Victory in Europe",
+          choices: ["Victory in Europe Day", "Very Exciting Day", "Veterans Everywhere Day", "Victory over Everyone Day"] }
+      ],
+      think: "Anne Frank kept a diary, and it helps people understand history today. Why do you think a diary written by a real kid can teach people things that a history book can't?"
+    }
+  },
+  {
+    id: "world-at-war-part-6",
+    title: "The World at War, Part VI: The War in the Pacific",
+    voice: "plain",
+    intro: "While the Allies fought their way across Europe, a very different war was being fought across the largest ocean on Earth. This is Part VI of a seven part series about World War II, and it follows American forces as they crossed the Pacific, island by island, toward Japan.",
+    sections: [
+      { title: "An Ocean-Sized War", text: [
+        "The Pacific Ocean covers about a third of the Earth's surface. By 1942, Japan controlled a huge area of it, from the edge of Alaska to the islands north of Australia, and from China to the middle of the Pacific.",
+        "Fighting there meant moving soldiers, food, fuel, and airplanes across thousands of miles of water. Aircraft carriers, which are floating airfields, became the most important ships of the war."
+      ]},
+      { title: "Guadalcanal", text: [
+        "After the victory at Midway, the Allies went on the attack. In August 1942, American Marines landed on Guadalcanal, an island in the Solomon Islands where Japan was building an airfield.",
+        "The fighting on land, at sea, and in the air lasted six months, in steamy jungle heat. In February 1943, the last Japanese troops left the island. It was the first major land victory for the Allies in the Pacific."
+      ]},
+      { title: "Island Hopping", text: [
+        "Japan held hundreds of islands, far too many to capture one by one. So American leaders came up with a plan called island hopping. Instead of attacking every island, they captured only the most important ones, especially islands where they could build airfields, and skipped the rest.",
+        "The skipped islands were cut off from supplies. Each captured island brought American airplanes closer to Japan, like stepping stones across the ocean."
+      ]},
+      { title: "I Shall Return", text: [
+        "In 1942, American General Douglas MacArthur was forced to leave the Philippines as Japanese forces took over. When he escaped, he made a famous promise to the Filipino people: \"I shall return.\"",
+        "He kept it. In October 1944, MacArthur waded ashore on the Philippine island of Leyte. At the same time, the Battle of Leyte Gulf was fought nearby, one of the largest naval battles in history. The American navy won, and Japan's navy never recovered."
+      ]},
+      { title: "The Navajo Code Talkers", text: [
+        "Japanese codebreakers were very good at cracking American messages, so the Marines needed a code the enemy could never break. The answer came from the Navajo Nation. In 1942, 29 young Navajo men joined the Marines and created a code based on their own language, which was spoken by very few people outside the Navajo Nation and had never been written down in a way enemies could study.",
+        "Ordinary words stood for military ones. For example, the Navajo word for turtle meant a tank, and the word for hummingbird meant a fighter plane. Over the course of the war, hundreds of Navajo Code Talkers sent messages by radio and telephone in every major Marine battle in the Pacific. Their code was never broken. It was kept secret until 1968, and today August 14 is National Navajo Code Talkers Day."
+      ]},
+      { title: "Iwo Jima", text: [
+        "In February 1945, Marines landed on Iwo Jima, a small volcanic island about 750 miles from Tokyo. Americans wanted it as an emergency landing field for damaged bombers flying back from Japan.",
+        "On February 23, 1945, Marines raised an American flag on top of Mount Suribachi, the island's volcano. A photographer named Joe Rosenthal snapped a picture of six men raising the flag together. It became one of the most famous photographs ever taken, and it won the Pulitzer Prize. The Marine Corps War Memorial near Washington, D.C., is a giant statue based on that photo."
+      ]},
+      { title: "Okinawa", text: [
+        "In April 1945, American forces invaded Okinawa, a large island only about 350 miles from Japan's main islands. The battle lasted nearly three months and was one of the deadliest of the Pacific war.",
+        "During the battle, some Japanese pilots, called kamikaze, flew their planes straight into American ships on purpose. The fierce fighting at Iwo Jima and Okinawa convinced American leaders that Japan would fight on no matter what."
+      ]},
+      { title: "Bombers Over Japan", text: [
+        "With bases on captured islands like Saipan, Tinian, and Guam, giant American B-29 bombers could now reach Japan. Starting in late 1944, they bombed Japanese factories and cities, and Japan's ability to make weapons and feed its people grew weaker and weaker.",
+        "The American navy also cut Japan off from the oil, food, and metal it needed from the rest of Asia. By the summer of 1945, Japan had very little left, but its leaders still refused to surrender."
+      ]},
+      { title: "Planning the Final Invasion", text: [
+        "American leaders began planning an invasion of Japan itself, set to begin in late 1945. Everyone expected it to be the bloodiest battle of the whole war, with huge losses for both American soldiers and Japanese people.",
+        "But in a secret desert base in Utah, another plan had been getting ready for months. A special group of airmen had been training for a mission that most of them knew almost nothing about. That story is the final chapter."
+      ]}
+    ],
+    closing: "Island by island, from Guadalcanal to Okinawa, American forces crossed the vast Pacific, and by the summer of 1945, the war's final chapter was about to be written by a secret unit from Wendover, Utah.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "About how much of the Earth's surface does the Pacific Ocean cover?", ref: "An Ocean-Sized War",
+          choices: ["About a third", "About a tenth", "About half", "Almost all of it"] },
+        { q: "What are aircraft carriers?", ref: "An Ocean-Sized War",
+          choices: ["Floating airfields", "Submarines for airplanes", "Trains that carry planes", "Airplanes that carry ships"] },
+        { q: "Why did Americans land on Guadalcanal?", ref: "Guadalcanal",
+          choices: ["Japan was building an airfield there", "It had gold mines", "It was close to California", "It was Japan's capital"] },
+        { q: "What was the first major land victory for the Allies in the Pacific?", ref: "Guadalcanal",
+          choices: ["Guadalcanal", "Pearl Harbor", "Dunkirk", "Stalingrad"] },
+        { q: "What was the island hopping plan?", ref: "Island Hopping",
+          choices: ["Capture only the most important islands and skip the rest", "Capture every single island one by one", "Swim from island to island", "Build bridges between islands"] },
+        { q: "What promise did General MacArthur make when he left the Philippines?", ref: "I Shall Return",
+          choices: ["I shall return", "Go for broke", "We can do it", "Nuts!"] },
+        { q: "Who won the Battle of Leyte Gulf?", ref: "I Shall Return",
+          choices: ["The American navy", "The Japanese navy", "The British army", "Nobody won"] },
+        { q: "What did the Navajo Code Talkers base their code on?", ref: "The Navajo Code Talkers",
+          choices: ["Their own Navajo language", "The Enigma machine", "Morse code", "Musical notes"] },
+        { q: "In the Navajo code, what did the word for turtle mean?", ref: "The Navajo Code Talkers",
+          choices: ["A tank", "A submarine", "A general", "A fighter plane"] },
+        { q: "Was the Navajo code ever broken?", ref: "The Navajo Code Talkers",
+          choices: ["No, it was never broken", "Yes, in 1943", "Yes, by German codebreakers", "Yes, at Iwo Jima"] },
+        { q: "Why did Americans want the island of Iwo Jima?", ref: "Iwo Jima",
+          choices: ["As an emergency landing field for bombers", "To build a new city", "To find oil", "To catch fish for soldiers"] },
+        { q: "Who took the famous photo of the flag raising on Iwo Jima?", ref: "Iwo Jima",
+          choices: ["Joe Rosenthal", "Paul Tibbets", "Douglas MacArthur", "Alan Turing"] },
+        { q: "What did the fighting at Iwo Jima and Okinawa convince American leaders?", ref: "Okinawa",
+          choices: ["Japan would fight on no matter what", "Japan was about to give up", "The war was already won", "Japan had no soldiers left"] },
+        { q: "From which captured islands could B-29 bombers reach Japan?", ref: "Bombers Over Japan",
+          choices: ["Saipan, Tinian, and Guam", "Hawaii, Alaska, and Cuba", "Sicily, Midway, and Iceland", "Britain, Ireland, and Malta"] },
+        { q: "What did everyone expect an invasion of Japan would be?", ref: "Planning the Final Invasion",
+          choices: ["The bloodiest battle of the whole war", "An easy and quick victory", "A battle fought only in the air", "A battle with no soldiers"] }
+      ],
+      think: "The Navajo Code Talkers used their own language to help their country. If you could use one skill or talent you have to help other people, what would it be, and how would you use it?"
+    }
+  },
+  {
+    id: "wendover-secret-air-base",
+    title: "The World at War, Part VII: The Secret Base at Wendover",
+    voice: "plain",
+    intro: "The last chapter of World War II was planned in a place most people drive right past: a quiet little airfield on the salt flats at the edge of Utah. What happened there in secret helped bring the biggest war in history to an end, and your own family was part of that story.",
+    sections: [
+      { title: "The War's Last Year", text: [
+        "The United States entered World War II after Japan attacked the American navy base at Pearl Harbor, Hawaii, on December 7, 1941. By 1944, the Allies were winning. In Europe, Germany finally surrendered in May 1945.",
+        "But the war against Japan went on. American forces had fought their way across the Pacific Ocean, island by island, and leaders were planning an invasion of Japan itself. Everyone expected that invasion to cost a huge number of lives on both sides."
+      ]},
+      { title: "A Letter to the President", text: [
+        "Back in 1939, the famous scientist Albert Einstein signed a letter to President Franklin Roosevelt. It warned that scientists had learned how to split the nucleus at the center of certain atoms, and that Germany might use that discovery to build a powerful new bomb.",
+        "The United States started a giant secret program called the Manhattan Project to build the bomb first. Ordinary explosives get their energy from breaking and making chemical bonds. An atomic bomb gets its energy from splitting the nucleus of atoms, which releases far, far more. Scientists in Los Alamos, New Mexico, built the bomb. Someone also had to learn how to deliver it, and that job went to Utah."
+      ]},
+      { title: "A Tiny Town on the Edge", text: [
+        "Wendover sits right on the line between Utah and Nevada, next to the Bonneville Salt Flats. In 1940, only about 100 people lived there. Because the desert around it was so huge and empty, the Army built an air base there with the largest bombing and gunnery range in the world, about 86 miles long.",
+        "During the war, bomber crews from all over the country trained at Wendover. At its busiest, the base had about 17,500 soldiers and 2,000 civilian workers, along with 668 buildings and three long runways."
+      ]},
+      { title: "A Pilot Picks a Base", text: [
+        "In September 1944, a young Army pilot named Paul Tibbets was given a top secret job: build and train a special group of crews to drop the atomic bomb. He was an expert on the B-29 Superfortress, one of the biggest bombers of the war.",
+        "Tibbets was offered three bases: Wendover, one in Kansas, and one in Idaho. He picked Wendover because it was so far from everything. Its runways could handle the huge B-29s, and a railroad line ran right into the base for sealed shipments."
+      ]},
+      { title: "The Most Secret Base in America", text: [
+        "On December 17, 1944, Tibbets's new unit officially began. It was called the 509th Composite Group, and it had about 1,700 people. The base was given a code name, Kingman. Mail and phone calls were checked, and signs reminded everyone that what they saw and heard there had to stay there.",
+        "Most of the airmen trained for months without knowing what they were really training for. They only knew it was important, and that they must never talk about it."
+      ]},
+      { title: "Pumpkin Bombs", text: [
+        "The atomic bombs had an unusual shape and were extremely heavy, so the crews practiced with bombs of the same size, shape, and weight. The airmen nicknamed them pumpkin bombs, and many were filled with concrete. Bombardiers dropped them from 30,000 feet, almost six miles up, trying to land within 200 feet of a target. Each crew needed 50 practice drops before Tibbets considered it ready.",
+        "Right after each drop, pilots made a very sharp turn at full speed to race away from the target. The bombs were so big that they had to be lowered into special pits in the ground so an airplane could be rolled over them and the bomb lifted up inside. Those loading pits are still at Wendover today."
+      ]},
+      { title: "Off to the Pacific", text: [
+        "In the spring and early summer of 1945, the 509th left Wendover for Tinian, a small island in the Pacific close enough for B-29s to reach Japan. One of their B-29s was named the Enola Gay, after Paul Tibbets's mother. Another was named Bockscar.",
+        "President Roosevelt died in April 1945, and Vice President Harry Truman became president. Truman had to make the decision about using the new bomb."
+      ]},
+      { title: "August 1945", text: [
+        "On August 6, 1945, Tibbets flew the Enola Gay and dropped the first atomic bomb used in war on the city of Hiroshima, Japan. Three days later, Bockscar dropped a second atomic bomb on the city of Nagasaki. The two bombs destroyed much of both cities and killed more than 100,000 people.",
+        "During those same days, the Soviet Union also declared war on Japan. People have discussed and debated the decision to use the bombs ever since. Since then, no country has used an atomic bomb in a war."
+      ]},
+      { title: "The War Ends", text: [
+        "On August 15, 1945, Japan announced it would surrender. Across America, people poured into the streets to celebrate. On September 2, 1945, Japanese leaders signed the official surrender on the deck of the battleship USS Missouri in Tokyo Bay.",
+        "World War II was over. It had lasted six years and involved more countries than any war in history. The world that came after it, with new friendships between old enemies and new worries about atomic weapons, is the world we still live in today."
+      ]},
+      { title: "Wendover Today", text: [
+        "The Air Force closed the base in 1969, and today it is a small public airport owned by Tooele County. So many of its old buildings are still standing that it is considered the most complete World War II training base left in the United States.",
+        "Visitors can tour a museum, see the old barracks and the bomb loading pits, and stand inside the giant hangar now known as the Enola Gay Hangar."
+      ]},
+      { title: "Your Family's War", text: [
+        "World War II wasn't only fought by famous generals and pilots. It took millions of ordinary people, and some of them were your great grandparents.",
+        "Your great grandmother Lucille worked at Wendover as a telephone operator. Back then, operators connected calls by hand on a switchboard, plugging cords into the right holes. On a base this secret, everyone who worked there had to be trusted to keep quiet about what they heard.",
+        "Your great grandfather J Lloyd was an aircraft mechanic at Pearl Harbor, keeping airplanes ready to fly. And your great grandfather Chet was a railroad engineer. He wanted to join the fight, but trains carried soldiers, weapons, and supplies all across the country, and his job was so important that he had to stay home and keep them running. Every one of those jobs helped win the war."
+      ]}
+    ],
+    closing: "The last chapter of World War II was written by pilots and scientists, but also by telephone operators, mechanics, and railroad engineers, ordinary people doing their jobs well, including your own family.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What attack brought the United States into World War II?", ref: "The War's Last Year",
+          choices: ["The attack on Pearl Harbor", "The sinking of the Lusitania", "The attack on Wendover", "The invasion of Poland"] },
+        { q: "Who signed a 1939 letter warning President Roosevelt about atomic bombs?", ref: "A Letter to the President",
+          choices: ["Albert Einstein", "Paul Tibbets", "Harry Truman", "Woodrow Wilson"] },
+        { q: "What was the secret program to build the atomic bomb called?", ref: "A Letter to the President",
+          choices: ["The Manhattan Project", "The New Deal", "The Marshall Plan", "The Kingman Plan"] },
+        { q: "Where does an atomic bomb get its energy?", ref: "A Letter to the President",
+          choices: ["Splitting the nucleus of atoms", "Breaking ordinary chemical bonds", "Burning lots of gasoline", "Mixing baking soda and vinegar"] },
+        { q: "Why did the Army build a bombing range at Wendover?", ref: "A Tiny Town on the Edge",
+          choices: ["The desert was huge and empty", "It had lots of trees for cover", "It was next to the ocean", "It was the biggest city in Utah"] },
+        { q: "Why did Paul Tibbets pick Wendover over bases in Kansas and Idaho?", ref: "A Pilot Picks a Base",
+          choices: ["It was far from everything", "It had the best restaurants", "It was closest to Japan", "It was always rainy"] },
+        { q: "What was Wendover's secret code name?", ref: "The Most Secret Base in America",
+          choices: ["Kingman", "Pumpkin", "Tinian", "Bonneville"] },
+        { q: "What were pumpkin bombs?", ref: "Pumpkin Bombs",
+          choices: ["Practice bombs shaped like the real ones", "Pumpkins dropped for Halloween", "Bombs that grew in gardens", "Orange paint for airplanes"] },
+        { q: "Who was the Enola Gay named after?", ref: "Off to the Pacific",
+          choices: ["Paul Tibbets's mother", "A famous movie star", "The first woman pilot", "A town in Nevada"] },
+        { q: "Who became president when Roosevelt died in April 1945?", ref: "Off to the Pacific",
+          choices: ["Harry Truman", "Herbert Hoover", "Woodrow Wilson", "Paul Tibbets"] },
+        { q: "On which two cities were atomic bombs dropped in August 1945?", ref: "August 1945",
+          choices: ["Hiroshima and Nagasaki", "Tokyo and Kyoto", "Berlin and Munich", "Paris and London"] },
+        { q: "Where did Japan sign the official surrender?", ref: "The War Ends",
+          choices: ["On the battleship USS Missouri", "In a railroad car in France", "At the Wendover airfield", "In the Hall of Mirrors"] },
+        { q: "What is the old Wendover airfield considered today?", ref: "Wendover Today",
+          choices: ["The most complete WWII training base left", "The busiest airport in Utah", "The place where the B-29 was invented", "A city of 17,500 people"] },
+        { q: "What job did great grandmother Lucille do at Wendover?", ref: "Your Family's War",
+          choices: ["Telephone operator", "Bomber pilot", "Railroad engineer", "Aircraft mechanic"] },
+        { q: "Why did great grandfather Chet have to stay home during the war?", ref: "Your Family's War",
+          choices: ["His railroad job was too important", "He was too young to join", "He lived too far from a base", "He was needed at Pearl Harbor"] }
+      ],
+      think: "Everyone at Wendover had to keep a huge secret. If you could ask someone who worked there one question about what it was like, what would you ask, and why?"
+    }
+  },
+  {
     id: "dog-who-discovered-calcium",
     title: "The Dog Who Discovered Calcium",
     voice: "plain",
