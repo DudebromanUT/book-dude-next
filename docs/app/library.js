@@ -103,6 +103,8 @@ export const ARTICLES = [
   },
   {
     id: 'cobol-history',
+    // Shown in the DONE part of the Library: she read it and passed its old test before the Library existed.
+    alwaysDone: true,
     title: 'COBOL’s History File',
     voice: 'cobol',
     intro: ['PROCESSING... HISTORY FILE LOADED.', 'I AM COBOL. MY NAME MEANS COMMON BUSINESS-ORIENTED LANGUAGE. I WAS CREATED IN 1959.'],

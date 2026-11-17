@@ -201,9 +201,10 @@ const testLine = a => 'PASS ' + a.test.pass + ' OF ' + a.test.outOf + ' (80%): '
 const testState = a => [earned(examId(a)) ? 'PASSED' : '', earned(thinkId(a)) ? 'BONUS EARNED' : ''].filter(Boolean).join(' · ');
 
 // A test she has passed is done: it moves to the end of the Library and Tests lists, in amber, so what's left comes
-// first. If its bonus question is still unanswered, it says so.
-const done = a => !!a.test && earned(examId(a));
-const doneLine = a => '✓ PASSED · ' + (earned(thinkId(a)) ? 'BONUS EARNED' : 'BONUS POINT STILL WAITING');
+// first. If its bonus question is still unanswered, it says so. An article marked alwaysDone (COBOL's history file)
+// sits with the done ones too.
+const done = a => !!a.alwaysDone || (!!a.test && earned(examId(a)));
+const doneLine = a => (a.test ? '✓ PASSED · ' + (earned(thinkId(a)) ? 'BONUS EARNED' : 'BONUS POINT STILL WAITING') : '✓ READING ONLY');
 function menuList(list, act, desc) {
   const rest = list.filter(a => !done(a)), finished = list.filter(done);
   const item = (a, i) => '<li><button type="button" class="t-opt' + (done(a) ? ' t-done' : '') + '" data-act="' + act + '" data-id="' + esc(a.id) + '"><span class="t-num">' + (i + 1) + '</span>' +

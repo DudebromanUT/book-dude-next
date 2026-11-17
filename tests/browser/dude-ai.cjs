@@ -204,9 +204,12 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await shot('1-library');
     const library = await options();
     assert.equal(library.length, 22);
-    assert.deepEqual(library.slice(0, 4), ["1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD HAS A TEST", '2 COBOL’S HISTORY FILE READING ONLY', '3 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '4 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST']);
-    assert.equal(library[20], '21 THE WORLD AT WAR, PART VII: THE SECRET BASE AT WENDOVER HAS A TEST');
-    assert.equal(library[21], '22 THE DOG WHO DISCOVERED CALCIUM HAS A TEST');
+    assert.deepEqual(library.slice(0, 4), ["1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD HAS A TEST", '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '3 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST', '4 THE ALKALI METALS: THE WILD FAMILY OF THE PERIODIC TABLE HAS A TEST']);
+    assert.equal(library[20], '21 THE DOG WHO DISCOVERED CALCIUM HAS A TEST');
+    // COBOL's history file sits with the done ones, in amber, from the start.
+    assert.equal(library[21], '22 COBOL’S HISTORY FILE ✓ READING ONLY');
+    assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 1');
+    assert.deepEqual(await p.$$eval(V + ' .t-opt.t-done', b => b.map(x => x.dataset.id)), ['cobol-history']);
     await p.click(V + ' [data-act="cobol-read"][data-id="cobol-history"]'); await sleep(200);
     const file = (await txt(p, V + ' .t-file'));
     assert.match(file, /^PROCESSING\.\.\. HISTORY FILE LOADED\. I AM COBOL\. MY NAME MEANS COMMON BUSINESS-ORIENTED LANGUAGE\./);
@@ -459,9 +462,9 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await key(1);
     list = await options();
     assert.equal(list[0], "1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD HAS A TEST");
-    assert.equal(list[1], '2 COBOL’S HISTORY FILE READING ONLY');
-    assert.deepEqual(list.slice(-2), ['21 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED', '22 THE DOG WHO DISCOVERED CALCIUM ✓ PASSED · BONUS EARNED']);
-    assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 2');
+    assert.equal(list[1], '2 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST');
+    assert.deepEqual(list.slice(-3), ['20 COBOL’S HISTORY FILE ✓ READING ONLY', '21 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED', '22 THE DOG WHO DISCOVERED CALCIUM ✓ PASSED · BONUS EARNED']);
+    assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 3');
     await key(3);
 
     // With Claude off in the script: no picks, and the chat says it's off, but the history file and the test work,
