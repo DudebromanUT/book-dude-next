@@ -9,6 +9,99 @@
 
 export const ARTICLES = [
   {
+    id: "california-condor",
+    title: "The California Condor: Utah's Giant Comeback Bird",
+    voice: "plain",
+    intro: "In 1982, there were only 22 California condors left in the whole world. Today there are more than 600, and some of them soar over the red cliffs of southern Utah. This is the story of how people brought North America's biggest bird back from the edge of extinction, and why the work isn't finished yet.",
+    sections: [
+      { title: "North America's Biggest Flier", text: [
+        "The California condor is the largest land bird in North America. Its wings stretch more than 9 feet from tip to tip, longer than a tall adult lying down. Instead of flapping all the time, condors ride rising columns of warm air, called thermals, and glide for hours. They can fly about 150 miles in a day and soar as high as 10,000 feet.",
+        "Adult condors are mostly black, with white patches under their wings. Their heads are bald, with bright pink and orange skin. They might not win a beauty contest, but there is a good reason for that bald head."
+      ]},
+      { title: "Nature's Cleanup Crew", text: [
+        "Condors are scavengers, which means they eat animals that have already died, like deer or cattle. They don't hunt. By cleaning up carcasses, they help keep the land clean and stop the spread of germs. A bald head is easier to keep clean when you eat this way.",
+        "Condors grow up slowly. A pair usually lays just one egg at a time, and the parents spend most of a year raising their chick. That means even a small number of deaths can hurt the population for a long time."
+      ]},
+      { title: "Down to 22", text: [
+        "Long ago, condors lived across much of North America. In more recent centuries, they still ranged along the West Coast from Canada to Mexico. But as more people moved west, condors began dying from poison, shooting, and especially lead.",
+        "By 1982, only 22 California condors were left in the world. Scientists warned that the species was about to disappear forever."
+      ]},
+      { title: "A Hard Decision", text: [
+        "Wildlife experts made a bold and difficult choice. They decided to catch every last wild condor and bring them into zoos, where they could be protected and raise chicks safely. Not everyone agreed. Some people believed the condors should be left in the wild.",
+        "On April 19, 1987, biologists captured the last wild condor, a male known as AC-9, in California. For the first time, there were no California condors flying free anywhere on Earth. Every condor alive, just 27 birds, lived in zoos."
+      ]},
+      { title: "Back to the Sky", text: [
+        "Zoos in California began a careful breeding program. To keep the chicks from getting too comfortable around people, keepers fed some of them using hand puppets shaped like adult condor heads. Slowly, the number of condors grew.",
+        "In 1992, the first captive-raised condors were released back into the wild in California. Then, on December 12, 1996, six young condors took their first flights from Vermilion Cliffs in northern Arizona, just south of the Utah border. They were the start of a brand new flock, the Arizona-Utah flock."
+      ]},
+      { title: "Condors in Utah", text: [
+        "The Arizona-Utah flock roams over the Grand Canyon, Vermilion Cliffs, and southern Utah, including Zion National Park. Condors nest in caves high on steep cliffs, and Zion's towering red rock walls are perfect for that.",
+        "In 2014, a condor chick hatched in Zion. It was the first wild condor chick in Utah since the recovery program began, but sadly it did not survive. Then, on September 25, 2019, a chick known as condor 1,000, or 1K, took its first flight from its nest cave in Zion. Two park visitors saw it happen. It was the first wild-hatched condor to fly from a nest in Zion, and because 2019 was the park's 100th birthday, it was nicknamed Zion's Centennial Chick."
+      ]},
+      { title: "The Lead Problem", text: [
+        "The biggest danger to condors today is lead, a heavy metal that is poisonous. When hunters shoot a deer or elk with bullets made of lead, tiny pieces of the bullet can break off and stay in the animal. If a condor later eats those remains, it swallows the lead.",
+        "Just one meal with lead in it can kill a condor. Lead poisoning is the leading cause of death for condors. Biologists regularly catch wild condors to test their blood, and birds with too much lead are treated with medicine to remove it before they are released again."
+      ]},
+      { title: "Hunters Helping Condors", text: [
+        "Utah came up with its own way to help. The Utah Division of Wildlife Resources started a program called Hunters Helping Condors. Since 2012, hunters with permits for the Zion hunting area in southern Utah have been offered free ammunition made without lead.",
+        "Hunters who use lead-free bullets, or who carry the leftover parts of their animal out of the wild so condors can't eat them, can also enter to win prizes. Arizona has a similar program, and for years, more than 80 percent of hunters in Arizona's condor area have taken part. It's a great example of hunters and wildlife scientists working together."
+      ]},
+      { title: "Bird Flu Strikes", text: [
+        "In the spring of 2023, a dangerous bird flu reached the Arizona-Utah flock. In just a few weeks, 21 condors died, about one out of every six birds in the flock. It was a terrible blow.",
+        "Biologists found one condor egg whose parents had died, rescued it from a cliffside nest, and hatched it safely. The chick was named Milagra, which means miracle, and in 2024 she was released to fly with the flock. Scientists also tested a bird flu vaccine, first on black vultures and then on condors. The California condor became the first bird in the United States approved for that emergency vaccine, and many wild condors have now been vaccinated."
+      ]},
+      { title: "Numbers on the Rise", text: [
+        "Every year, the U.S. Fish and Wildlife Service counts every California condor in the world. At the end of 2025, there were 607 condors. Of those, 392 were flying free in the wild, and 215 lived in zoos and breeding centers.",
+        "There were 98 wild condors in the Arizona-Utah flock. In 2025, 16 chicks hatched and fledged in the wild, which means they grew big enough to fly from their nests. Five of those were in Arizona and Utah."
+      ]},
+      { title: "Condor News in 2026", text: [
+        "On September 26, 2026, four more young condors were released at Vermilion Cliffs, almost 30 years after the first release there. Nearly 900 people gathered to watch them take their first flights.",
+        "There was exciting news farther west, too. Condors are now being released in Northern California by the Yurok Tribe, for whom the condor is a sacred bird. In 2026, a female condor there may have laid the first egg in the region in more than 100 years. And in October 2026, the San Diego Zoo Wildlife Alliance released its 200th condor raised at its Safari Park."
+      ]},
+      { title: "How to Spot a Condor", text: [
+        "Every wild condor wears a large tag with a number on each wing, plus a small radio or GPS transmitter. That is how biologists know each bird, and it's why condors are usually called by numbers, like 1K, instead of names.",
+        "If you visit Zion, the Grand Canyon, or the condor viewing site at Vermilion Cliffs, look up for a huge black bird gliding without flapping. If you can read its wing tag, you have spotted one of the rarest birds in the world."
+      ]}
+    ],
+    closing: "From only 22 birds to more than 600, the California condor's comeback shows what people can do when scientists, zoos, tribes, and even hunters work together, but the condor still needs help to stay in Utah's skies for good.",
+    test: {
+      pass: 12, outOf: 15, points: 4,
+      questions: [
+        { q: "What are thermals?", ref: "North America's Biggest Flier",
+          choices: ["Rising columns of warm air", "Feathers that keep condors warm", "Caves where condors nest", "Tags on condors' wings"] },
+        { q: "What is a scavenger?", ref: "Nature's Cleanup Crew",
+          choices: ["An animal that eats animals that already died", "An animal that hunts every day", "An animal that only eats plants", "An animal that sleeps all winter"] },
+        { q: "Why is a bald head helpful for a condor?", ref: "Nature's Cleanup Crew",
+          choices: ["It is easier to keep clean", "It helps the bird fly faster", "It keeps the bird warm", "It scares away eagles"] },
+        { q: "How many California condors were left in 1982?", ref: "Down to 22",
+          choices: ["22", "2,200", "220", "2"] },
+        { q: "What happened on April 19, 1987?", ref: "A Hard Decision",
+          choices: ["The last wild condor was captured", "The first condor was released in Utah", "Bird flu reached the flock", "Condor 1K took its first flight"] },
+        { q: "Why did keepers use hand puppets to feed condor chicks?", ref: "Back to the Sky",
+          choices: ["So the chicks wouldn't get too comfortable around people", "To make the chicks laugh", "Because the chicks were afraid of food", "To teach the chicks to talk"] },
+        { q: "Where were the first six condors of the Arizona-Utah flock released in 1996?", ref: "Back to the Sky",
+          choices: ["Vermilion Cliffs", "Bryce Canyon", "Great Salt Lake", "Pearl Harbor"] },
+        { q: "Where do condors build their nests?", ref: "Condors in Utah",
+          choices: ["In caves high on steep cliffs", "In tall pine trees", "In holes in the ground", "On the roofs of houses"] },
+        { q: "Why was condor 1K nicknamed Zion's Centennial Chick?", ref: "Condors in Utah",
+          choices: ["2019 was Zion's 100th birthday", "It was the 100th chick in Zion", "It weighed 100 pounds", "It flew 100 miles on its first day"] },
+        { q: "What is the leading cause of death for condors?", ref: "The Lead Problem",
+          choices: ["Lead poisoning", "Old age", "Cold weather", "Running out of caves"] },
+        { q: "What does Utah's Hunters Helping Condors program offer hunters?", ref: "Hunters Helping Condors",
+          choices: ["Free ammunition made without lead", "Free condor eggs", "A ride in a helicopter", "A pet condor"] },
+        { q: "About how much of the Arizona-Utah flock died from bird flu in 2023?", ref: "Bird Flu Strikes",
+          choices: ["About one out of every six birds", "Every single bird", "About one out of every hundred birds", "None of the birds"] },
+        { q: "What does the name Milagra mean?", ref: "Bird Flu Strikes",
+          choices: ["Miracle", "Mountain", "Feather", "Sunrise"] },
+        { q: "How many California condors were there in the world at the end of 2025?", ref: "Numbers on the Rise",
+          choices: ["607", "22", "6,000", "60"] },
+        { q: "How do biologists tell wild condors apart?", ref: "How to Spot a Condor",
+          choices: ["Numbered tags on their wings", "The color of their feathers", "Their different songs", "Collars with their names"] }
+      ],
+      think: "If you spotted a condor with a number tag soaring over Zion and got to give it a real name, what would you name it, and why?"
+    }
+  },
+  {
     id: 'cobol-history',
     title: 'COBOL’s History File',
     voice: 'cobol',

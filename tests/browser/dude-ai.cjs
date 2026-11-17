@@ -152,7 +152,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     const btn = await p.$eval(V + ' .grownup-btn', e => ({ bg: getComputedStyle(e).backgroundColor, h: e.getBoundingClientRect().height }));
     assert.equal(btn.bg, 'rgb(242, 181, 58)', 'yellow');
     assert.ok(btn.h <= 44, 'small: ' + btn.h);
-    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 21 ARTICLES TO READ', '3 TESTS 98 POINTS UP FOR GRABS']);
+    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 22 ARTICLES TO READ', '3 TESTS 103 POINTS UP FOR GRABS']);
     assert.deepEqual(await pfKeys(), ['PF1 LIBRARY', 'PF3 EXIT', 'PF5 SOUND ON']);
     // Typing an option: a number that isn't one says so; 1 opens the chat.
     await p.fill('#cobol-option', '9'); await p.$eval('form[data-form="cobol-option"] button', e => e.click()); await sleep(200);
@@ -203,11 +203,10 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await shot('1-library');
     const library = await options();
-    assert.equal(library.length, 21);
-    assert.deepEqual(library.slice(0, 4), ['1 COBOL’S HISTORY FILE READING ONLY', '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '3 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST',
-      '4 THE ALKALI METALS: THE WILD FAMILY OF THE PERIODIC TABLE HAS A TEST']);
-    assert.equal(library[19], '20 THE WORLD AT WAR, PART VII: THE SECRET BASE AT WENDOVER HAS A TEST');
-    assert.equal(library[20], '21 THE DOG WHO DISCOVERED CALCIUM HAS A TEST');
+    assert.equal(library.length, 22);
+    assert.deepEqual(library.slice(0, 4), ["1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD HAS A TEST", '2 COBOL’S HISTORY FILE READING ONLY', '3 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '4 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST']);
+    assert.equal(library[20], '21 THE WORLD AT WAR, PART VII: THE SECRET BASE AT WENDOVER HAS A TEST');
+    assert.equal(library[21], '22 THE DOG WHO DISCOVERED CALCIUM HAS A TEST');
     await p.click(V + ' [data-act="cobol-read"][data-id="cobol-history"]'); await sleep(200);
     const file = (await txt(p, V + ' .t-file'));
     assert.match(file, /^PROCESSING\.\.\. HISTORY FILE LOADED\. I AM COBOL\. MY NAME MEANS COMMON BUSINESS-ORIENTED LANGUAGE\./);
@@ -221,7 +220,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS 98 POINTS UP FOR GRABS');
+    assert.equal((await options())[2], '3 TESTS 103 POINTS UP FOR GRABS');
     await option(1);
     assert.equal((await lines()).length, 4, 'the conversation is still there');
 
@@ -318,15 +317,15 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS 93 POINTS UP FOR GRABS');
+    assert.equal((await options())[2], '3 TESTS 98 POINTS UP FOR GRABS');
     // Option 3 lists the tests; PF3 from a test goes back to the list.
     await option(3);
     assert.equal(await screenName(), 'TESTS');
     // A passed test moves to the end, in amber, under "DONE"; what's left comes first.
     let list = await options();
-    assert.equal(list.length, 20);
-    assert.match(list[0], /^1 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY PASS 12 OF 15/);
-    assert.equal(list[19], '20 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED');
+    assert.equal(list.length, 21);
+    assert.match(list[0], /^1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD PASS 12 OF 15/);
+    assert.equal(list[20], '21 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED');
     assert.deepEqual(await p.$$eval(V + ' .t-opt.t-done', b => b.map(x => x.dataset.id)), ['guard-dog-wise-owl-dopamine']);
     assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 1');
     await p.click(V + ' .t-opt[data-act="cobol-test"]'); await sleep(200);
@@ -459,8 +458,9 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.match(fake.article, /\n\nEvery time you drink a glass of milk/);
     await key(1);
     list = await options();
-    assert.equal(list[0], '1 COBOL’S HISTORY FILE READING ONLY');
-    assert.deepEqual(list.slice(-2), ['20 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED', '21 THE DOG WHO DISCOVERED CALCIUM ✓ PASSED · BONUS EARNED']);
+    assert.equal(list[0], "1 THE CALIFORNIA CONDOR: UTAH'S GIANT COMEBACK BIRD HAS A TEST");
+    assert.equal(list[1], '2 COBOL’S HISTORY FILE READING ONLY');
+    assert.deepEqual(list.slice(-2), ['21 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED', '22 THE DOG WHO DISCOVERED CALCIUM ✓ PASSED · BONUS EARNED']);
     assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 2');
     await key(3);
 
