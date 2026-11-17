@@ -729,6 +729,11 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .t-num { grid-row: span 2; color: #E8FFF0; font-weight: 800; }
 .t-name { color: #E8FFF0; font-weight: 700; }
 .t-desc { grid-column: 2; color: #6FE7FF; font-size: .9em; }
+/* A passed test, at the end of the list: amber, like an old amber-screen terminal. */
+.t-opt.t-done { border-color: rgb(255 184 77 / .55); background: rgb(255 184 77 / .06); }
+.t-opt.t-done .t-num, .t-opt.t-done .t-name { color: #FFD08A; }
+.t-opt.t-done .t-desc { color: #FFB84D; }
+.t-divider { list-style: none; margin: 10px 0 2px; color: #FFB84D; font-weight: 700; letter-spacing: .08em; font-size: .85em; }
 /* Library articles in the plain voice read in a sans face; every article gets a title line. */
 .t-title { margin: 0; color: #E8FFF0; font: 700 1.15em/1.3 inherit; text-shadow: 0 0 6px rgb(232 255 240 / .4); }
 .t-plain { font-family: var(--sans); font-size: 16px; line-height: 1.55; }

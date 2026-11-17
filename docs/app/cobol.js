@@ -200,10 +200,21 @@ function testsStatus() {
 const testLine = a => 'PASS ' + a.test.pass + ' OF ' + a.test.outOf + ' (80%): ' + a.test.points + ' POINTS, +1 BONUS';
 const testState = a => [earned(examId(a)) ? 'PASSED' : '', earned(thinkId(a)) ? 'BONUS EARNED' : ''].filter(Boolean).join(' · ');
 
+// A test she has passed is done: it moves to the end of the Library and Tests lists, in amber, so what's left comes
+// first. If its bonus question is still unanswered, it says so.
+const done = a => !!a.test && earned(examId(a));
+const doneLine = a => '✓ PASSED · ' + (earned(thinkId(a)) ? 'BONUS EARNED' : 'BONUS POINT STILL WAITING');
+function menuList(list, act, desc) {
+  const rest = list.filter(a => !done(a)), finished = list.filter(done);
+  const item = (a, i) => '<li><button type="button" class="t-opt' + (done(a) ? ' t-done' : '') + '" data-act="' + act + '" data-id="' + esc(a.id) + '"><span class="t-num">' + (i + 1) + '</span>' +
+    '<span class="t-name">' + esc(a.title.toUpperCase()) + '</span><span class="t-desc">' + (done(a) ? doneLine(a) : desc(a)) + '</span></button></li>';
+  return '<ol class="t-menu">' + rest.map(item).join('') +
+    (finished.length ? '<li class="t-divider" aria-hidden="true">DONE: ' + finished.length + '</li>' + finished.map((a, i) => item(a, rest.length + i)).join('') : '') + '</ol>';
+}
+
 function libraryBody() {
-  return '<p class="t-menu-title">THE LIBRARY. SELECT AN ARTICLE, HUMAN.</p><ol class="t-menu">' + ARTICLES.map((a, i) =>
-    '<li><button type="button" class="t-opt" data-act="cobol-read" data-id="' + esc(a.id) + '"><span class="t-num">' + (i + 1) + '</span>' +
-    '<span class="t-name">' + esc(a.title.toUpperCase()) + '</span><span class="t-desc">' + (a.test ? 'HAS A TEST' + (testState(a) ? ' · ' + testState(a) : '') : 'READING ONLY') + '</span></button></li>').join('') + '</ol>';
+  return '<p class="t-menu-title">THE LIBRARY. SELECT AN ARTICLE, HUMAN.</p>' +
+    menuList(ARTICLES, 'cobol-read', a => (a.test ? 'HAS A TEST' + (testState(a) ? ' · ' + testState(a) : '') : 'READING ONLY'));
 }
 
 function articleBody() {
@@ -222,9 +233,7 @@ function articleBody() {
 }
 
 function testsBody() {
-  return '<p class="t-menu-title">TESTS. EACH ONE EARNS ITS POINTS ONCE.</p><ol class="t-menu">' + TESTED.map((a, i) =>
-    '<li><button type="button" class="t-opt" data-act="cobol-test" data-id="' + esc(a.id) + '"><span class="t-num">' + (i + 1) + '</span>' +
-    '<span class="t-name">' + esc(a.title.toUpperCase()) + '</span><span class="t-desc">' + (testState(a) || testLine(a)) + '</span></button></li>').join('') + '</ol>' +
+  return '<p class="t-menu-title">TESTS. EACH ONE EARNS ITS POINTS ONCE.</p>' + menuList(TESTED, 'cobol-test', a => testState(a) || testLine(a)) +
     '<p class="t-note">Read the article in the Library first. More tests are coming, and math tests will need 90% or higher for more points.</p>';
 }
 

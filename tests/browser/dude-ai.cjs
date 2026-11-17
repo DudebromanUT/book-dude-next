@@ -322,7 +322,13 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     // Option 3 lists the tests; PF3 from a test goes back to the list.
     await option(3);
     assert.equal(await screenName(), 'TESTS');
-    assert.deepEqual((await options()).slice(0, 1), ['1 THE GUARD DOG, THE WISE OWL, AND DOPAMINE PASSED · BONUS EARNED']);
+    // A passed test moves to the end, in amber, under "DONE"; what's left comes first.
+    let list = await options();
+    assert.equal(list.length, 20);
+    assert.match(list[0], /^1 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY PASS 12 OF 15/);
+    assert.equal(list[19], '20 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED');
+    assert.deepEqual(await p.$$eval(V + ' .t-opt.t-done', b => b.map(x => x.dataset.id)), ['guard-dog-wise-owl-dopamine']);
+    assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 1');
     await p.click(V + ' .t-opt[data-act="cobol-test"]'); await sleep(200);
     assert.equal(await screenName(), 'TEST');
     await key(3);
@@ -451,7 +457,12 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.match(fake.article, /^NOTE FROM HER PARENTS, FOR COBOL ONLY \(she never sees this\): this article is intentionally fake\./);
     assert.match(fake.article, /Humphry Davy discovered calcium in 1808/);
     assert.match(fake.article, /\n\nEvery time you drink a glass of milk/);
-    await key(1); await key(3);
+    await key(1);
+    list = await options();
+    assert.equal(list[0], '1 COBOL’S HISTORY FILE READING ONLY');
+    assert.deepEqual(list.slice(-2), ['20 THE GUARD DOG, THE WISE OWL, AND DOPAMINE ✓ PASSED · BONUS EARNED', '21 THE DOG WHO DISCOVERED CALCIUM ✓ PASSED · BONUS EARNED']);
+    assert.equal(await txt(p, V + ' .t-divider'), 'DONE: 2');
+    await key(3);
 
     // With Claude off in the script: no picks, and the chat says it's off, but the history file and the test work,
     // from the tab and from About the Dude (which opens the history on the COBOL tab).
