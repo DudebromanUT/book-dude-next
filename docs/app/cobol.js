@@ -486,7 +486,9 @@ function redrawThink(a) {
 }
 
 // The article as plain text, so COBOL's reply can build on what she read.
-const articleText = a => [].concat(lines(a.intro), ...a.sections.map(f => [f.title].concat(f.text)), lines(a.closing)).join('\n');
+// The article as COBOL reads it for its reply to her think-about-it answer, with her parents' note first when there is
+// one (cobolNote: for an article that is meant to be questioned, like the deliberately fake one). She never sees the note.
+const articleText = a => [].concat(a.cobolNote ? [a.cobolNote, ''] : [], lines(a.intro), ...a.sections.map(f => [f.title].concat(f.text)), lines(a.closing)).join('\n');
 
 // Her passed tests and bonus points, for the weekly email's numbers.
 // A test record's name in a sentence: "test on Topaz Mountain: ...", "think-about-it question on ...", or a retired one's.

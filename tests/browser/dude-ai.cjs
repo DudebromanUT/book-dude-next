@@ -152,7 +152,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     const btn = await p.$eval(V + ' .grownup-btn', e => ({ bg: getComputedStyle(e).backgroundColor, h: e.getBoundingClientRect().height }));
     assert.equal(btn.bg, 'rgb(242, 181, 58)', 'yellow');
     assert.ok(btn.h <= 44, 'small: ' + btn.h);
-    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 3 ARTICLES TO READ', '3 TESTS 10 POINTS UP FOR GRABS']);
+    assert.deepEqual(await options(), ['1 CHAT WITH COBOL OPEN UNTIL 8 P.M.', '2 LIBRARY 14 ARTICLES TO READ', '3 TESTS 63 POINTS UP FOR GRABS']);
     assert.deepEqual(await pfKeys(), ['PF1 LIBRARY', 'PF3 EXIT', 'PF5 SOUND ON']);
     // Typing an option: a number that isn't one says so; 1 opens the chat.
     await p.fill('#cobol-option', '9'); await p.$eval('form[data-form="cobol-option"] button', e => e.click()); await sleep(200);
@@ -202,7 +202,11 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await key(1);
     assert.equal(await screenName(), 'LIBRARY');
     await shot('1-library');
-    assert.deepEqual(await options(), ['1 COBOL’S HISTORY FILE READING ONLY', '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '3 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST']);
+    const library = await options();
+    assert.equal(library.length, 14);
+    assert.deepEqual(library.slice(0, 4), ['1 COBOL’S HISTORY FILE READING ONLY', '2 THE GUARD DOG, THE WISE OWL, AND DOPAMINE HAS A TEST', '3 TOPAZ MOUNTAIN: ROCKS, PEOPLE, AND MEMORY HAS A TEST',
+      '4 THE ALKALI METALS: THE WILD FAMILY OF THE PERIODIC TABLE HAS A TEST']);
+    assert.equal(library[13], '14 THE DOG WHO DISCOVERED CALCIUM HAS A TEST');
     await p.click(V + ' [data-act="cobol-read"][data-id="cobol-history"]'); await sleep(200);
     const file = (await txt(p, V + ' .t-file'));
     assert.match(file, /^PROCESSING\.\.\. HISTORY FILE LOADED\. I AM COBOL\. MY NAME MEANS COMMON BUSINESS-ORIENTED LANGUAGE\./);
@@ -216,7 +220,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS 10 POINTS UP FOR GRABS');
+    assert.equal((await options())[2], '3 TESTS 63 POINTS UP FOR GRABS');
     await option(1);
     assert.equal((await lines()).length, 4, 'the conversation is still there');
 
@@ -313,7 +317,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     assert.equal(await screenName(), 'LIBRARY');
     await key(3);
     assert.equal(await screenName(), 'MAIN MENU');
-    assert.equal((await options())[2], '3 TESTS 5 POINTS UP FOR GRABS');
+    assert.equal((await options())[2], '3 TESTS 58 POINTS UP FOR GRABS');
     // Option 3 lists the tests; PF3 from a test goes back to the list.
     await option(3);
     assert.equal(await screenName(), 'TESTS');
@@ -426,6 +430,27 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await p.waitForSelector('#chat-input', { timeout: 10000 });
     await key(3);
     assert.match((await options())[0], /OPEN UNTIL 8 P\.M\.$/);
+
+    // The deliberately fake article: True/False and Yes/No questions (two choices each), and its parents' note goes to
+    // COBOL with her think-about-it answer but is never shown in the article.
+    await key(1);
+    await p.click(V + ' [data-act="cobol-read"][data-id="dog-who-discovered-calcium"]'); await sleep(200);
+    assert.match(await txt(p, V + ' .t-file'), /^The Dog Who Discovered Calcium Every time you drink a glass of milk/);
+    assert.doesNotMatch(await txt(p, V), /NOTE FROM HER PARENTS|intentionally fake/);
+    await p.click(V + ' .t-actions [data-act="cobol-test"]'); await sleep(200);
+    assert.equal((await p.$$(V + ' .t-q')).length, 10);
+    assert.deepEqual(await p.$$eval(V + ' .t-q', qs => qs.map(q => q.querySelectorAll('input[type="radio"]').length)), new Array(10).fill(2));
+    for (let i = 0; i < 10; i++) await p.check(V + ' input[name="q' + i + '"][value="0"]');
+    await p.$eval('form[data-form="cobol-test"] button[type="submit"]', e => e.click()); await sleep(300);
+    assert.match(await txt(p, V + ' .t-result'), /^SCORE: 10 OF 10 \(100%\) RESULT: PASSED\. \+2 POINTS\./);
+    await p.fill('#think-input', 'The dates were wrong: Biscuit found the rock before he was born.');
+    await p.$eval('form[data-form="cobol-think"] button', e => e.click());
+    await p.waitForSelector(V + ' .t-think .t-cobol', { timeout: 10000 });
+    const fake = posts.filter(x => x.body.action === 'think').pop().body;
+    assert.match(fake.article, /^NOTE FROM HER PARENTS, FOR COBOL ONLY \(she never sees this\): this article is intentionally fake\./);
+    assert.match(fake.article, /Humphry Davy discovered calcium in 1808/);
+    assert.match(fake.article, /\n\nEvery time you drink a glass of milk/);
+    await key(1); await key(3);
 
     // With Claude off in the script: no picks, and the chat says it's off, but the history file and the test work,
     // from the tab and from About the Dude (which opens the history on the COBOL tab).

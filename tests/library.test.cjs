@@ -33,8 +33,9 @@ test('every test matches its length, and every question is well formed', async (
     const qs = new Set();
     for (const q of t.questions) {
       assert.ok(titles.has(q.ref), a.id + ': no section "' + q.ref + '"');
-      assert.equal(q.choices.length, 4, q.q);
-      assert.equal(new Set(q.choices).size, 4, q.q);
+      // Four choices, or two (True/False, Yes/No) where her parents asked for that.
+      assert.ok(q.choices.length === 4 || q.choices.length === 2, q.q);
+      assert.equal(new Set(q.choices).size, q.choices.length, q.q);
       assert.doesNotMatch(q.choices.join('|'), /all of the above|none of the above/i, q.q);
       assert.ok(!qs.has(q.q), 'repeated: ' + q.q);
       qs.add(q.q);
