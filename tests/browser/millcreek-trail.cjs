@@ -119,6 +119,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       }
       assert.match(seen, story);
       if (key === 'bryce') assert.equal(await p.evaluate(() => PIC['Bryce Canyon'].naturalWidth), 160, 'Bryce has the family\'s photo');
+      if (key === 'hole') { assert.equal(await p.evaluate(() => PIC['Hole in the Rock'].naturalWidth), 160); assert.match(seen, /Lake Powell/); }
       if (key === 'swell') { assert.equal(await p.evaluate(() => PIC['San Rafael Swell'].naturalWidth), 160); assert.match(seen, /a valley full of stone goblins/); }
       assert.ok(await p.evaluate(b => S.t - b >= 3 * 864e5, before), 'the detour takes days');
       await p.waitForSelector('#panel #go');

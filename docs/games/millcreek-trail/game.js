@@ -163,7 +163,7 @@ const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mounta
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
    Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
    New ones are made with scripts/pixelate.py. */
-const PHOTO={'San Francisco, California':'img/san-francisco.png','San Joaquin River crossing':'img/san-joaquin-river.png','Fort Tejon':'img/fort-tejon.png','Mojave River crossing':'img/mojave-river.png','Las Vegas Springs':'img/las-vegas-springs.png','Virgin River crossing':'img/virgin-river.png','Mineral Mountains':'img/mineral-mountains.png','Mount Nebo':'img/mount-nebo.png','Sevier River crossing':'img/sevier-river.png','Fillmore':'img/fillmore.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
+const PHOTO={'San Francisco, California':'img/san-francisco.png','San Joaquin River crossing':'img/san-joaquin-river.png','Fort Tejon':'img/fort-tejon.png','Mojave River crossing':'img/mojave-river.png','Las Vegas Springs':'img/las-vegas-springs.png','Virgin River crossing':'img/virgin-river.png','Mineral Mountains':'img/mineral-mountains.png','Mount Nebo':'img/mount-nebo.png','Sevier River crossing':'img/sevier-river.png','Fillmore':'img/fillmore.png','Hole in the Rock':'img/hole-in-the-rock.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
@@ -188,7 +188,7 @@ const SIDE={
   'St. George':{k:'hole',n:'Hole in the Rock',days:8,
     ask:()=>`A cattleman in ${LM[S.li].n} tells of a crack in the canyon rim far to the east, where the land drops a thousand feet to the Colorado River. It is a hard, dry detour of about 8 days there and back.`,
     go:q=>{const p=pick(['wheel','axle','tongue']);
-      q.push(`After days of bare slickrock you reach the rim. There is a narrow crack in the cliff, barely wider than a wagon, dropping all the way down to the river. ${lead()} says someday folks will be crazy enough to lower wagons down it. ${wife()} says nobody is that crazy.\n\n(In the winter of 1879, about 250 Mormon pioneers did exactly that, widening the crack by hand and lowering 80 wagons through it.)`);
+      q.push(`After days of bare slickrock you reach the rim. There is a narrow crack in the cliff, barely wider than a wagon, dropping all the way down to the river. ${lead()} says someday folks will be crazy enough to lower wagons down it. ${wife()} says nobody is that crazy.\n\n(In the winter of 1879, about 250 Mormon pioneers did exactly that, widening the crack by hand and lowering 80 wagons through it. In 1963 a dam turned the river at the bottom into Lake Powell.)`);
       if(S[p]>0){S[p]--;q.push(`The slickrock cracked a wagon ${p}. You used your spare.`)}else{lose(2,q);q.push(`The slickrock cracked a wagon ${p} and you have no spare. Lost 2 more days fixing it.`)}
       alive().forEach(m=>{if(m.kind!=='blanket')m.hp=clamp(m.hp-6,1,100)});q.push('There is almost no water out here. Everyone is parched.')}},
   'Beaver':{k:'bryce',n:'Bryce Canyon',days:4,
