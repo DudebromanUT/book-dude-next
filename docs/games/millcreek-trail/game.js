@@ -163,7 +163,7 @@ const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mounta
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
    Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
    New ones are made with scripts/pixelate.py. */
-const PHOTO={'San Francisco, California':'img/san-francisco.png','San Joaquin River crossing':'img/san-joaquin-river.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
+const PHOTO={'San Francisco, California':'img/san-francisco.png','San Joaquin River crossing':'img/san-joaquin-river.png','Fort Tejon':'img/fort-tejon.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){

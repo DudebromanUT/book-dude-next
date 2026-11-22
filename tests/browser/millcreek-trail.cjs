@@ -138,6 +138,15 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#panel #go');
     assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'menu:null');
 
+    // Every photo in the game loads, at the size the scene expects.
+    assert.deepEqual(await p.evaluate(() => Object.keys(PHOTO).filter(n => !(PIC[n].complete && PIC[n].naturalWidth === 160 && PIC[n].naturalHeight === 75))), []);
+    // A town with a store shows its photo on arrival too.
+    await reach('Fort Tejon');
+    assert.match(await panel(), /^You have arrived at Fort Tejon\./);
+    assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'photo:Fort Tejon');
+    await press('ok');
+    await p.waitForSelector('#panel #buy');
+
     // The family's own photo of Zion Canyon, pixelated, shows on arrival.
     await reach('Zion Canyon');
     assert.match(await panel(), /^You have reached Zion Canyon\./);
