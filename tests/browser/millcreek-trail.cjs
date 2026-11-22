@@ -114,6 +114,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         await press('ok');
       }
       assert.match(seen, story);
+      if (key === 'bryce') assert.equal(await p.evaluate(() => PIC['Bryce Canyon'].naturalWidth), 160, 'Bryce has the family\'s photo');
       assert.ok(await p.evaluate(b => S.t - b >= 3 * 864e5, before), 'the detour takes days');
       await p.waitForSelector('#panel #go');
       await reach(stop);

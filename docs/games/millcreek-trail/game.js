@@ -161,8 +161,9 @@ const EV=[
 function event(q){for(let i=0;i<6;i++){const sub=[],r=pick(EV)(sub);if(r){q.push(r);S.log.push(`${dateStr()}: ${r}`);q.push(...sub);return}}}
 const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mountains.','Cajon Pass':'The gap between the San Gabriel and San Bernardino Mountains. Beyond it lies the Mojave Desert.','Las Vegas Springs':'Cool springs and green meadows in the middle of the desert. Las Vegas means the meadows. Nobody can imagine anyone building a city here.','St. George':'A brand new cotton mission among red cliffs and black lava. Welcome to Utah Territory.','Zion Canyon':'The Virgin River has carved a canyon of red and cream cliffs half a mile deep. Everyone stops talking for a while.','Cedar Breaks':'A giant amphitheater of orange, pink and white rock at 10,000 feet. The air is thin and cold.','Cedar City':'An iron mining town at the edge of the high plateaus.','Fillmore':'The territorial capital, with a sandstone statehouse that is only half finished.','Mount Nebo':'The tallest peak in the Wasatch Range, nearly 12,000 feet. The Salt Lake Valley is just beyond the next ridges.','Provo and Utah Lake':'The biggest freshwater lake in the territory, full of fish.'};
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
-   Arriving at one of these places shows its photo while the arrival message is on screen. */
-const PHOTO={'Zion Canyon':'img/zion.png'};
+   Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
+   New ones are made with scripts/pixelate.py. */
+const PHOTO={'Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
@@ -354,6 +355,8 @@ function drawHunt(dt){
 }
 // The side-trip sights, drawn while the detour's story is on screen.
 function drawSight(k){
+  const x=Object.values(SIDE).find(v=>v.k===k),im=x&&PIC[x.n];
+  if(im&&im.complete&&im.naturalWidth)return drawPhoto(x.n);
   if(k==='bryce'){sky('clear');rect(0,96,W,54,'#d88a52');for(let i=0;i<40;i++){const x=i*8+((i*37)%5),h=22+((i*53)%34),c=['#e07a40','#f0a878','#c85a30','#f4dcc0'][i%4];rect(x,96-h,6,h,c);rect(x-1,96-h,8,3,'#f4e6d4');rect(x+1,96-h*.55,4,2,'#f4e6d4')}rect(0,118,W,32,'#7a8a50');for(let i=0;i<14;i++){const x=i*24+6;g.fillStyle='#2f5a34';g.beginPath();g.moveTo(x,128);g.lineTo(x+7,104);g.lineTo(x+14,128);g.fill()}}
   else if(k==='swell'){sky('hot');rect(0,100,W,50,'#d4b483');g.fillStyle='#b8603a';g.beginPath();g.moveTo(0,100);g.lineTo(90,38);g.lineTo(230,52);g.lineTo(W,100);g.fill();for(let j=0;j<4;j++){g.fillStyle=['#d88a5a','#c8a070','#a85030','#e0c098'][j];g.beginPath();g.moveTo(20+j*30,100);g.lineTo(90+j*18,44+j*10);g.lineTo(104+j*18,48+j*10);g.lineTo(40+j*30,100);g.fill()}rect(150,66,60,34,'#8a3a22');for(let i=0;i<5;i++){rect(156+i*11,72,3,10,'#e8d0b0');rect(155+i*11,70,5,3,'#e8d0b0');rect(154+i*11,75,7,1,'#e8d0b0')}}
   else{sky('clear');rect(0,70,W,80,'#c87a4a');rect(0,70,W,4,'#e0a070');rect(150,70,14,80,'#4a2414');rect(152,70,10,80,'#6a3420');for(let i=0;i<6;i++)rect(i*58,86+(i%2)*14,40,2,'#a85a34');rect(0,136,W,14,'#3d7fc0');rect(0,136,W,2,'#9cd0f5');rect(120,62,16,8,'#f2ead8');rect(118,68,20,3,'#7a4a26')}
