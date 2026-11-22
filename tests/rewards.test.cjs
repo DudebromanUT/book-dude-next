@@ -244,3 +244,34 @@ test('the points ledger: every AR quiz, test and home-points book, by school yea
     ['ar', 'mine:undated', 3, '']
   ], 'a history score with no points is not an entry; a 0 is');
 });
+
+test('AR points by quarter: kept apart from other points, with points the school reported that Book Dude has no quiz for', () => {
+  const t = C.arTrack({});
+  assert.deepEqual(t.quarters['2026-27'], ['2026-10-19', '2027-01-04', '2027-03-15']);
+  assert.deepEqual(t.goal, { quarter: 62.5, year: 250 });
+  assert.deepEqual(['2026-08-01', '2026-10-18', '2026-10-19', '2027-01-03', '2027-01-04', '2027-03-15', '2027-07-31', '2027-08-01', ''].map(d => C.quarterOf(d, t)), [1, 1, 2, 2, 3, 4, 4, 1, 0]);
+  const records = {
+    'hatchet--gary-paulsen': C.entry({ id: 'hatchet--gary-paulsen', earnedPoints: 7, quizDate: '2026-10-01' }),
+    'frindle--andrew-clements': C.entry({ id: 'frindle--andrew-clements', earnedPoints: 4.7, quizDate: '2026-11-03' }),
+    'old--book': C.entry({ id: 'old--book', earnedPoints: 9, quizDate: '2026-05-01' }),
+    'mine:lottie': C.entry({ id: 'mine:lottie', homePoints: 4, homeDate: '2026-11-16' }),
+    'exam:topaz-mountain': C.entry({ id: 'exam:topaz-mountain', earnedPoints: 4, quizDate: '2026-11-14' })
+  };
+  const track = { missed: { '2026-27': { 1: 61, 2: 40 } }, before: { year: '2026-27', points: 954.3 } };
+  const r = C.arReport(records, track, '2026-27');
+  assert.deepEqual(r.quarters.map(x => [x.q, x.counted, x.missed, x.ar, x.other]), [[1, 7, 61, 68, 0], [2, 4.7, 40, 44.7, 8], [3, 0, 0, 0, 0], [4, 0, 0, 0, 0]]);
+  assert.deepEqual(r.starts, ['2026-08-01', '2026-10-19', '2027-01-04', '2027-03-15']);
+  assert.equal(r.yearAr, 112.7);
+  assert.equal(r.yearOther, 8, 'tests and home points are not AR');
+  assert.equal(r.lifetime, 954.3 + 7 + 4.7 + 9 + 101, 'all time: earlier years, every quiz, every missed point');
+  assert.equal(C.arReport(records, {}, '2026-27').lifetime, null, 'no all-time number until a grown-up gives the earlier years');
+  // Junk is left out; quarter dates must be in order and in their school year.
+  const bad = C.arTrack({ quarters: { '2027-28': ['2027-10-20', '2027-09-01', '2028-03-15'], '2028-29': ['2028-10-18', '2029-01-03', '2029-03-14'] },
+    missed: { '2026-27': { 1: 'lots', 5: 3, 2: 12.345 }, nonsense: { 1: 3 } }, goal: { quarter: -1 }, before: { year: 'x', points: 3 } });
+  assert.equal(bad.quarters['2027-28'], undefined);
+  assert.deepEqual(bad.quarters['2028-29'], ['2028-10-18', '2029-01-03', '2029-03-14']);
+  assert.deepEqual(bad.missed, { '2026-27': { 2: 12.35 } });
+  assert.deepEqual(bad.goal, { quarter: 62.5, year: 250 });
+  assert.equal(bad.before, null);
+  assert.ok(C.SYNCED_SETTINGS.includes('arTrack'), 'it travels with her account');
+});

@@ -218,6 +218,83 @@
     return out.sort((a, b) => b.date.localeCompare(a.date) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
 
+  /* ---- AR points by quarter ---- */
+
+  // Her school's quarter start dates, by school year: quarter 1 always starts August 1, these are quarters 2 to 4.
+  // A grown-up can change them (or add the next year's) in arTrack.quarters; these are the ones her parents gave.
+  const QUARTERS = { '2026-27': ['2026-10-19', '2027-01-04', '2027-03-15'] };
+
+  /**
+   * The AR tracking settings, checked: { quarters: { year: [q2, q3, q4] }, goal: { quarter, year }, missed: { year:
+   * { '1'..'4': points } }, before: { year, points } }. `missed` is AR points on the school's report that Book Dude
+   * has no quiz for (the quizzes from before the school emails came in); `before` is her AR points from earlier school
+   * years, counted up to the start of `year`.
+   */
+  function arTrack(o) {
+    o = isPlain(o) ? o : {};
+    const pts = (v, max) => { const n = amount(v, max); return typeof n === 'number' && !Number.isNaN(n) ? round(n) : null; };
+    const yearOk = y => /^\d{4}-\d{2}$/.test(y) && schoolYear(y.slice(0, 4) + '-08-01') === y;
+    const quarters = Object.assign({}, QUARTERS);
+    if (isPlain(o.quarters)) {
+      for (const y of Object.keys(o.quarters)) {
+        const list = Array.isArray(o.quarters[y]) ? o.quarters[y].map(day) : [];
+        if (yearOk(y) && list.length === 3 && list.every((d, i) => d && schoolYear(d) === y && (i === 0 || d > list[i - 1]))) quarters[y] = list;
+      }
+    }
+    const missed = {};
+    if (isPlain(o.missed)) {
+      for (const y of Object.keys(o.missed)) {
+        if (!yearOk(y) || !isPlain(o.missed[y])) continue;
+        for (const q of ['1', '2', '3', '4']) {
+          const n = pts(o.missed[y][q], 10000);
+          if (n !== null && n !== 0) { missed[y] = missed[y] || {}; missed[y][q] = n; }
+        }
+      }
+    }
+    const goal = isPlain(o.goal) ? o.goal : {};
+    const before = isPlain(o.before) && yearOk(o.before.year) && pts(o.before.points, 100000) !== null ? { year: o.before.year, points: pts(o.before.points, 100000) } : null;
+    return { quarters, goal: { quarter: pts(goal.quarter, 10000) || 62.5, year: pts(goal.year, 100000) || 250 }, missed, before };
+  }
+
+  /** Which quarter (1 to 4) of its school year a day falls in, by the quarter dates in arTrack. 0 for no day. */
+  function quarterOf(d, track) {
+    const y = schoolYear(d);
+    if (!y) return 0;
+    const starts = (track || arTrack({})).quarters[y];
+    if (!starts) return 1;
+    let q = 1;
+    starts.forEach((s, i) => { if (d >= s) q = i + 2; });
+    return q;
+  }
+
+  /**
+   * Her AR points, kept apart from her other points (Book Dude tests and home points), for the school year `year`
+   * ('2026-27'): each quarter's AR points (quizzes Book Dude has, plus `missed` from the school's report), the year,
+   * all time (earlier years from `before`), and the same quarters and year for the other points.
+   */
+  function arReport(records, track, year) {
+    const t = arTrack(track);
+    const q = () => ({ 1: 0, 2: 0, 3: 0, 4: 0 });
+    const ar = q(), other = q();
+    let arAll = 0;
+    for (const e of ledger(records)) {
+      if (e.kind === 'ar') arAll += e.points;
+      if (e.year !== year) continue;
+      (e.kind === 'ar' ? ar : other)[quarterOf(e.date, t)] += e.points;
+    }
+    const missed = t.missed[year] || {};
+    const quarters = [1, 2, 3, 4].map(n => ({ q: n, counted: round(ar[n]), missed: missed[n] || 0, ar: round(ar[n] + (missed[n] || 0)), other: round(other[n]) }));
+    const yearAr = round(quarters.reduce((s, x) => s + x.ar, 0));
+    // All time: the earlier years she had before Book Dude's first tracked year, plus every year's missed points, plus
+    // every AR quiz Book Dude has.
+    const allMissed = Object.keys(t.missed).reduce((s, y) => s + Object.keys(t.missed[y]).reduce((a, k) => a + t.missed[y][k], 0), 0);
+    return {
+      year, quarters, goal: t.goal, starts: ['', ...(t.quarters[year] || [])].map((d, i) => (i ? d : year.slice(0, 4) + '-08-01')),
+      yearAr, yearOther: round(quarters.reduce((s, x) => s + x.other, 0)),
+      lifetime: t.before ? round(t.before.points + arAll + allMissed) : null
+    };
+  }
+
   /** Points from Book Dude's own tests (see EXAM_PREFIX). */
   function examPoints(records) {
     let sum = 0;
@@ -657,7 +734,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -731,7 +808,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

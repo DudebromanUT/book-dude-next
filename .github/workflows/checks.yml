@@ -75,6 +75,8 @@ jobs:
         run: node tests/browser/update.cjs
       - name: The talking Dude, with the Google script played by the test
         run: node tests/browser/dude-ai.cjs
+      - name: AR points by quarter, apart from other points
+        run: node tests/browser/ar-points.cjs
       - name: Home points and finding a cover
         run: node tests/browser/home-points.cjs
       - name: The Games tab and Maple's Big Day

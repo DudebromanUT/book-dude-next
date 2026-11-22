@@ -242,7 +242,8 @@ const TAKE = {
   // Arcade scores only ever get better: a copy from the account is put together with what is here, best of each.
   arcade: v => { state.settings.arcade = C.arcadeBest(state.settings.arcade, v); },
   // How many book-money payouts her parents have been emailed about (they only ever go up).
-  payoutTold: v => { if (Number.isInteger(v) && v >= 0) state.settings.payoutTold = Math.max(state.settings.payoutTold || 0, v); }
+  payoutTold: v => { if (Number.isInteger(v) && v >= 0) state.settings.payoutTold = Math.max(state.settings.payoutTold || 0, v); },
+  arTrack: v => { if (v && typeof v === 'object') state.settings.arTrack = C.arTrack(v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);

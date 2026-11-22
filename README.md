@@ -45,6 +45,14 @@ each home-points book, with dates and totals. Under it, **How your points are co
 and screen time use: the school's AR total above the starting line (or the AR quizzes entered, without a school
 total), plus Book Dude tests, plus home points.
 
+**AR points, apart from the rest.** The Progress tab's **AR points** card shows this quarter and this school year
+against her goals (62.5 a quarter, 250 a year), all time, and every quarter, with Book Dude tests and home points in
+their own "Other" column. Both still count for book money and screen time. AR points are counted from her AR quizzes
+by date (`arReport` in `docs/core.js`), in her school's quarters (August 1, October 19, January 4, March 15 for
+2026-27; `QUARTERS` in `docs/core.js`, or `arTrack.quarters` for another year). Book Dude only has points for quizzes
+from the school emails or typed in, so **Grown-up: match the school's AR report** takes each quarter's total and the
+all-time total from the school's report once, and keeps the difference; quizzes after that add on top.
+
 **Asking for the money.** When she puts points in the jar for a payout, the app tells the Google script, which emails
 her parents to add the money to her account (once per payout; one earned offline is told the next time the app is
 online). This needs the version of `scripts/school-email/Code.gs` from this repo pasted into the Google script.

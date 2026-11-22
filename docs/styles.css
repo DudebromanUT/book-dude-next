@@ -884,6 +884,21 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .code-input { max-width: 10ch; font-size: 1.4rem; letter-spacing: .5em; font-variant-numeric: tabular-nums; }
 .panel-sub { margin-top: 10px; font-size: .74rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------- AR points ---------- */
+.ar-card .ar-goal { margin-top: 10px; }
+.ar-card .ar-goal p { margin: 0 0 4px; }
+.ar-card .ar-big .big { font-size: 1.8rem; font-weight: 800; margin-right: 4px; }
+.ar-card .bar { display: block; height: 10px; margin: 4px 0; }
+.ar-all { margin: 12px 0 4px; }
+.ar-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-variant-numeric: tabular-nums; }
+.ar-table th, .ar-table td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.ar-table td { text-align: right; }
+.ar-table th .hint, .ar-table td .hint { display: block; font-weight: 400; }
+.ar-table tbody th { white-space: nowrap; width: 1%; padding-right: 12px; }
+.ar-table td .hint { font-size: .78rem; }
+.ar-table tr.now th, .ar-table tr.now td { font-weight: 700; }
+.ar-table tr.total th, .ar-table tr.total td { font-weight: 800; border-bottom: 0; }
+
 /* ---------- Where your points came from ---------- */
 .ledger .chips { margin: 4px 0 10px; }
 .ledger-total { margin: 0 0 10px; }
