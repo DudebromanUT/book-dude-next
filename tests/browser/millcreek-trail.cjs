@@ -96,9 +96,37 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await press('cont');
     await p.waitForSelector('#panel #go');
 
+    // Side trips: offered once from a nearby stop; taking one costs days and shows its own scene.
+    const reach = name => p.evaluate(n => { S.li = LM.findIndex(l => l.n === n) - 1; S.miles = LM[S.li + 1].m; arrive(); }, name);
+    const sights = [['Cedar Breaks', 'bryce', /^Bryce Canyon\? A shepherd says .* about 3 days\./, /hoodoos/],
+      ['Fillmore', 'swell', /^San Rafael Swell\? A trapper in Fillmore .* about 6 days\./, /painted figures on the walls/],
+      ['St. George', 'hole', /^Hole in the Rock\? A cattleman in St\. George .* about 8 days/, /In the winter of 1879, about 250 Mormon pioneers did exactly that/]];
+    for (const [stop, key, ask, story] of sights) {
+      await reach(stop);
+      await press('ok');
+      assert.match(await panel(), ask);
+      const before = await p.evaluate(() => S.t);
+      await press('see');
+      let seen = '';
+      for (let i = 0; i < 60 && await p.$('#panel #ok'); i++) {
+        seen += ' ' + await panel();
+        if (i === 1 && process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'sight-' + key + '.png') });
+        await press('ok');
+      }
+      assert.match(seen, story);
+      assert.ok(await p.evaluate(b => S.t - b >= 3 * 864e5, before), 'the detour takes days');
+      await p.waitForSelector('#panel #go');
+      await reach(stop);
+      await press('ok');
+      assert.ok(await p.$('#panel #go'), 'each side trip is offered only once');
+    }
+    await reach('Cedar City');
+    await press('ok');
+    assert.ok(await p.$('#panel #go'), 'stops without a side trip go straight back to the trail');
+
     // The finish: the whole party makes it, 3 stars, on the scoreboard records and in the hall of fame.
     await p.evaluate(() => { finish(); });
-    assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Haddam, Katrina, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Final score \d+/);
+    assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Haddam, Katrina, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Side trips seen: 3 \+300 Party and supplies and sights \d+ .* Final score \d+/);
     const saved = await p.evaluate(() => { const a = window.BookDudeArcade.open('millcreek-trail'); return [a.get('records'), a.get('hof')]; });
     assert.equal(saved[0].Haddam.trip.stars, 3, 'on a device not signed in, the wagon leader is the player');
     assert.ok(saved[0].Haddam.trip.score > 0);

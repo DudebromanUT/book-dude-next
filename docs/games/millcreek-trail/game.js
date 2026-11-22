@@ -58,7 +58,8 @@ If they don't make it, neither do you.</div>
     say(`Before leaving, ${S.party[0].n} should stock up at a San Francisco outfitter before heading inland. You have $${S.cash.toFixed(2)}.`,()=>store(true))},
    cont:()=>{S=sv;resume()},hof:showHof});
 }
-function resume(){if(S.pend==='river')river();else menu()}
+// A trip saved while the wagon was rolling comes back stopped (the clock that moved it didn't survive the reload).
+function resume(){S.going=false;if(S.pend==='river')river();else menu()}
 function have(k){return k==='food'?Math.round(S.food)+' lbs':S[k]}
 function store(first){
   mode='idle';const f=1+.15*S.forts,cart={};ITEMS.forEach(i=>cart[i.k]=0);
@@ -163,8 +164,41 @@ function arrive(){
   S.li++;const L=LM[S.li];S.miles=L.m;S.log.push(`${dateStr()}: reached ${L.n}.`);save();
   if(L.t==='river'){S.pend='river';S.rv=null;return river()}
   if(L.t==='end')return finish();
-  if(L.t==='fort'){S.forts++;return say(`You have arrived at ${L.n}. ${FL[L.n]||''} You can buy supplies here.`,menu)}
-  say(`You have reached ${L.n}. ${FL[L.n]||''}`,menu);
+  if(L.t==='fort'){S.forts++;return say(`You have arrived at ${L.n}. ${FL[L.n]||''} You can buy supplies here.`,()=>offerSide(L.n))}
+  say(`You have reached ${L.n}. ${FL[L.n]||''}`,()=>offerSide(L.n));
+}
+/* Side trips: three sights off the main road, each offered once from a nearby stop. A detour costs days (and the
+   food and health those days take), has a payoff and a risk, and adds SIDE_PTS to the score at the end. */
+const SIDE_PTS=100;
+const lead=()=>S.party[0].alive?S.party[0].n:'Someone',wife=()=>S.party[1].alive?S.party[1].n:'Someone';
+const SIDE={
+  'St. George':{k:'hole',n:'Hole in the Rock',days:8,
+    ask:()=>`A cattleman in ${LM[S.li].n} tells of a crack in the canyon rim far to the east, where the land drops a thousand feet to the Colorado River. It is a hard, dry detour of about 8 days there and back.`,
+    go:q=>{const p=pick(['wheel','axle','tongue']);
+      q.push(`After days of bare slickrock you reach the rim. There is a narrow crack in the cliff, barely wider than a wagon, dropping all the way down to the river. ${lead()} says someday folks will be crazy enough to lower wagons down it. ${wife()} says nobody is that crazy.\n\n(In the winter of 1879, about 250 Mormon pioneers did exactly that, widening the crack by hand and lowering 80 wagons through it.)`);
+      if(S[p]>0){S[p]--;q.push(`The slickrock cracked a wagon ${p}. You used your spare.`)}else{lose(2,q);q.push(`The slickrock cracked a wagon ${p} and you have no spare. Lost 2 more days fixing it.`)}
+      alive().forEach(m=>{if(m.kind!=='blanket')m.hp=clamp(m.hp-6,1,100)});q.push('There is almost no water out here. Everyone is parched.')}},
+  'Cedar Breaks':{k:'bryce',n:'Bryce Canyon',days:3,
+    ask:()=>`A shepherd says that a day or so east of here there is a canyon full of orange stone spires, like a city made of rock. It is a detour of about 3 days.`,
+    go:q=>{const c=who('cat'),b=who('blanket'),f=RI(15,30);
+      q.push(`The ground just ends, and below it are thousands of orange, pink and white stone spires called hoodoos.${c?` ${c.n} refuses to believe it.`:''} Everyone stands at the rim for a long time.`);
+      alive().forEach(m=>m.hp=clamp(m.hp+10,0,100));S.food+=f;q.push(`Everyone feels better. You gathered ${f} lbs of pine nuts.`);
+      if([9,10,11,0,1,2,3].includes(month())){if(b){q.push(`It is freezing at the rim at night. ${b.n} wraps everyone up.`)}else{alive().forEach(m=>m.hp=clamp(m.hp-8,1,100));q.push('It is freezing at the rim at night. Everyone shivers until morning.')}}
+      q.push('(A settler named Ebenezer Bryce will move here in 1875. He will call it "a hell of a place to lose a cow.")')}},
+  'Fillmore':{k:'swell',n:'San Rafael Swell',days:6,
+    ask:()=>`A trapper in Fillmore tells of a giant wall of tilted rock to the east, with pictures painted on the canyon walls by people who lived there long, long ago. It is a detour of about 6 days.`,
+    go:q=>{const d=who('dog');
+      q.push(`The San Rafael Swell rises out of the desert like a giant rock wave, tipped on its side. In a narrow canyon you find painted figures on the walls, hundreds of years old. ${lead()} says we should leave them exactly as we found them. Everyone agrees.`);
+      if(d){S.food+=RI(10,25);alive().forEach(m=>m.hp=clamp(m.hp+5,0,100));q.push(`${d.n} sniffed out a hidden spring and a jackrabbit. Cold water and dinner for everyone.`)}
+      if(ch(.3)){const f=Math.min(Math.round(S.food),RI(20,60));S.food-=f;lose(1,q);q.push(`A flash flood roared down the canyon. You lost ${f} lbs of food and a day hauling the wagon to high ground.`)}}}
+};
+function offerSide(name){
+  const x=SIDE[name];S.sights=S.sights||[];
+  if(!x||S.sights.includes(x.k)||S.over)return menu();
+  mode='idle';
+  screen(`<div class="msg">${esc(x.n)}?\n${esc(x.ask())}</div><p class="small">Side trips cost days and food, but every one you see adds ${SIDE_PTS} points at the end.</p><div class="btns"><button class="pri" id="see">Take the detour</button><button id="skip">Stay on the trail</button></div>`,
+  {see:()=>{S.sights.push(x.k);S.seen=(S.seen||[]).concat(x.k);S.sightNow=x.k;const q=[];lose(x.days,q);mode='sight';x.go(q);q.unshift(`You spend ${x.days} days on the detour to ${x.n}.`);S.log.push(`${dateStr()}: saw ${x.n}.`);runQ(q,()=>{S.sightNow=null;mode='menu';menu()})},
+   skip:()=>{S.sights.push(x.k);S.log.push(`${dateStr()}: skipped ${x.n}.`);save();menu()}});
 }
 function river(){
   mode='idle';const L=LM[S.li];
@@ -188,12 +222,13 @@ function cross(q){S.pend=null;S.rv=null;runQ(q,menu)}
 function finish(){
   S.over=true;stopGo();mode='end';
   const liv=alive(),pts=liv.reduce((s,m)=>s+(m.kind==='human'?{good:500,fair:400,poor:300,'very poor':200}[hpWord(m.hp)]:250),0);
-  const raw=pts+50+S.oxen*4+(S.wheel+S.axle+S.tongue)*2+S.clothes*2+Math.floor(S.bullets/50)+Math.floor(S.food/25)+Math.floor(S.cash/5),score=raw*PROF[S.prof].mult;
+  const seen=(S.seen||[]).length;
+  const raw=pts+50+seen*SIDE_PTS+S.oxen*4+(S.wheel+S.axle+S.tongue)*2+S.clothes*2+Math.floor(S.bullets/50)+Math.floor(S.food/25)+Math.floor(S.cash/5),score=raw*PROF[S.prof].mult;
   let hof=ARCADE.get('hof');if(!Array.isArray(hof))hof=[];
   hof.push({n:S.party[0].n,s:score,d:dateStr()});hof.sort((a,b)=>b.s-a.s);hof=hof.slice(0,10);
   ARCADE.set('hof',hof);record(score,liv);save();
   screen(`<div class="msg">Congratulations! You made it to Millcreek on ${dateStr()}.\n${liv.map(m=>esc(m.n)).join(', ')} made it to the Salt Lake Valley.</div><div class="msg epi">${esc(epilogue())}</div>
-  <div class="row"><span>Party and supplies</span><span class="num">${raw}</span></div><div class="row"><span>${PROF[S.prof].n} bonus</span><span class="num">x${PROF[S.prof].mult}</span></div><div class="row"><span>Final score</span><b class="num">${score}</b></div>
+  ${seen?`<div class="row"><span>Side trips seen: ${seen}</span><span class="num">+${seen*SIDE_PTS}</span></div>`:''}<div class="row"><span>Party and supplies${seen?' and sights':''}</span><span class="num">${raw}</span></div><div class="row"><span>${PROF[S.prof].n} bonus</span><span class="num">x${PROF[S.prof].mult}</span></div><div class="row"><span>Final score</span><b class="num">${score}</b></div>
   <div class="btns"><button class="pri" id="again">Play again</button><button id="hof">Hall of fame</button></div>`,{again:setup,hof:showHof});
 }
 // The best finish for the family scoreboard: more stars first, then the higher score.
@@ -305,6 +340,12 @@ function drawHunt(dt){
   if(hunt.flash>0){hunt.flash-=dt;rect(hunt.sx-3,hunt.sy,7,1,'#fff');rect(hunt.sx,hunt.sy-3,1,7,'#fff')}
   g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,W,14);g.fillStyle='#f3e6cf';g.textAlign='left';g.font='13px VT323, monospace';g.fillText(`Bullets ${S.bullets}   Meat ${hunt.meat} lbs   Time ${Math.ceil(hunt.t)}`,6,11);
 }
-function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else drawTrail();requestAnimationFrame(frame)}
+// The side-trip sights, drawn while the detour's story is on screen.
+function drawSight(k){
+  if(k==='bryce'){sky('clear');rect(0,96,W,54,'#d88a52');for(let i=0;i<40;i++){const x=i*8+((i*37)%5),h=22+((i*53)%34),c=['#e07a40','#f0a878','#c85a30','#f4dcc0'][i%4];rect(x,96-h,6,h,c);rect(x-1,96-h,8,3,'#f4e6d4');rect(x+1,96-h*.55,4,2,'#f4e6d4')}rect(0,118,W,32,'#7a8a50');for(let i=0;i<14;i++){const x=i*24+6;g.fillStyle='#2f5a34';g.beginPath();g.moveTo(x,128);g.lineTo(x+7,104);g.lineTo(x+14,128);g.fill()}}
+  else if(k==='swell'){sky('hot');rect(0,100,W,50,'#d4b483');g.fillStyle='#b8603a';g.beginPath();g.moveTo(0,100);g.lineTo(90,38);g.lineTo(230,52);g.lineTo(W,100);g.fill();for(let j=0;j<4;j++){g.fillStyle=['#d88a5a','#c8a070','#a85030','#e0c098'][j];g.beginPath();g.moveTo(20+j*30,100);g.lineTo(90+j*18,44+j*10);g.lineTo(104+j*18,48+j*10);g.lineTo(40+j*30,100);g.fill()}rect(150,66,60,34,'#8a3a22');for(let i=0;i<5;i++){rect(156+i*11,72,3,10,'#e8d0b0');rect(155+i*11,70,5,3,'#e8d0b0');rect(154+i*11,75,7,1,'#e8d0b0')}}
+  else{sky('clear');rect(0,70,W,80,'#c87a4a');rect(0,70,W,4,'#e0a070');rect(150,70,14,80,'#4a2414');rect(152,70,10,80,'#6a3420');for(let i=0;i<6;i++)rect(i*58,86+(i%2)*14,40,2,'#a85a34');rect(0,136,W,14,'#3d7fc0');rect(0,136,W,2,'#9cd0f5');rect(120,62,16,8,'#f2ead8');rect(118,68,20,3,'#7a4a26')}
+}
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else if(mode==='sight'&&S&&S.sightNow)drawSight(S.sightNow);else drawTrail();requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 setup();
