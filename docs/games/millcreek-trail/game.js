@@ -163,7 +163,7 @@ const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mounta
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
    Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
    New ones are made with scripts/pixelate.py. */
-const PHOTO={'San Francisco, California':'img/san-francisco.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png'};
+const PHOTO={'San Francisco, California':'img/san-francisco.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
@@ -201,7 +201,7 @@ const SIDE={
   'Fillmore':{k:'swell',n:'San Rafael Swell',days:6,
     ask:()=>`A trapper in Fillmore tells of a giant wall of tilted rock to the east, with pictures painted on the canyon walls by people who lived there long, long ago. It is a detour of about 6 days.`,
     go:q=>{const d=who('dog');
-      q.push(`The San Rafael Swell rises out of the desert like a giant rock wave, tipped on its side. In a narrow canyon you find painted figures on the walls, hundreds of years old. ${lead()} says we should leave them exactly as we found them. Everyone agrees.`);
+      q.push(`The San Rafael Swell rises out of the desert like a giant rock wave, tipped on its side. At its edge is a valley full of stone goblins: red rock mushrooms with lumpy heads, hundreds of them, staring back. ${who('dog')?who('dog').n+' growls at one. It does not move.':'Nobody turns their back on them.'} In a narrow canyon you find painted figures on the walls, hundreds of years old. ${lead()} says we should leave them exactly as we found them. Everyone agrees.`);
       if(d){S.food+=RI(10,25);alive().forEach(m=>m.hp=clamp(m.hp+5,0,100));q.push(`${d.n} sniffed out a hidden spring and a jackrabbit. Cold water and dinner for everyone.`)}
       if(ch(.3)){const f=Math.min(Math.round(S.food),RI(20,60));S.food-=f;lose(1,q);q.push(`A flash flood roared down the canyon. You lost ${f} lbs of food and a day hauling the wagon to high ground.`)}}}
 };
