@@ -55,7 +55,7 @@ If they don't make it, neither do you.</div>
   <p class="small">Bankers start rich. Farmers start poor but score triple. Leave too late and the Mojave will bake you. Leave too early and the Utah passes are still full of snow.</p>
   <div class="btns"><button class="pri" id="go">Start the journey</button>${sv&&!sv.over?'<button id="cont">Continue saved trip</button>':''}<button id="hof">Hall of fame</button></div>`,
   {go:()=>{const pr=$('#prof').value;S={party:DEF.map((d,i)=>({n:$('#n'+i).value.trim()||d.n,kind:d.k,l:d.l,hp:100,sick:null,alive:true,ride:false})),prof:pr,cash:PROF[pr].cash,mode:$('#mode').value,t:Date.UTC(1862,+$('#mon').value,1),miles:0,li:0,forts:0,oxen:0,food:0,clothes:0,bullets:0,wheel:0,axle:0,tongue:0,pace:0,rat:0,log:[],weather:'clear',over:false,pend:null};
-    say(`Before leaving, ${S.party[0].n} should stock up at a San Francisco outfitter before heading inland. You have $${S.cash.toFixed(2)}.`,()=>store(true))},
+    say(`Before leaving, ${S.party[0].n} should stock up at a San Francisco outfitter before heading inland. You have $${S.cash.toFixed(2)}.\n\n(That big red bridge in the picture? It won't be built for another 75 years. Don't tell ${S.party[0].n}.)`,()=>store(true))},
    cont:()=>{S=sv;resume()},hof:showHof});
 }
 // A trip saved while the wagon was rolling comes back stopped (the clock that moved it didn't survive the reload).
@@ -163,7 +163,7 @@ const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mounta
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
    Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
    New ones are made with scripts/pixelate.py. */
-const PHOTO={'Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png'};
+const PHOTO={'San Francisco, California':'img/san-francisco.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
@@ -338,7 +338,8 @@ function party(){
   if(P0[2].alive){const x=110,y=Math.round(109-b*2);rect(x,y,14,7,'#c07a3a');rect(x+1,y,11,4,'#1e1812');rect(x-1,y-4,2,5,'#1e1812');rect(x+12,y-5,7,7,'#c88a48');rect(x+13,y-7,2,2,'#c88a48');rect(x+12,y-5,3,2,'#8a5a2a');rect(x+17,y-5,2,2,'#8a5a2a');rect(x+15,y-3,1,1,'#111');rect(x+16,y,4,4,'#dba86a');rect(x+19,y-1,1,2,'#111');rect(x+11,y+7,2,4+st,'#c07a3a');rect(x+1,y+7,2,4-st,'#c07a3a')}
 }
 function weatherFx(w){if(w==='rain'){g.fillStyle='rgba(200,220,240,.6)';for(let i=0;i<40;i++){const x=(i*37+last/6)%W,y=(i*53+last/3)%HH;g.fillRect(x,y,1,4)}}if(w==='snow'){g.fillStyle='#fff';for(let i=0;i<50;i++){const x=(i*41+Math.sin(last/900+i)*8+W)%W,y=(i*29+last/25)%HH;g.fillRect(x,y,2,2)}}}
-function drawTrail(){const ter=S?terrain():'plains',w=S?S.weather:'clear';sky(w);far(ter);ground(ter);landmark();party();weatherFx(w)}
+// The start screens, and San Francisco before the wagon rolls, show the family's photo of the city.
+function drawTrail(){const sf=PIC[LM[0].n];if((!S||(S.li===0&&S.miles<1&&!S.going))&&sf&&sf.complete&&sf.naturalWidth)return drawPhoto(LM[0].n);const ter=S?terrain():'plains',w=S?S.weather:'clear';sky(w);far(ter);ground(ter);landmark();party();weatherFx(w)}
 function drawTomb(){sky('cloudy');far(S?terrain():'plains');ground(S?terrain():'plains');rect(132,58,56,62,'#8a8a90');g.fillStyle='#8a8a90';g.beginPath();g.arc(160,60,28,Math.PI,0);g.fill();rect(132,58,56,2,'#a8a8ae');g.fillStyle='#2a2a30';g.textAlign='center';g.font='16px VT323, monospace';g.fillText('R.I.P.',160,62);g.font='14px VT323, monospace';g.fillText(tombInfo?tombInfo.n.slice(0,10):'',160,80);g.font='11px VT323, monospace';g.fillText(tombInfo?tombInfo.d:'',160,96);rect(124,118,72,4,'#6a5a40')}
 function drawHunt(dt){
   hunt.t-=dt;if(hunt.t<=0){hunt.t=0;endHunt();return drawTrail()}

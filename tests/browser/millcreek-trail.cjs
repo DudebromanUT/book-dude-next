@@ -68,7 +68,11 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // Start, shop, and hit the trail.
     await p.selectOption('#mode', 'gentle');
     await press('go');
-    assert.match(await panel(), /stock up at a San Francisco outfitter/);
+    assert.match(await panel(), /stock up at a San Francisco outfitter.* It won't be built for another 75 years\. Don't tell Haddam\./);
+    await p.waitForTimeout(300);
+    const tower = await p.evaluate(() => Array.from(document.getElementById('scene').getContext('2d').getImageData(141, 70, 1, 1).data));
+    assert.ok(tower[0] > 120 && tower[0] > tower[2] * 1.4, 'the red bridge tower from the family\'s photo: ' + tower);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'photo-sf.png') });
     await press('ok');
     for (let i = 0; i < 3; i++) await p.click('#panel [data-p="oxen"]');
     for (let i = 0; i < 24; i++) await p.click('#panel [data-p="food"]');
