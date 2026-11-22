@@ -437,11 +437,11 @@ async function clickThrough(BASE) {
   note('school update abc', await text('#school-error'));
   await p.fill('#school-quick', '61'); await click('form[data-form="school"] button[type="submit"]', 500);
   note('school update 61', await toast() + ' / ' + await text('.screen-card'));
-  note('choice card', await text('.choice-card'));
+  note('choice card', await text('#pet-meters .fig'));
   await click('[data-act="choose"][data-to="minutes"]', 400);
-  note('chose minutes', await toast() + ' / ' + await text('.choice-card') + ' / ' + await text('.screen-card .jar-count'));
+  note('chose minutes', await toast() + ' / ' + await text('#pet-meters .fig .meter-num') + ' / ' + await text('.screen-card .jar-count'));
   await click('[data-act="choose"][data-to="jar"]', 400);
-  note('chose jar', await toast() + ' / ' + await text('.choice-next') + ' / ' + await text('.jar-card .jar-tally'));
+  note('chose jar', await toast() + ' / ' + await text('#pet-meters .fig .meter-num') + ' / ' + await text('.jar-card .jar-tally'));
   await click('.tab[data-tab="more"]', 400);
   await click('[data-act="to-jar-plus"]', 300);
   note('fix choices full', await toast() + ' / ' + await text('#to-jar') + ' / ' + await text('#to-minutes'));

@@ -897,11 +897,70 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .meter-bonus { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
 .meter-cloud path { fill: none; stroke: #7FAE45; stroke-width: 2.5; stroke-linecap: round; }
 .meter-tuft path { fill: none; stroke: #7D776C; stroke-width: 2; stroke-linecap: round; }
-.meter-cloud, .meter-tuft { animation: meter-float 2.4s ease-in-out infinite; }
+.meter-cloud { animation: meter-float 2.4s ease-in-out infinite; }
+/* Fig's Litter-Robot */
+.robot { width: 100%; max-width: 240px; display: block; margin: 0 auto; overflow: visible; }
+.robot-body { fill: #F4F4F2; stroke: #C9C6BF; stroke-width: 2; }
+.robot-hole { fill: #2B2B2E; }
+.robot-lip { fill: #E6E4DF; stroke: #C9C6BF; stroke-width: 1.5; }
+.robot-drawer { fill: #E3E1DC; stroke: #B9B5AD; stroke-width: 2; }
+.robot-handle { stroke: #8F8A80; stroke-width: 4; stroke-linecap: round; }
+.robot-lumps { fill: #5A3E1E; }
+.robot-full { font: 800 16px system-ui, sans-serif; fill: #FFF6E0; letter-spacing: 1px; }
+.robot.full .robot-drawer { stroke: #C0392B; animation: robot-blink 1s step-end infinite; }
+.robot.full { animation: robot-shake 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.robot-fly circle { fill: #1E1A18; } .robot-fly .wing { fill: rgb(200 220 235 / .85); }
+.robot-fly { animation: fly-a 3s linear infinite; }
+.robot-fly.f1 { animation-name: fly-b; animation-duration: 2.4s; } .robot-fly.f2 { animation-name: fly-c; animation-duration: 3.4s; } .robot-fly.f3 { animation-name: fly-d; animation-duration: 2.8s; }
+@keyframes fly-a { 0% { transform: translate(60px, 110px); } 25% { transform: translate(80px, 92px); } 50% { transform: translate(100px, 104px); } 75% { transform: translate(78px, 120px); } 100% { transform: translate(60px, 110px); } }
+@keyframes fly-b { 0% { transform: translate(140px, 106px); } 30% { transform: translate(122px, 90px); } 60% { transform: translate(110px, 108px); } 100% { transform: translate(140px, 106px); } }
+@keyframes fly-c { 0% { transform: translate(100px, 96px); } 33% { transform: translate(130px, 118px); } 66% { transform: translate(70px, 122px); } 100% { transform: translate(100px, 96px); } }
+@keyframes fly-d { 0% { transform: translate(46px, 130px); } 50% { transform: translate(156px, 128px); } 100% { transform: translate(46px, 130px); } }
+@keyframes robot-blink { 50% { stroke: #B9B5AD; } }
+@keyframes robot-shake { 0%, 80%, 100% { transform: rotate(0); } 84% { transform: rotate(-2deg); } 88% { transform: rotate(2deg); } 92% { transform: rotate(-1.5deg); } 96% { transform: rotate(1deg); } }
+.robot-status { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.25rem; font-weight: 800; margin: 6px 0 2px; color: var(--accent-text); }
+.robot-status .dot { width: 14px; height: 14px; border-radius: 50%; background: #5B9BE8; display: inline-block; }
+.robot-status .dot.warn { background: #E08A2E; }
+.robot-spend { justify-content: center; margin-top: 8px; }
+.robot-scoops { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--surface); font-weight: 700; }
+.robot-scoops b { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+/* The party when she spends 10 points */
+.party { position: fixed; inset: 0; z-index: 60; overflow: hidden; cursor: pointer; }
+.party .party-pet { position: absolute; top: auto; bottom: 40vh; left: -130px; width: 120px; height: 120px; display: block; }
+.party-fig .party-pet { animation: party-cross 4s linear forwards; }
+.party-fig .party-pet .critter-body { animation: party-dance .5s ease-in-out infinite alternate; }
+.party-maple .party-pet { animation: party-cross 3.6s linear forwards; }
+.party-maple .party-pet .critter-body { animation: party-bounce .45s ease-in-out infinite alternate; }
+.party .ball { position: absolute; bottom: 40vh; left: -30px; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #F7F06A, #C9C22E); box-shadow: inset 0 0 0 2px rgb(0 0 0 / .1);
+  animation: party-cross-ball 3.6s linear forwards, party-ball-bounce .45s ease-in infinite alternate; }
+.party .bill { position: absolute; top: -40px; width: 38px; height: 20px; border-radius: 3px; background: #7CB66A; color: #1F4D1A; font: 800 13px/20px system-ui, sans-serif; text-align: center; box-shadow: 0 1px 2px rgb(0 0 0 / .2);
+  animation: party-bill 3.6s linear forwards; }
+.party .b0 { left: 6%; } .party .b1 { left: 20%; animation-delay: .3s; } .party .b2 { left: 34%; animation-delay: .7s; } .party .b3 { left: 48%; animation-delay: .1s; }
+.party .b4 { left: 62%; animation-delay: .5s; } .party .b5 { left: 76%; animation-delay: .9s; } .party .b6 { left: 88%; animation-delay: .4s; }
+.party .bill:nth-of-type(n+8) { animation-delay: 1.2s; margin-left: 5vw; }
+.party-say { position: absolute; left: 50%; top: 16vh; transform: translateX(-50%); margin: 0; padding: 10px 16px; border-radius: 14px; background: var(--ink); color: var(--surface); font-weight: 800; text-align: center; width: max-content; max-width: 86vw; animation: pop .3s ease-out; }
+.party.still .party-pet { left: calc(50% - 60px); animation: none; } .party.still .party-pet .critter-body, .party.still .ball, .party.still .bill { animation: none; } .party.still .bill, .party.still .ball { display: none; }
+.party.still .critter .leg, .party.still .critter .tail, .party.still .critter-body > svg { animation: none; }
+@keyframes party-cross { to { left: calc(100vw + 20px); } }
+@keyframes party-cross-ball { from { left: 40px; } to { left: calc(100vw + 120px); } }
+@keyframes party-dance { from { transform: rotate(-12deg) translateY(0); } to { transform: rotate(12deg) translateY(-18px); } }
+@keyframes party-bounce { from { transform: translateY(0); } to { transform: translateY(-46px); } }
+@keyframes party-ball-bounce { from { bottom: 40vh; } to { bottom: calc(40vh + 70px); } }
+@keyframes party-bill { to { transform: translateY(110vh) rotate(540deg); } }
 .meter .d1 { animation-delay: .4s; } .meter .d2 { animation-delay: .8s; } .meter .d3 { animation-delay: 1.2s; }
 .meter .d4 { animation-delay: 1.6s; } .meter .d5 { animation-delay: 2s; } .meter .d6 { animation-delay: .2s; } .meter .d7 { animation-delay: 1s; }
 @keyframes meter-float { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-4px); opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .meter-cloud, .meter-tuft { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .meter-cloud, .robot-fly, .robot, .robot.full .robot-drawer { animation: none; } }
+/* Piano practice */
+.piano-week { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.piano-day { display: grid; grid-template-columns: 6.5em 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: var(--surface-2); }
+.piano-day.today { outline: 2px solid var(--accent); }
+.piano-when { font-weight: 700; }
+.piano-checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.piano-check { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--accent); background: transparent; color: var(--accent-text); font-weight: 800; font-size: 1.05rem; display: inline-grid; place-items: center; cursor: pointer; }
+.piano-check.done { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.piano-check.add { border-style: dashed; }
+.piano-min { font-variant-numeric: tabular-nums; }
 
 /* ---------- AR points ---------- */
 .ar-card .ar-goal { margin-top: 10px; }

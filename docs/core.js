@@ -351,7 +351,23 @@
    * before screen time started never count. Books she added herself earn no extra. `owed` never goes below zero.
    * `minutesToMove` counts the tens she can move back into the jar: chosen minutes that haven't been given yet.
    */
-  function screenTime(totalPoints, records, books, settings) {
+  /**
+   * Piano practice a grown-up checked off: { 'YYYY-MM-DD': checks }, one check for each 15 minutes, each check worth
+   * 15 minutes of screen time. Anything that isn't a day with a whole number of checks (1 to 96) is left out.
+   */
+  const PIANO_STEP = 15;
+  function piano(o) {
+    const out = {};
+    if (!isPlain(o)) return out;
+    for (const k of Object.keys(o).slice(0, 2000)) {
+      const n = o[k];
+      if (day(k) === k && Number.isInteger(n) && n >= 1 && n <= 96) out[k] = n;
+    }
+    return out;
+  }
+  const pianoMinutes = o => Object.values(piano(o)).reduce((sum, n) => sum + n * PIANO_STEP, 0);
+
+  function screenTime(totalPoints, records, books, settings, practice) {
     const cfg = reward(settings);
     const spent = choices(totalPoints, cfg);
     const catalog = new Set((books || []).filter(b => b && !isCustomId(b.book_id)).map(b => b.book_id));
@@ -365,11 +381,14 @@
     extras.sort((x, y) => y.finishedDate.localeCompare(x.finishedDate) || (x.id < y.id ? -1 : 1));
     const fromPoints = spent.toMinutes * cfg.minutes;
     const fromBooks = extras.reduce((sum, x) => sum + x.minutes, 0);
-    const owed = Math.max(0, fromPoints + fromBooks - cfg.given);
+    const fromPiano = pianoMinutes(practice);
+    const owed = Math.max(0, fromPoints + fromBooks + fromPiano - cfg.given);
+    // Piano minutes can't be moved into the jar: only minutes chosen with points (counted after the piano's).
+    const movable = Math.max(0, owed - fromPiano);
     return {
-      fromPoints, fromBooks, books: extras, earned: fromPoints + fromBooks, given: cfg.given, owed,
+      fromPoints, fromBooks, fromPiano, books: extras, earned: fromPoints + fromBooks + fromPiano, given: cfg.given, owed,
       into: spent.into, toGo: spent.toGo, perTen: cfg.minutes,
-      minutesToMove: cfg.on && cfg.screen && cfg.minutes > 0 ? Math.min(spent.toMinutes, Math.floor(owed / cfg.minutes)) : 0
+      minutesToMove: cfg.on && cfg.screen && cfg.minutes > 0 ? Math.min(spent.toMinutes, Math.floor(movable / cfg.minutes)) : 0
     };
   }
 
@@ -734,7 +753,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -808,7 +827,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, PIANO_STEP,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

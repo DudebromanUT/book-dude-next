@@ -1,11 +1,13 @@
-/* The pets' progress meters on the Progress tab, for laughs:
- *   Maple's Fart-o-Meter: her AR points this quarter, against her quarter goal.
- *   Fig's Hairball Meter: all her points this quarter (AR, Book Dude tests and home points), against the same goal.
- * Each Library test she passes this quarter is a can of beans for Maple (more stink clouds), and each think-about-it
- * bonus is a cleaning session for Fig (more fur tufts). The numbers come from arReport (docs/core.js); this file only
- * draws them. No sounds. */
+/* The pets' meters on the Progress tab, for laughs:
+ *   Maple's Fart-o-Meter: her AR points this quarter, against her quarter goal (arReport, docs/core.js). Each Library
+ *   test she passes this quarter is a can of beans for Maple: more stink clouds.
+ *   Fig's Litter-Robot: every point (AR, Library tests, home points) fills the waste drawer toward her next 10. A full
+ *   drawer stays full, and stinky, until she spends the 10 points on money or screen time; that cleans it out. The
+ *   spend buttons live here, and spending sets off a party (party below): Fig dances for money, Maple chases a ball
+ *   for screen time.
+ * No sounds. */
 
-import { C, esc, today, fmtNum } from './util.js';
+import { C, esc, today, fmtNum, reducedMotion } from './util.js';
 import { state } from './state.js';
 
 const MAPLE = [
@@ -16,19 +18,16 @@ const MAPLE = [
   [80, 'Clear the Room!!', 'Fig has left the building. Bobby Joe is wearing a gas mask.'],
   [100, 'LEGENDARY TOOT', 'Quarter goal smashed! Maple is very proud and only a little sorry.']
 ];
-const FIG = [
-  [0, 'Perfectly Fluffy', 'Fig is napping. Fig is always napping.'],
-  [20, 'A Little Gaggy', 'Fig made a weird noise. Everyone pretended not to notice.'],
-  [40, 'Hack Hack', 'Fig is warming up. Stand back.'],
-  [60, 'Hairball Incoming', 'The Dude moved his slippers. Just in case.'],
-  [80, 'HAIRBALL!!!', 'Right on the rug. Of course it was the rug.'],
-  [100, 'Hairball the Size of a Hamster', 'Quarter goal smashed! Fig is very proud. Nobody else is.']
-];
 const BEANS = ['No beans yet. Pass a Library test to feed Maple a can.', 'One can of beans. Maple is interested.', 'Two cans. Maple is making plans.',
   'Three cans. Maple’s farts now have farts.', 'Four cans. The neighbors have questions.', 'Five cans. Scientists want to study Maple.'];
-const BATHS = ['No cleaning sessions yet. Answer a think-about-it question to give Fig one.', 'One cleaning session. Fig licked her whole leg. Twice.',
-  'Two cleaning sessions. Fig is very shiny and slightly damp.', 'Three cleaning sessions. That fur has to go somewhere.',
-  'Four cleaning sessions. Fig swallowed enough fur to knit a sweater.', 'Five cleaning sessions. Fig is basically a fur factory.'];
+// Fig's drawer, from empty to overflowing: [fill from, status, line].
+const DRAWER = [
+  [0, 'Ready', 'Fresh. Suspiciously fresh. Fig approves.'],
+  [0.2, 'Getting Ripe', 'Fig is pretending not to notice. Fig noticed.'],
+  [0.5, 'Smelly Cat', 'The flies have started a book club.'],
+  [0.8, 'Code Brown', 'Fig is giving everyone The Look.'],
+  [1, 'DRAWER FULL', 'Fig is filing a complaint with management. Spend your points to clean it out!']
+];
 
 const level = (list, pct) => list.reduce((got, row) => (pct >= row[0] ? row : got), list[0]);
 
@@ -49,45 +48,102 @@ function gauge(id, pct, zones, photo, alt, extras) {
     '<circle cx="100" cy="100" r="25" class="meter-ring"/></svg>';
 }
 
-// Stink clouds around the gauge: one more for each level and each can of beans (up to 8).
-function clouds(n) {
-  const spots = [[22, 108], [178, 108], [10, 80], [190, 80], [30, 50], [170, 50], [60, 18], [140, 18]];
+// Stink clouds around a picture: up to 8, at the spots given.
+function clouds(n, spots) {
   return spots.slice(0, n).map(([x, y], i) => '<g class="meter-cloud d' + i + '">' +
     '<path d="M ' + (x - 7) + ' ' + y + ' q 3 -6 7 0 t 7 0" /><path d="M ' + (x - 5) + ' ' + (y - 7) + ' q 3 -5 6 0 t 6 0" /></g>').join('');
 }
-// Scribbly hairballs around Fig's gauge: one more for each level and each cleaning session (up to 8).
-function tufts(n) {
-  const spots = [[22, 108], [178, 108], [10, 80], [190, 80], [30, 50], [170, 50], [60, 18], [140, 18]];
-  return spots.slice(0, n).map(([x, y], i) => '<g class="meter-tuft d' + i + '"><path d="M ' + (x - 6) + ' ' + y +
-    ' c 0 -8 12 -8 12 0 c 0 7 -10 7 -10 1 c 0 -5 8 -5 8 0 c 0 4 -6 4 -6 0 M ' + (x + 6) + ' ' + y + ' q 4 2 3 6 M ' + (x - 6) + ' ' + y + ' q -4 -1 -5 3"/></g>').join('');
+const GAUGE_SPOTS = [[22, 108], [178, 108], [10, 80], [190, 80], [30, 50], [170, 50], [60, 18], [140, 18]];
+const ROBOT_SPOTS = [[40, 140], [162, 140], [34, 118], [168, 118], [44, 96], [158, 96], [30, 160], [172, 160]];
+
+// A cartoon Litter-Robot: the globe with Fig's face in the doorway, and the waste drawer filling up below.
+function robot(frac, flies) {
+  const h = Math.round(44 * Math.min(1, frac));
+  const color = frac >= 1 ? '#6B4A22' : frac >= 0.8 ? '#8A6A2E' : frac >= 0.5 ? '#A8A04A' : '#8FCBA8';
+  const top = 156 - h;
+  const fly = i => '<g class="robot-fly f' + i + '"><circle r="2.4"/><ellipse class="wing" cx="-2" cy="-2.4" rx="2" ry="1.2"/><ellipse class="wing" cx="2" cy="-2.4" rx="2" ry="1.2"/></g>';
+  return '<svg class="robot' + (frac >= 1 ? ' full' : '') + '" viewBox="0 0 200 172" role="img" aria-label="' + esc('Fig’s Litter-Robot: waste drawer ' + Math.round(Math.min(1, frac) * 100) + '% full') + '">' +
+    '<defs><clipPath id="robot-door"><circle cx="100" cy="58" r="30"/></clipPath><clipPath id="robot-drawer"><rect x="56" y="112" width="88" height="44" rx="8"/></clipPath></defs>' +
+    '<path class="robot-body" d="M 56 104 Q 48 24 100 14 Q 152 24 144 104 L 150 162 Q 150 168 144 168 L 56 168 Q 50 168 50 162 Z"/>' +
+    '<circle class="robot-hole" cx="100" cy="58" r="34"/>' +
+    '<image href="img/cat.jpg" x="70" y="28" width="60" height="60" clip-path="url(#robot-door)" preserveAspectRatio="xMidYMid slice"/>' +
+    '<path class="robot-lip" d="M 66 76 Q 100 98 134 76 L 136 84 Q 100 106 64 84 Z"/>' +
+    '<rect class="robot-drawer" x="56" y="112" width="88" height="44" rx="8"/>' +
+    '<g clip-path="url(#robot-drawer)"><rect x="56" y="' + top + '" width="88" height="' + h + '" fill="' + color + '"/>' +
+      (frac >= 0.5 ? '<g class="robot-lumps"><ellipse cx="74" cy="' + (top + 2) + '" rx="6" ry="3.5"/><ellipse cx="116" cy="' + (top + 3) + '" rx="7" ry="4"/>' +
+        (frac >= 0.8 ? '<ellipse cx="96" cy="' + (top + 1) + '" rx="5" ry="3"/><ellipse cx="134" cy="' + (top + 4) + '" rx="4" ry="2.5"/>' : '') + '</g>' : '') + '</g>' +
+    '<path class="robot-handle" d="M 86 120 L 114 120"/>' +
+    (frac >= 1 ? '<text class="robot-full" x="100" y="146" text-anchor="middle">FULL!</text>' : '') +
+    (frac >= 0.2 ? clouds(Math.min(8, Math.floor(frac * 8)), ROBOT_SPOTS) : '') +
+    Array.from({ length: flies }, (_, i) => fly(i)).join('') +
+    '</svg>';
 }
 
-function card(cls, title, gaugeSvg, lvl, points, goal, unit, bonusLine) {
-  return '<div class="meter ' + cls + '"><h3>' + title + '</h3>' + gaugeSvg +
+function figCard(total) {
+  const cfg = C.reward(state.settings.reward), ch = C.choices(total, cfg);
+  const both = cfg.on && cfg.screen;
+  const frac = ch.open ? 1 : ch.into / 10;
+  const lvl = level(DRAWER, frac);
+  const flies = frac >= 1 ? 4 : frac >= 0.8 ? 3 : frac >= 0.5 ? 2 : frac >= 0.35 ? 1 : 0;
+  const jarLabel = cfg.perPoint > 0 ? '$' + fmtNum(10 * cfg.perPoint) : '10 points in the jar';
+  return '<div class="meter fig"><h3>Fig’s Litter-Robot</h3>' + robot(frac, flies) +
+    '<p class="robot-status"><i class="dot' + (frac >= 0.8 ? ' warn' : '') + '"></i>' + esc(lvl[1]) + '</p>' +
+    '<p class="meter-line">' + esc(lvl[2]) + '</p>' +
+    '<p class="meter-num">' + (ch.open
+      ? '<b>' + fmtNum(ch.open * 10) + '</b> points to spend' + (ch.into ? ' · ' + fmtNum(ch.into) + ' already in the next drawer' : '')
+      : 'Waste: <b>' + Math.round(frac * 100) + '%</b> · ' + fmtNum(ch.into) + ' of 10 points') + '</p>' +
+    (ch.open && both
+      ? '<p class="meter-bonus">Clean it out! Every 10 points: ' + esc(jarLabel) + ' or ' + cfg.minutes + ' minutes of screen time.</p>' +
+        '<div class="row-actions robot-spend"><button type="button" class="btn primary" data-act="choose" data-to="jar">' + esc(jarLabel) + '</button>' +
+        '<button type="button" class="btn primary" data-act="choose" data-to="minutes">' + cfg.minutes + ' minutes</button></div>'
+      : '<p class="meter-bonus">Every point fills the drawer. At 10, you clean it out for ' + (both ? 'money or screen time' : 'your reward') + '.</p>') +
+    '<p class="robot-scoops"><span>Scoops Saved</span><b>' + fmtNum(ch.toJar + ch.toMinutes) + '</b></p></div>';
+}
+
+function mapleCard(lvl, gaugeSvg, points, goal, beans) {
+  return '<div class="meter maple"><h3>Maple’s Fart-o-Meter</h3>' + gaugeSvg +
     '<p class="meter-level">' + esc(lvl[1]) + '</p><p class="meter-line">' + esc(lvl[2]) + '</p>' +
-    '<p class="meter-num"><b>' + fmtNum(points) + '</b> of ' + fmtNum(goal) + ' ' + unit + ' this quarter</p>' +
-    '<p class="meter-bonus">' + esc(bonusLine) + '</p></div>';
+    '<p class="meter-num"><b>' + fmtNum(points) + '</b> of ' + fmtNum(goal) + ' AR points this quarter</p>' +
+    '<p class="meter-bonus">' + esc(BEANS[Math.min(beans, BEANS.length - 1)] + (beans > 5 ? ' (' + beans + ' cans!)' : '')) + '</p></div>';
 }
 
-export function metersHtml() {
+export function metersHtml(total) {
   const day = today(), year = C.schoolYear(day), t = C.arTrack(state.settings.arTrack);
   const q = C.quarterOf(day, t), r = C.arReport(state.records, state.settings.arTrack, year), now = r.quarters[q - 1];
-  // Book Dude tests passed, and think-about-it bonuses answered, this quarter.
-  let beans = 0, baths = 0;
+  // Book Dude tests passed this quarter (not the think-about-it bonuses).
+  let beans = 0;
   for (const id of Object.keys(state.records)) {
     const rec = state.records[id];
-    if (!C.isExam(id) || typeof rec.earnedPoints !== 'number' || C.schoolYear(rec.quizDate) !== year || C.quarterOf(rec.quizDate, t) !== q) continue;
-    if (/:think$/.test(id)) baths++; else beans++;
+    if (!C.isExam(id) || /:think$/.test(id) || typeof rec.earnedPoints !== 'number' || C.schoolYear(rec.quizDate) !== year || C.quarterOf(rec.quizDate, t) !== q) continue;
+    beans++;
   }
   const goal = r.goal.quarter;
-  const ar = Math.round(now.ar * 100) / 100, all = Math.round((now.ar + now.other) * 100) / 100;
-  const pa = goal ? ar / goal * 100 : 0, pt = goal ? all / goal * 100 : 0;
-  const ml = level(MAPLE, pa), fl = level(FIG, pt);
-  const mStep = MAPLE.indexOf(ml), fStep = FIG.indexOf(fl);
+  const ar = Math.round(now.ar * 100) / 100;
+  const pa = goal ? ar / goal * 100 : 0;
+  const ml = level(MAPLE, pa);
   return '<section class="panel meters" id="pet-meters"><h2 class="section-title">Pet-o-Meters <small>Quarter ' + q + '</small></h2><div class="meter-row">' +
-    card('maple', 'Maple’s Fart-o-Meter', gauge('maple', pa, ['#B9D98C', '#D9D46A', '#D9A74A', '#B8743A', '#7A4B2A'], 'img/dog.jpg', 'Maple’s Fart-o-Meter: ' + ml[1], clouds(Math.min(8, mStep + beans))),
-      ml, ar, goal, 'AR points', BEANS[Math.min(beans, BEANS.length - 1)] + (beans > 5 ? ' (' + beans + ' cans!)' : '')) +
-    card('fig', 'Fig’s Hairball Meter', gauge('fig', pt, ['#D8DEE3', '#BFC7CD', '#A3ACB3', '#8A8F86', '#6B6A5C'], 'img/cat.jpg', 'Fig’s Hairball Meter: ' + fl[1], tufts(Math.min(8, fStep + baths))),
-      fl, all, goal, 'points', BATHS[Math.min(baths, BATHS.length - 1)] + (baths > 5 ? ' (' + baths + ' sessions!)' : '')) +
-    '</div><p class="hint">Maple’s meter is AR points only. Fig’s counts every point: AR, Library tests and home points. Pass a Library test for a can of beans, and answer its think-about-it question for one of Fig’s cleaning sessions.</p></section>';
+    mapleCard(ml, gauge('maple', pa, ['#B9D98C', '#D9D46A', '#D9A74A', '#B8743A', '#7A4B2A'], 'img/dog.jpg', 'Maple’s Fart-o-Meter: ' + ml[1],
+      clouds(Math.min(8, MAPLE.indexOf(ml) + beans), GAUGE_SPOTS)), ar, goal, beans) +
+    figCard(total) +
+    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass feeds her a can of beans. Fig’s drawer fills with every point: AR, Library tests and home points.</p></section>';
+}
+
+/* The party when she spends 10 points (no sound, tap to skip, about 4 seconds):
+ *   'jar': Fig dances across the screen while dollar bills float down.
+ *   'minutes': Maple bounces across the screen chasing a ball. */
+export function party(kind) {
+  const art = window.BookPets && window.BookPets.art;
+  if (!art) return;
+  const fig = kind === 'jar';
+  const el = document.createElement('div');
+  el.className = 'party ' + (fig ? 'party-fig' : 'party-maple') + (reducedMotion() ? ' still' : '');
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = (fig ? Array.from({ length: 14 }, (_, i) => '<i class="bill b' + (i % 7) + '">$</i>').join('') : '<i class="ball"></i>') +
+    '<span class="critter walking here critter-' + (fig ? 'fig' : 'maple') + ' party-pet"><span class="critter-body">' + art[fig ? 'fig' : 'maple'] + '</span></span>' +
+    '<p class="party-say">' + (fig ? 'Drawer clean! Fig is doing her happy dance.' : 'Screen time! Maple wants the ball.') + '</p>';
+  const host = document.querySelector('dialog[open]') || document.body;
+  host.appendChild(el);
+  const done = () => el.remove();
+  el.addEventListener('click', done);
+  setTimeout(done, 4200);
 }

@@ -7,7 +7,8 @@ import { collLabel, BOOKS, BY_ID, COLLECTIONS } from './books.js';
 import { state, saveUi, saveSetting } from './state.js';
 import { main, toast } from './page.js';
 import { greeting, revealChip, applySizes, row } from './cards.js';
-import { rewardPoints, choiceHtml, jarHtml, screenHtml, filesHtml } from './money.js';
+import { rewardPoints, jarHtml, screenHtml, filesHtml } from './money.js';
+import { pianoHtml } from './piano.js';
 import { quizLine } from './shelves.js';
 import { examTitle } from './cobol.js';
 import { arHtml } from './ar.js';
@@ -131,11 +132,11 @@ export function renderProgress() {
   const total = rewardPoints();
   main.innerHTML =
     '<header class="view-head"><div><p class="kicker">' + esc(greeting()) + '</p><h1>My progress</h1></div></header>' +
-    choiceHtml(total) +
-    metersHtml() +
+    metersHtml(total) +
     arHtml() +
     jarHtml(total) +
     screenHtml(total) +
+    pianoHtml() +
     ledgerHtml(total) +
     '<div class="chips" role="group" aria-label="Time period">' + years.map(y =>
       '<button type="button" class="chip" data-act="period" data-period="' + y + '" aria-pressed="' + (state.period === y) + '">' + y + '</button>').join('') +
