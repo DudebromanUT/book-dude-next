@@ -102,7 +102,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 
     // Side trips: offered once from a nearby stop; taking one costs days and shows its own scene.
     const reach = name => p.evaluate(n => { S.li = LM.findIndex(l => l.n === n) - 1; S.miles = LM[S.li + 1].m; arrive(); }, name);
-    const sights = [['Cedar Breaks', 'bryce', /^Bryce Canyon\? A shepherd says .* about 3 days\./, /hoodoos/],
+    const sights = [['Beaver', 'bryce', /^Bryce Canyon\? A shepherd in Beaver says .* about 4 days\./, /hoodoos/],
       ['Fillmore', 'swell', /^San Rafael Swell\? A trapper in Fillmore .* about 6 days\./, /painted figures on the walls/],
       ['St. George', 'hole', /^Hole in the Rock\? A cattleman in St\. George .* about 8 days/, /In the winter of 1879, about 250 Mormon pioneers did exactly that/]];
     for (const [stop, key, ask, story] of sights) {
@@ -147,6 +147,17 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await press('ok');
     await p.waitForSelector('#panel #buy');
 
+    // The route through Beaver: the river, the town, then the Mineral Mountains (with the family's photo).
+    assert.deepEqual(await p.evaluate(() => LM.slice(8, 13).map(l => l.n + ' ' + l.m)), ['Zion Canyon 925', 'Beaver River crossing 1030', 'Beaver 1040', 'Mineral Mountains 1075', 'Sevier River crossing 1130']);
+    assert.equal(await p.evaluate(() => LM.some(l => /Cedar/.test(l.n))), false);
+    await reach('Mineral Mountains');
+    assert.match(await panel(), /^You have reached Mineral Mountains\. Pale granite domes/);
+    assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'photo:Mineral Mountains');
+    await p.waitForTimeout(300);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'photo-mineral.png') });
+    await press('ok');
+    await p.waitForSelector('#panel #go');
+
     // The family's own photo of Zion Canyon, pixelated, shows on arrival.
     await reach('Zion Canyon');
     assert.match(await panel(), /^You have reached Zion Canyon\./);
@@ -158,7 +169,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await press('ok');
     await p.waitForSelector('#panel #go');
     assert.equal(await p.evaluate(() => mode), 'menu');
-    await reach('Cedar City');
+    await reach('Provo and Utah Lake');
     await press('ok');
     assert.ok(await p.$('#panel #go'), 'stops without a side trip go straight back to the trail');
 
