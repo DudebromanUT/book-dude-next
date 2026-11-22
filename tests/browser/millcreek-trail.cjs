@@ -1,0 +1,125 @@
+/* The Millcreek Trail on the Games tab: the family's homemade trail game opens from its card, plays (shop, travel,
+ * stop), saves the trip through the arcade, offers it again after a reload, scores a finish for the family scoreboard
+ * and the hall of fame, and works offline, loading nothing from another site.
+ *
+ *   Run:  node tests/browser/millcreek-trail.cjs
+ *
+ * Needs Playwright 1.56.1 and its Chromium, like clickthrough.cjs. */
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+const assert = require('assert');
+const { chromium, devices } = require('playwright');
+
+const DOCS = path.join(__dirname, '..', '..', 'docs');
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
+  '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2' };
+function serve() {
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const rel = decodeURIComponent(url.pathname).replace(/^\/book-dude-next\//, '');
+    const file = path.join(DOCS, rel === '' || rel.endsWith('/') ? rel + 'index.html' : rel);
+    if (!url.pathname.startsWith('/book-dude-next/') || !file.startsWith(DOCS + path.sep)) { res.writeHead(404); res.end(); return; }
+    // The built-in reading history isn't part of this: an empty one, so the shelves stay empty and offline still gets ready.
+    if (rel === 'history.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"app":"reading-room","version":1,"records":[]}'); return; }
+    fs.readFile(file, (err, data) => {
+      if (err) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': (TYPES[path.extname(file)] || 'application/octet-stream'), 'Cache-Control': 'no-cache' });
+      res.end(data);
+    });
+  });
+  return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server)));
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+
+(async () => {
+  const server = await serve();
+  const ORIGIN = 'http://127.0.0.1:' + server.address().port;
+  const BASE = ORIGIN + '/book-dude-next/';
+  const browser = await chromium.launch();
+  const errors = [], outside = [];
+  try {
+    const ctx = await browser.newContext({ ...devices['iPhone 13'], timezoneId: 'America/Denver' });
+    const p = await ctx.newPage();
+    p.on('pageerror', e => errors.push(e.message));
+    p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    p.on('request', r => { if (!r.url().startsWith(ORIGIN) && !r.url().startsWith('data:')) outside.push(r.url()); });
+    const panel = async () => clean(await p.innerText('#panel'));
+    const press = async id => { await p.click('#panel #' + id); };
+
+    await p.goto(BASE);
+    await p.waitForSelector('#sheet[open] .story');
+    await p.click('.story .btn[data-act="close-sheet"]');
+    await p.$eval('.tab[data-tab="games"]', e => e.click());
+    await p.waitForSelector('.game-card');
+    const cards = await p.$$eval('.game-card', els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    assert.equal(cards.length, 2);
+    assert.match(cards[1], /The Millcreek Trail\s*It’s 1862\. .*No stars yet\. 1 level to play\./);
+
+    // The game's own page, with its own font and nothing from another site.
+    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card a.btn', els => els[1].click())]);
+    await p.waitForSelector('#panel #go');
+    assert.ok(p.url().endsWith('/book-dude-next/games/millcreek-trail/'));
+    assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('22px VT323'))), true, 'its font ships with the app');
+    assert.match(await panel(), /^The year is 1862\. Haddam and Katrina/);
+    assert.deepEqual(await p.$$eval('#panel input', els => els.map(e => e.value)), ['Haddam', 'Katrina', 'Mabel', 'Twig', 'Gigi']);
+
+    // Start, shop, and hit the trail.
+    await p.selectOption('#mode', 'gentle');
+    await press('go');
+    assert.match(await panel(), /stock up at a San Francisco outfitter/);
+    await press('ok');
+    for (let i = 0; i < 3; i++) await p.click('#panel [data-p="oxen"]');
+    for (let i = 0; i < 24; i++) await p.click('#panel [data-p="food"]');
+    for (let i = 0; i < 4; i++) await p.click('#panel [data-p="clothes"]');
+    await press('buy');
+    assert.match(await panel(), /have 6 .* have 600 lbs .* have 4/);
+    await press('lv');
+    await p.waitForSelector('#panel #go');
+    // The health bars get their width without inline styles (the page's rules forbid them).
+    assert.deepEqual(await p.$$eval('#panel .bar i', els => els.map(e => e.style.width)), ['100%', '100%', '100%', '100%', '100%']);
+    await press('go');
+    await p.waitForSelector('#panel #stop');
+    await p.waitForTimeout(2500);
+    // Events may stop the wagon: keep clicking Continue until we're back at the menu.
+    for (let i = 0; i < 20 && !(await p.$('#panel #stop')) && !(await p.$('#panel #go')); i++) await p.click('#panel button.pri');
+    if (await p.$('#panel #stop')) await press('stop');
+    await p.waitForSelector('#panel #go');
+    const trip = await p.evaluate(() => window.BookDudeArcade.open('millcreek-trail').get('trip'));
+    assert.ok(trip && trip.miles > 0 && trip.oxen >= 5 && trip.mode === 'gentle', 'the trip saves through the arcade');
+    assert.equal(await p.evaluate(() => localStorage.getItem('mct-save')), null, 'not under the old standalone key');
+
+    // Coming back offers the saved trip.
+    await p.reload();
+    await p.waitForSelector('#panel #cont');
+    await press('cont');
+    await p.waitForSelector('#panel #go');
+
+    // The finish: the whole party makes it, 3 stars, on the scoreboard records and in the hall of fame.
+    await p.evaluate(() => { finish(); });
+    assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Haddam, Katrina, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Final score \d+/);
+    const saved = await p.evaluate(() => { const a = window.BookDudeArcade.open('millcreek-trail'); return [a.get('records'), a.get('hof')]; });
+    assert.equal(saved[0].Haddam.trip.stars, 3, 'on a device not signed in, the wagon leader is the player');
+    assert.ok(saved[0].Haddam.trip.score > 0);
+    assert.equal(saved[1][0].n, 'Haddam');
+    if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'trail-finish.png') });
+    await Promise.all([p.waitForNavigation(), p.click('a.home')]);
+    await p.waitForSelector('.game-card');
+    assert.match(await p.$$eval('.game-card', els => els[1].textContent.replace(/\s+/g, ' ')), /3 stars of 3/);
+
+    // Offline: the game opens with no internet.
+    await p.evaluate(() => navigator.serviceWorker.ready); await sleep(1500);
+    await ctx.setOffline(true);
+    await p.goto(BASE + 'games/millcreek-trail/');
+    await p.waitForSelector('#panel #go');
+    assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('22px VT323'))), true);
+
+    assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
+    assert.deepStrictEqual(errors, []);
+    console.log('The Millcreek Trail is on the Games tab: it plays, saves the trip, scores the finish for the family scoreboard, and works offline, loading nothing from anywhere else.');
+  } finally {
+    await browser.close();
+    server.close();
+  }
+})().catch(e => { console.error('FAILED', e.message.split('\n').slice(0, 4).join(' '), (e.stack.match(/millcreek-trail.cjs:\d+/) || [''])[0]); process.exit(1); });

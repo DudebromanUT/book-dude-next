@@ -61,7 +61,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.$eval('.tab[data-tab="games"]', e => e.click());
     await p.waitForSelector('.game-card');
     assert.equal(await p.evaluate(() => location.hash), '#games');
-    assert.match(clean(await p.textContent('#main')), /Games\s*Maple’s Big Day\s*Poop Patrol, Catch Fig, Garden Duty and Tug of War.*No stars yet\. 4 levels to play\.\s*Play\s*Scores are kept on this device\./);
+    assert.match(clean(await p.textContent('#main')), /Games\s*Maple’s Big Day\s*Poop Patrol, Catch Fig, Garden Duty and Tug of War.*No stars yet\. 4 levels to play\.\s*Play.*Scores are kept on this device\./);
 
     step('tab ok');
     // The game's own page.

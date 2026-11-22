@@ -19,7 +19,9 @@ import { account, activeKidName, saveScores, scoreboard } from './cloud.js';
 
 export const GAMES = [
   { id: 'maple-madness', title: 'Maple’s Big Day', blurb: 'Poop Patrol, Catch Fig, Garden Duty and Tug of War, starring Maple and Fig. In English and Spanish.', href: 'games/maple-madness/',
-    levels: [['poop', 'Poop Patrol'], ['chase', 'Catch Fig'], ['water', 'Garden Duty'], ['tug', 'Tug of War']] }
+    levels: [['poop', 'Poop Patrol'], ['chase', 'Catch Fig'], ['water', 'Garden Duty'], ['tug', 'Tug of War']] },
+  { id: 'millcreek-trail', title: 'The Millcreek Trail', blurb: 'It’s 1862. Get the family’s ancestors, a terrier, a cat and a blanket that seems to be alive from San Francisco to Millcreek. Hunt, ford rivers, and try not to die of dysentery.', href: 'games/millcreek-trail/',
+    levels: [['trip', 'The trip to Millcreek']] }
 ];
 
 const read = key => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } };
