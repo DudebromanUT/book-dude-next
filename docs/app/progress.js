@@ -11,6 +11,7 @@ import { rewardPoints, choiceHtml, jarHtml, screenHtml, filesHtml } from './mone
 import { quizLine } from './shelves.js';
 import { examTitle } from './cobol.js';
 import { arHtml } from './ar.js';
+import { metersHtml } from './meters.js';
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Where her points came from: every AR quiz, Book Dude test and home-points book, by school year (August to July), and
@@ -131,6 +132,7 @@ export function renderProgress() {
   main.innerHTML =
     '<header class="view-head"><div><p class="kicker">' + esc(greeting()) + '</p><h1>My progress</h1></div></header>' +
     choiceHtml(total) +
+    metersHtml() +
     arHtml() +
     jarHtml(total) +
     screenHtml(total) +
