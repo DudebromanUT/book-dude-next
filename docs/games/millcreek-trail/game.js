@@ -163,7 +163,7 @@ const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mounta
 /* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
    Arriving at one of these places (or taking its side trip) shows its photo while the story is on screen.
    New ones are made with scripts/pixelate.py. */
-const PHOTO={'San Francisco, California':'img/san-francisco.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
+const PHOTO={'San Francisco, California':'img/san-francisco.png','San Joaquin River crossing':'img/san-joaquin-river.png','Zion Canyon':'img/zion.png','Bryce Canyon':'img/bryce.png','San Rafael Swell':'img/san-rafael-swell.png'};
 const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
 function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
@@ -213,8 +213,9 @@ function offerSide(name){
   {see:()=>{S.sights.push(x.k);S.seen=(S.seen||[]).concat(x.k);S.sightNow=x.k;const q=[];lose(x.days,q);mode='sight';x.go(q);q.unshift(`You spend ${x.days} days on the detour to ${x.n}.`);S.log.push(`${dateStr()}: saw ${x.n}.`);runQ(q,()=>{S.sightNow=null;mode='menu';menu()})},
    skip:()=>{S.sights.push(x.k);S.log.push(`${dateStr()}: skipped ${x.n}.`);save();menu()}});
 }
+// A river with a photo shows it the whole time you decide how to cross, and while the crossing plays out.
 function river(){
-  mode='idle';const L=LM[S.li];
+  const L=LM[S.li];if(PIC[L.n]){mode='photo';S.photoNow=L.n}else mode='idle';
   if(!S.rv)S.rv={w:RI(60,600),dp:+(R(L.dp[0],L.dp[1])+(month()<6?R(0,1.5):0)).toFixed(1)};save();
   const r=S.rv;
   screen(`<div class="msg">${esc(L.n)}\nThe river is ${r.w} feet across and ${r.dp} feet deep. What will you do?</div><div class="btns"><button id="ford">Ford the river</button><button id="caulk">Caulk the wagon and float</button>${L.ferry?`<button id="ferry">Take the ferry, $${L.ferry}</button>`:''}<button id="wait">Wait a day</button></div><p class="small">Fording is safest under 2.5 feet. Floating needs at least 2 feet of water.</p>${partyHTML()}`,
@@ -231,7 +232,7 @@ function tip(q,p){
   const cand=alive().filter(m=>m.kind!=='blanket');
   if(ch(p)&&cand.length){const m=pick(cand);if(S.mode==='gentle'){m.hp=clamp(m.hp-25,1,100);q.push(`${m.n} was swept downstream and pulled out, soaked and miserable.`)}else down(m,q,'drowning')}
 }
-function cross(q){S.pend=null;S.rv=null;runQ(q,menu)}
+function cross(q){S.pend=null;S.rv=null;runQ(q,()=>{S.photoNow=null;menu()})}
 function finish(){
   S.over=true;stopGo();mode='end';
   const liv=alive(),pts=liv.reduce((s,m)=>s+(m.kind==='human'?{good:500,fair:400,poor:300,'very poor':200}[hpWord(m.hp)]:250),0);

@@ -126,6 +126,18 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       await press('ok');
       assert.ok(await p.$('#panel #go'), 'each side trip is offered only once');
     }
+    // A river crossing with a photo shows it while you decide, and goes back to the trail once across.
+    await reach('San Joaquin River crossing');
+    assert.match(await panel(), /^San Joaquin River crossing The river is \d+ feet across/);
+    assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'photo:San Joaquin River crossing');
+    await p.waitForTimeout(300);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'photo-river.png') });
+    await p.evaluate(() => { S.cash = 100; });
+    await press('ferry');
+    for (let i = 0; i < 30 && await p.$('#panel #ok'); i++) await press('ok');
+    await p.waitForSelector('#panel #go');
+    assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'menu:null');
+
     // The family's own photo of Zion Canyon, pixelated, shows on arrival.
     await reach('Zion Canyon');
     assert.match(await panel(), /^You have reached Zion Canyon\./);
