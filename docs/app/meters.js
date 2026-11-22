@@ -1,10 +1,10 @@
 /* The pets' meters on the Progress tab, for laughs:
  *   Maple's Fart-o-Meter: her AR points this quarter, against her quarter goal (arReport, docs/core.js). Each Library
  *   test she passes this quarter is a can of beans for Maple: more stink clouds.
- *   Fig's Litter-Robot: every point (AR, Library tests, home points) fills the waste drawer toward her next 10. A full
- *   drawer stays full, and stinky, until she spends the 10 points on money or screen time; that cleans it out. The
- *   spend buttons live here, and spending sets off a party (party below): Fig dances for money, Maple chases a ball
- *   for screen time.
+ *   Fig's Litter-Robot: the waste drawer starts full and gross, and every point (AR, Library tests, home points)
+ *   scoops some out; at 10 it's sparkling clean and she can spend the 10 points on money or screen time. Spending
+ *   fills it right back up (Fig is reliable like that). The spend buttons live here, and spending sets off a party
+ *   (party below): Fig dances for money, Maple chases a ball for screen time.
  * No sounds. */
 
 import { C, esc, today, fmtNum, reducedMotion } from './util.js';
@@ -20,13 +20,13 @@ const MAPLE = [
 ];
 const BEANS = ['No beans yet. Pass a Library test to feed Maple a can.', 'One can of beans. Maple is interested.', 'Two cans. Maple is making plans.',
   'Three cans. Maple’s farts now have farts.', 'Four cans. The neighbors have questions.', 'Five cans. Scientists want to study Maple.'];
-// Fig's drawer, from empty to overflowing: [fill from, status, line].
+// Fig's drawer as she scoops it out, from overflowing to spotless: [clean from, status, line].
 const DRAWER = [
-  [0, 'Ready', 'Fresh. Suspiciously fresh. Fig approves.'],
-  [0.2, 'Getting Ripe', 'Fig is pretending not to notice. Fig noticed.'],
-  [0.5, 'Smelly Cat', 'The flies have started a book club.'],
-  [0.8, 'Code Brown', 'Fig is giving everyone The Look.'],
-  [1, 'DRAWER FULL', 'Fig is filing a complaint with management. Spend your points to clean it out!']
+  [0, 'DRAWER FULL', 'Fig is filing a complaint with management. Earn points to scoop it out!'],
+  [0.2, 'Code Brown', 'Fig is giving everyone The Look. Keep scooping.'],
+  [0.5, 'Smelly Cat', 'Halfway there. The flies are packing their bags.'],
+  [0.8, 'Almost Fresh', 'Fig is cautiously optimistic. One more book should do it.'],
+  [1, 'Sparkling Clean!', 'Fig approves. Spend your 10 points before she makes another one.']
 ];
 
 const level = (list, pct) => list.reduce((got, row) => (pct >= row[0] ? row : got), list[0]);
@@ -60,6 +60,9 @@ const ROBOT_SPOTS = [[40, 140], [162, 140], [34, 118], [168, 118], [44, 96], [15
 function robot(frac, flies) {
   const h = Math.round(44 * Math.min(1, frac));
   const color = frac >= 1 ? '#6B4A22' : frac >= 0.8 ? '#8A6A2E' : frac >= 0.5 ? '#A8A04A' : '#8FCBA8';
+  const sparkles = frac <= 0 ? '<g class="robot-sparkle">' + [[40, 124], [162, 118], [48, 92], [154, 88], [100, 6]].map(([x, y], i) =>
+    '<path class="d' + i + '" d="M ' + x + ' ' + (y - 8) + ' L ' + (x + 2.5) + ' ' + (y - 2.5) + ' L ' + (x + 8) + ' ' + y + ' L ' + (x + 2.5) + ' ' + (y + 2.5) + ' L ' + x + ' ' + (y + 8) +
+    ' L ' + (x - 2.5) + ' ' + (y + 2.5) + ' L ' + (x - 8) + ' ' + y + ' L ' + (x - 2.5) + ' ' + (y - 2.5) + ' Z"/>').join('') + '</g>' : '';
   const top = 156 - h;
   const fly = i => '<g class="robot-fly f' + i + '"><circle r="2.4"/><ellipse class="wing" cx="-2" cy="-2.4" rx="2" ry="1.2"/><ellipse class="wing" cx="2" cy="-2.4" rx="2" ry="1.2"/></g>';
   return '<svg class="robot' + (frac >= 1 ? ' full' : '') + '" viewBox="0 0 200 172" role="img" aria-label="' + esc('Fig’s Litter-Robot: waste drawer ' + Math.round(Math.min(1, frac) * 100) + '% full') + '">' +
@@ -74,6 +77,7 @@ function robot(frac, flies) {
         (frac >= 0.8 ? '<ellipse cx="96" cy="' + (top + 1) + '" rx="5" ry="3"/><ellipse cx="134" cy="' + (top + 4) + '" rx="4" ry="2.5"/>' : '') + '</g>' : '') + '</g>' +
     '<path class="robot-handle" d="M 86 120 L 114 120"/>' +
     (frac >= 1 ? '<text class="robot-full" x="100" y="146" text-anchor="middle">FULL!</text>' : '') +
+    (frac <= 0 ? '<text class="robot-clean" x="100" y="142" text-anchor="middle">CLEAN!</text>' : '') + sparkles +
     (frac >= 0.2 ? clouds(Math.min(8, Math.floor(frac * 8)), ROBOT_SPOTS) : '') +
     Array.from({ length: flies }, (_, i) => fly(i)).join('') +
     '</svg>';
@@ -82,8 +86,8 @@ function robot(frac, flies) {
 function figCard(total) {
   const cfg = C.reward(state.settings.reward), ch = C.choices(total, cfg);
   const both = cfg.on && cfg.screen;
-  const frac = ch.open ? 1 : ch.into / 10;
-  const lvl = level(DRAWER, frac);
+  const clean = ch.open ? 1 : ch.into / 10, frac = 1 - clean;
+  const lvl = level(DRAWER, clean);
   const flies = frac >= 1 ? 4 : frac >= 0.8 ? 3 : frac >= 0.5 ? 2 : frac >= 0.35 ? 1 : 0;
   const jarLabel = cfg.perPoint > 0 ? '$' + fmtNum(10 * cfg.perPoint) : '10 points in the jar';
   return '<div class="meter fig"><h3>Fig’s Litter-Robot</h3>' + robot(frac, flies) +
@@ -91,12 +95,12 @@ function figCard(total) {
     '<p class="meter-line">' + esc(lvl[2]) + '</p>' +
     '<p class="meter-num">' + (ch.open
       ? '<b>' + fmtNum(ch.open * 10) + '</b> points to spend' + (ch.into ? ' · ' + fmtNum(ch.into) + ' already in the next drawer' : '')
-      : 'Waste: <b>' + Math.round(frac * 100) + '%</b> · ' + fmtNum(ch.into) + ' of 10 points') + '</p>' +
+      : 'Clean: <b>' + Math.round(clean * 100) + '%</b> · ' + fmtNum(ch.into) + ' of 10 points scooped') + '</p>' +
     (ch.open && both
-      ? '<p class="meter-bonus">Clean it out! Every 10 points: ' + esc(jarLabel) + ' or ' + cfg.minutes + ' minutes of screen time.</p>' +
+      ? '<p class="meter-bonus">Every 10 points: ' + esc(jarLabel) + ' or ' + cfg.minutes + ' minutes of screen time.</p>' +
         '<div class="row-actions robot-spend"><button type="button" class="btn primary" data-act="choose" data-to="jar">' + esc(jarLabel) + '</button>' +
         '<button type="button" class="btn primary" data-act="choose" data-to="minutes">' + cfg.minutes + ' minutes</button></div>'
-      : '<p class="meter-bonus">Every point fills the drawer. At 10, you clean it out for ' + (both ? 'money or screen time' : 'your reward') + '.</p>') +
+      : '<p class="meter-bonus">Every point scoops some out. At 10 it’s clean, and you get ' + (both ? 'money or screen time' : 'your reward') + '.</p>') +
     '<p class="robot-scoops"><span>Scoops Saved</span><b>' + fmtNum(ch.toJar + ch.toMinutes) + '</b></p></div>';
 }
 
@@ -125,7 +129,7 @@ export function metersHtml(total) {
     mapleCard(ml, gauge('maple', pa, ['#B9D98C', '#D9D46A', '#D9A74A', '#B8743A', '#7A4B2A'], 'img/dog.jpg', 'Maple’s Fart-o-Meter: ' + ml[1],
       clouds(Math.min(8, MAPLE.indexOf(ml) + beans), GAUGE_SPOTS)), ar, goal, beans) +
     figCard(total) +
-    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass feeds her a can of beans. Fig’s drawer fills with every point: AR, Library tests and home points.</p></section>';
+    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass feeds her a can of beans. Every point scoops Fig’s drawer: AR, Library tests and home points.</p></section>';
 }
 
 /* The party when she spends 10 points (no sound, tap to skip, about 4 seconds):
@@ -140,7 +144,7 @@ export function party(kind) {
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = (fig ? Array.from({ length: 14 }, (_, i) => '<i class="bill b' + (i % 7) + '">$</i>').join('') : '<i class="ball"></i>') +
     '<span class="critter walking here critter-' + (fig ? 'fig' : 'maple') + ' party-pet"><span class="critter-body">' + art[fig ? 'fig' : 'maple'] + '</span></span>' +
-    '<p class="party-say">' + (fig ? 'Drawer clean! Fig is doing her happy dance.' : 'Screen time! Maple wants the ball.') + '</p>';
+    '<p class="party-say">' + (fig ? 'Ka-ching! Fig is doing her happy dance.' : 'Screen time! Maple wants the ball.') + '<span class="party-sub">' + (fig ? 'Fig celebrated by making a fresh one.' : 'Fig made a fresh one while you weren’t looking.') + '</span></p>';
   const host = document.querySelector('dialog[open]') || document.body;
   host.appendChild(el);
   const done = () => el.remove();

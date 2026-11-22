@@ -63,7 +63,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     const meters = async () => clean(await p.innerText('#pet-meters'));
     let m = await meters();
     assert.match(m, /Maple’s Fart-o-Meter Barely a Squeak .* 10\.5 of 62\.5 AR points this quarter One can of beans\./);
-    assert.match(m, /Fig’s Litter-Robot FULL! DRAWER FULL .* 20 points to spend · 6\.5 already in the next drawer .* Scoops Saved 0/);
+    assert.match(m, /Fig’s Litter-Robot CLEAN! Sparkling Clean! .* 20 points to spend · 6\.5 already in the next drawer .* Scoops Saved 0/);
     assert.equal(await p.$$eval('#pet-meters .maple .meter-cloud', e => e.length), 1, 'one stink cloud for the can of beans');
     assert.match(text, /Quarter 1 Aug 1, 2026 7 0 Quarter 2 Oct 19, 2026 10\.5 9 Quarter 3 Jan 4, 2027 0 0 Quarter 4 Mar 15, 2027 0 0 Year 17\.5 9/, 'tests and home points are "other", never AR');
 
@@ -94,7 +94,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     text = await card();
     assert.match(text, /Quarter 2 Oct 19, 2026 to Jan 3, 2027 62\.7 of 62\.5 Quarter goal reached! School year 130\.7 of 250 All time: 1,085 AR points/);
     m = await meters();
-    assert.match(m, /LEGENDARY TOOT .* 62\.7 of 62\.5 AR points .* DRAWER FULL .* 30 points to spend/);
+    assert.match(m, /LEGENDARY TOOT .* 62\.7 of 62\.5 AR points .* Sparkling Clean! .* 30 points to spend/);
     assert.equal(await p.$eval('#pet-meters .maple .meter-needle', e => e.getAttribute('transform')), 'rotate(90.0 100 100)', 'the needle stops at the end');
     if (process.env.SHOTS) { await p.$eval('#ar-points', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(process.env.SHOTS, 'ar-points.png') }); }
     const saved = await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.arTrack);

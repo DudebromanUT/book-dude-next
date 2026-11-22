@@ -907,6 +907,13 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .robot-handle { stroke: #8F8A80; stroke-width: 4; stroke-linecap: round; }
 .robot-lumps { fill: #5A3E1E; }
 .robot-full { font: 800 16px system-ui, sans-serif; fill: #FFF6E0; letter-spacing: 1px; }
+.robot-clean { font: 800 15px system-ui, sans-serif; fill: #2E8A5A; letter-spacing: 1px; }
+.robot-sparkle path { fill: #F2C94C; animation: sparkle 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+.robot-sparkle .d1 { animation-delay: .3s; } .robot-sparkle .d2 { animation-delay: .6s; } .robot-sparkle .d3 { animation-delay: .9s; } .robot-sparkle .d4 { animation-delay: 1.2s; }
+@keyframes sparkle { 0%, 100% { transform: scale(.4); opacity: .4; } 50% { transform: scale(1.1); opacity: 1; } }
+.party-sub { display: block; font-weight: 600; font-size: .9rem; opacity: .85; margin-top: 2px; }
+.piano-goal { margin: 4px 0 6px; font-size: 1.05rem; }
+.cash-in.locked b { font-weight: 700; }
 .robot.full .robot-drawer { stroke: #C0392B; animation: robot-blink 1s step-end infinite; }
 .robot.full { animation: robot-shake 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
 .robot-fly circle { fill: #1E1A18; } .robot-fly .wing { fill: rgb(200 220 235 / .85); }
@@ -950,7 +957,7 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .meter .d1 { animation-delay: .4s; } .meter .d2 { animation-delay: .8s; } .meter .d3 { animation-delay: 1.2s; }
 .meter .d4 { animation-delay: 1.6s; } .meter .d5 { animation-delay: 2s; } .meter .d6 { animation-delay: .2s; } .meter .d7 { animation-delay: 1s; }
 @keyframes meter-float { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-4px); opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .meter-cloud, .robot-fly, .robot, .robot.full .robot-drawer { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .meter-cloud, .robot-fly, .robot, .robot.full .robot-drawer, .robot-sparkle path { animation: none; } }
 /* Piano practice */
 .piano-week { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .piano-day { display: grid; grid-template-columns: 6.5em 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: var(--surface-2); }

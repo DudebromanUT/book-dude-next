@@ -29,7 +29,7 @@ export function rewardPoints() {
 }
 
 // Screen time: what she has earned, and the extra a book earns when she finishes it (0 for books she added).
-export const screenStatus = total => C.screenTime(total, state.records, BOOKS, state.settings.reward, state.settings.piano);
+export const screenStatus = total => C.screenTime(total, state.records, BOOKS, state.settings.reward);
 export function bookExtra(b) {
   const cfg = C.reward(state.settings.reward);
   if (!cfg.screen || !b || b._custom) return 0;
@@ -165,11 +165,22 @@ export function screenHtml(total) {
     (st.books.length ? '<ul class="screen-books" aria-label="Books that earned extra minutes">' + st.books.slice(0, 3).map(x =>
       '<li><span>' + esc(title(x.id)) + '</span><b>+' + x.minutes + ' min</b></li>').join('') + '</ul>' : '') +
     (st.minutesToMove ? '<div class="row-actions move-row"><button type="button" class="btn small" data-act="move-to-jar">Move ' + cfg.minutes + ' minutes to the jar</button></div>' : '') +
-    (st.owed ? '<div class="jar-owed"><b>Cash it in on the weekend.</b>' +
-      '<button type="button" class="btn small" data-act="minutes-given">Grown-up: mark minutes as given</button></div>' : '') +
-    '<p class="jar-tally">' + fmtNum(st.earned) + ' minutes earned (' + fmtNum(st.fromPoints) + ' from points, ' + fmtNum(st.fromBooks) + ' from books' + (st.fromPiano ? ', ' + fmtNum(st.fromPiano) + ' from piano' : '') + ')' +
+    (st.owed ? cashInHtml() : '') +
+    '<p class="jar-tally">' + fmtNum(st.earned) + ' minutes earned (' + fmtNum(st.fromPoints) + ' from points, ' + fmtNum(st.fromBooks) + ' from books)' +
       (st.given ? ' · given: ' + fmtNum(st.given) : '') + '</p>' +
   '</section>';
+}
+
+// Cashing in: open Friday after school through Sunday, once she has practiced piano enough this week. A grown-up approves
+// either way, and can let her cash in outside those rules (a sick week, a long weekend).
+function cashInHtml() {
+  const now = new Date(), open = C.cashWindow(now.getDay(), now.getHours());
+  const week = C.pianoWeek(state.settings.piano, today());
+  const ready = open && week.met;
+  const why = [!week.met ? 'Piano first: ' + fmtNum(week.minutes) + ' of ' + week.goal + ' minutes this week. Maple is holding the remote hostage.' : '',
+    !open ? 'Cash-in opens Friday after school.' : ''].filter(Boolean).join(' ');
+  return '<div class="jar-owed cash-in' + (ready ? ' ready' : ' locked') + '"><b>' + (ready ? 'Cash-in is open! Any screen: iPad, Switch, laptop or TV.' : esc(why)) + '</b>' +
+    '<button type="button" class="btn small' + (ready ? ' primary' : '') + '" data-act="minutes-given">' + (ready ? 'Cash in (a grown-up approves)' : 'Grown-up: cash in anyway') + '</button></div>';
 }
 
 export function filesHtml(total) {
@@ -308,7 +319,7 @@ function schoolFieldsHtml(cfg, total) {
 }
 
 function screenFieldsHtml(cfg, total) {
-  const st = C.screenTime(total, state.records, BOOKS, cfg, state.settings.piano);
+  const st = C.screenTime(total, state.records, BOOKS, cfg);
   const specials = Object.keys(cfg.special).filter(id => BY_ID.has(id));
   return '<h3 class="panel-sub">Screen time</h3>' +
     '<label class="switch"><input type="checkbox" id="screen-on"' + (cfg.screen ? ' checked' : '') + '> Show screen time</label>' +
@@ -402,9 +413,9 @@ export const actions = {
   'minutes-given': () => asGrownup(() => {
     const owed = screenStatus(rewardPoints()).owed;
     if (!owed) return;
-    showBox('Mark screen time as given?',
-      '<p>' + plural(owed, 'minute is', 'minutes are') + ' waiting. Tap how many she’s using now. The rest stays saved for later.</p>' +
-      '<div class="row-actions">' + [30, 60].filter(n => n < owed).map(n => '<button type="button" class="btn" data-act="minutes-give" data-min="' + n + '">' + n + ' minutes</button>').join('') +
+    showBox('Cash in screen time',
+      '<p>' + plural(owed, 'minute is', 'minutes are') + ' waiting. Tap how many she’s using now, on any screen. The rest stays saved for later.</p>' +
+      '<div class="row-actions">' + [15, 30, 60].filter(n => n < owed).map(n => '<button type="button" class="btn" data-act="minutes-give" data-min="' + n + '">' + n + ' minutes</button>').join('') +
         '<button type="button" class="btn primary" data-act="minutes-give" data-min="' + owed + '">All ' + fmtNum(owed) + '</button>' +
         '<button type="button" class="btn" data-act="close-confirm">Cancel</button></div>');
   }),
@@ -414,7 +425,7 @@ export const actions = {
     if (!(n > 0)) return;
     await saveReward({ given: C.reward(state.settings.reward).given + n });
     renderProgress();
-    toast(plural(n, 'minute') + ' of screen time marked as given. The Dude recommends stretching first.');
+    toast(plural(n, 'minute') + ' of screen time cashed in. The Dude recommends stretching first.');
   },
   'given-minus': guard(async () => { const cfg = C.reward(state.settings.reward); await saveReward({ given: Math.max(0, cfg.given - 30) }); renderMore(); }),
   'given-plus': guard(async () => { const cfg = C.reward(state.settings.reward); await saveReward({ given: cfg.given + 30 }); renderMore(); }),

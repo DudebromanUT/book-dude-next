@@ -276,16 +276,18 @@ test('AR points by quarter: kept apart from other points, with points the school
   assert.ok(C.SYNCED_SETTINGS.includes('arTrack'), 'it travels with her account');
 });
 
-test('piano practice: each 15 minutes checked is 15 minutes of screen time, never moved into the jar', () => {
+test('piano practice: 90 minutes a week (Monday to Sunday) unlock cashing in; it earns no minutes itself', () => {
   assert.deepEqual(C.piano({ '2026-11-22': 3, '2026-11-21': 1, '2026-02-30': 2, 'soon': 1, '2026-11-20': 0, '2026-11-19': 1.5, '2026-11-18': 97 }), { '2026-11-22': 3, '2026-11-21': 1 });
   assert.equal(C.pianoMinutes({ '2026-11-22': 3, '2026-11-21': 1 }), 60);
-  assert.equal(C.pianoMinutes(null), 0);
+  const p = { '2026-11-15': 4, '2026-11-16': 2, '2026-11-18': 2, '2026-11-22': 2 };
+  const w = C.pianoWeek(p, '2026-11-22');
+  assert.deepEqual([w.days[0], w.days[6], w.minutes, w.goal, w.met], ['2026-11-16', '2026-11-22', 90, 90, true], 'Sunday the 15th is last week');
+  assert.deepEqual([C.pianoWeek(p, '2026-11-16').minutes, C.pianoWeek(p, '2026-11-16').met], [90, true], 'Monday is the same week');
+  assert.deepEqual([C.pianoWeek(p, '2026-11-15').days[0], C.pianoWeek(p, '2026-11-15').minutes], ['2026-11-09', 60]);
+  assert.equal(C.pianoWeek({}, 'nope').met, false);
   const cfg = { on: true, screen: true, minutes: 60, bonus: 0, toMinutes: 1 };
-  const s = C.screenTime(10, {}, [], cfg, { '2026-11-22': 2 });
-  assert.deepEqual([s.fromPoints, s.fromPiano, s.earned, s.owed, s.minutesToMove], [60, 30, 90, 90, 1]);
-  // With the points minutes given, only piano minutes are left: none can move into the jar.
-  const t = C.screenTime(10, {}, [], { ...cfg, given: 60 }, { '2026-11-22': 2 });
-  assert.deepEqual([t.owed, t.minutesToMove], [30, 0]);
-  assert.equal(C.screenTime(10, {}, [], cfg).fromPiano, 0, 'no piano, no minutes');
+  assert.equal(C.screenTime(10, {}, [], cfg).earned, 60, 'piano adds no minutes');
+  // Cash-in: Friday from 3 pm, Saturday, Sunday.
+  assert.deepEqual([[5, 14], [5, 15], [6, 9], [0, 22], [1, 10], [4, 20]].map(([d, h]) => C.cashWindow(d, h)), [false, true, true, true, false, false]);
   assert.ok(C.SYNCED_SETTINGS.includes('piano'), 'it travels with her account');
 });

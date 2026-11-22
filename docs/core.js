@@ -352,10 +352,11 @@
    * `minutesToMove` counts the tens she can move back into the jar: chosen minutes that haven't been given yet.
    */
   /**
-   * Piano practice a grown-up checked off: { 'YYYY-MM-DD': checks }, one check for each 15 minutes, each check worth
-   * 15 minutes of screen time. Anything that isn't a day with a whole number of checks (1 to 96) is left out.
+   * Piano practice a grown-up checked off: { 'YYYY-MM-DD': checks }, one check for each 15 minutes. It earns no screen
+   * time itself: PIANO_GOAL minutes in a week (Monday to Sunday) unlock cashing in screen time that weekend.
+   * Anything that isn't a day with a whole number of checks (1 to 96) is left out.
    */
-  const PIANO_STEP = 15;
+  const PIANO_STEP = 15, PIANO_GOAL = 90;
   function piano(o) {
     const out = {};
     if (!isPlain(o)) return out;
@@ -366,8 +367,20 @@
     return out;
   }
   const pianoMinutes = o => Object.values(piano(o)).reduce((sum, n) => sum + n * PIANO_STEP, 0);
+  /** The week (Monday to Sunday) that `today` is in: its days, oldest first, the piano minutes in it, and whether that's enough. */
+  function pianoWeek(o, today) {
+    const d = day(today);
+    if (!d) return { days: [], minutes: 0, goal: PIANO_GOAL, met: false };
+    const t = Date.parse(d + 'T12:00:00Z'), back = (new Date(t).getUTCDay() + 6) % 7;
+    const days = Array.from({ length: 7 }, (_, i) => new Date(t + (i - back) * 864e5).toISOString().slice(0, 10));
+    const p = piano(o);
+    const minutes = days.reduce((sum, k) => sum + (p[k] || 0) * PIANO_STEP, 0);
+    return { days, minutes, goal: PIANO_GOAL, met: minutes >= PIANO_GOAL };
+  }
+  /** Screen time cashes in from Friday after school (3 pm) through Sunday. `dow` is 0 (Sunday) to 6, `hour` 0 to 23. */
+  const cashWindow = (dow, hour) => dow === 6 || dow === 0 || (dow === 5 && hour >= 15);
 
-  function screenTime(totalPoints, records, books, settings, practice) {
+  function screenTime(totalPoints, records, books, settings) {
     const cfg = reward(settings);
     const spent = choices(totalPoints, cfg);
     const catalog = new Set((books || []).filter(b => b && !isCustomId(b.book_id)).map(b => b.book_id));
@@ -381,14 +394,11 @@
     extras.sort((x, y) => y.finishedDate.localeCompare(x.finishedDate) || (x.id < y.id ? -1 : 1));
     const fromPoints = spent.toMinutes * cfg.minutes;
     const fromBooks = extras.reduce((sum, x) => sum + x.minutes, 0);
-    const fromPiano = pianoMinutes(practice);
-    const owed = Math.max(0, fromPoints + fromBooks + fromPiano - cfg.given);
-    // Piano minutes can't be moved into the jar: only minutes chosen with points (counted after the piano's).
-    const movable = Math.max(0, owed - fromPiano);
+    const owed = Math.max(0, fromPoints + fromBooks - cfg.given);
     return {
-      fromPoints, fromBooks, fromPiano, books: extras, earned: fromPoints + fromBooks + fromPiano, given: cfg.given, owed,
+      fromPoints, fromBooks, books: extras, earned: fromPoints + fromBooks, given: cfg.given, owed,
       into: spent.into, toGo: spent.toGo, perTen: cfg.minutes,
-      minutesToMove: cfg.on && cfg.screen && cfg.minutes > 0 ? Math.min(spent.toMinutes, Math.floor(movable / cfg.minutes)) : 0
+      minutesToMove: cfg.on && cfg.screen && cfg.minutes > 0 ? Math.min(spent.toMinutes, Math.floor(owed / cfg.minutes)) : 0
     };
   }
 
@@ -827,7 +837,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, PIANO_STEP,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, PIANO_STEP, PIANO_GOAL,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates
