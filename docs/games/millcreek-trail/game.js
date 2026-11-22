@@ -59,7 +59,7 @@ If they don't make it, neither do you.</div>
    cont:()=>{S=sv;resume()},hof:showHof});
 }
 // A trip saved while the wagon was rolling comes back stopped (the clock that moved it didn't survive the reload).
-function resume(){S.going=false;if(S.pend==='river')river();else menu()}
+function resume(){S.going=false;S.photoNow=null;S.sightNow=null;if(S.pend==='river')river();else menu()}
 function have(k){return k==='food'?Math.round(S.food)+' lbs':S[k]}
 function store(first){
   mode='idle';const f=1+.15*S.forts,cart={};ITEMS.forEach(i=>cart[i.k]=0);
@@ -160,12 +160,24 @@ const EV=[
 ];
 function event(q){for(let i=0;i<6;i++){const sub=[],r=pick(EV)(sub);if(r){q.push(r);S.log.push(`${dateStr()}: ${r}`);q.push(...sub);return}}}
 const FL={'Fort Tejon':'An army post guarding the pass over the Tehachapi Mountains.','Cajon Pass':'The gap between the San Gabriel and San Bernardino Mountains. Beyond it lies the Mojave Desert.','Las Vegas Springs':'Cool springs and green meadows in the middle of the desert. Las Vegas means the meadows. Nobody can imagine anyone building a city here.','St. George':'A brand new cotton mission among red cliffs and black lava. Welcome to Utah Territory.','Zion Canyon':'The Virgin River has carved a canyon of red and cream cliffs half a mile deep. Everyone stops talking for a while.','Cedar Breaks':'A giant amphitheater of orange, pink and white rock at 10,000 feet. The air is thin and cold.','Cedar City':'An iron mining town at the edge of the high plateaus.','Fillmore':'The territorial capital, with a sandstone statehouse that is only half finished.','Mount Nebo':'The tallest peak in the Wasatch Range, nearly 12,000 feet. The Salt Lake Valley is just beyond the next ridges.','Provo and Utah Lake':'The biggest freshwater lake in the territory, full of fish.'};
+/* The family's own photos of the places on the trail, pixelated to the scene's size (160 x 75, drawn at double size).
+   Arriving at one of these places shows its photo while the arrival message is on screen. */
+const PHOTO={'Zion Canyon':'img/zion.png'};
+const PIC={};for(const [n,src] of Object.entries(PHOTO)){const im=new Image();im.src=src;PIC[n]=im}
+function showPhoto(n,next){S.photoNow=n;mode='photo';return()=>{S.photoNow=null;mode='menu';next()}}
 function arrive(){
   S.li++;const L=LM[S.li];S.miles=L.m;S.log.push(`${dateStr()}: reached ${L.n}.`);save();
   if(L.t==='river'){S.pend='river';S.rv=null;return river()}
   if(L.t==='end')return finish();
-  if(L.t==='fort'){S.forts++;return say(`You have arrived at ${L.n}. ${FL[L.n]||''} You can buy supplies here.`,()=>offerSide(L.n))}
-  say(`You have reached ${L.n}. ${FL[L.n]||''}`,()=>offerSide(L.n));
+  const after=PIC[L.n]?showPhoto(L.n,()=>offerSide(L.n)):()=>offerSide(L.n);
+  if(L.t==='fort'){S.forts++;return say(`You have arrived at ${L.n}. ${FL[L.n]||''} You can buy supplies here.`,after)}
+  say(`You have reached ${L.n}. ${FL[L.n]||''}`,after);
+}
+function drawPhoto(n){
+  const im=PIC[n];if(!im||!im.complete||!im.naturalWidth)return drawTrail();
+  g.imageSmoothingEnabled=false;g.drawImage(im,0,0,W,HH);
+  const t=n.toUpperCase();g.font='13px VT323, monospace';g.textAlign='left';const w=g.measureText(t).width+12;
+  g.fillStyle='rgba(26,18,12,.7)';g.fillRect(6,HH-20,w,15);g.fillStyle='#f0a030';g.fillText(t,12,HH-9);
 }
 /* Side trips: three sights off the main road, each offered once from a nearby stop. A detour costs days (and the
    food and health those days take), has a payoff and a risk, and adds SIDE_PTS to the score at the end. */
@@ -346,6 +358,6 @@ function drawSight(k){
   else if(k==='swell'){sky('hot');rect(0,100,W,50,'#d4b483');g.fillStyle='#b8603a';g.beginPath();g.moveTo(0,100);g.lineTo(90,38);g.lineTo(230,52);g.lineTo(W,100);g.fill();for(let j=0;j<4;j++){g.fillStyle=['#d88a5a','#c8a070','#a85030','#e0c098'][j];g.beginPath();g.moveTo(20+j*30,100);g.lineTo(90+j*18,44+j*10);g.lineTo(104+j*18,48+j*10);g.lineTo(40+j*30,100);g.fill()}rect(150,66,60,34,'#8a3a22');for(let i=0;i<5;i++){rect(156+i*11,72,3,10,'#e8d0b0');rect(155+i*11,70,5,3,'#e8d0b0');rect(154+i*11,75,7,1,'#e8d0b0')}}
   else{sky('clear');rect(0,70,W,80,'#c87a4a');rect(0,70,W,4,'#e0a070');rect(150,70,14,80,'#4a2414');rect(152,70,10,80,'#6a3420');for(let i=0;i<6;i++)rect(i*58,86+(i%2)*14,40,2,'#a85a34');rect(0,136,W,14,'#3d7fc0');rect(0,136,W,2,'#9cd0f5');rect(120,62,16,8,'#f2ead8');rect(118,68,20,3,'#7a4a26')}
 }
-function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else if(mode==='sight'&&S&&S.sightNow)drawSight(S.sightNow);else drawTrail();requestAnimationFrame(frame)}
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else if(mode==='sight'&&S&&S.sightNow)drawSight(S.sightNow);else if(mode==='photo'&&S&&S.photoNow)drawPhoto(S.photoNow);else drawTrail();requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 setup();

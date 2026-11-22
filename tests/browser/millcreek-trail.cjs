@@ -120,6 +120,17 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       await press('ok');
       assert.ok(await p.$('#panel #go'), 'each side trip is offered only once');
     }
+    // The family's own photo of Zion Canyon, pixelated, shows on arrival.
+    await reach('Zion Canyon');
+    assert.match(await panel(), /^You have reached Zion Canyon\./);
+    await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => mode + ':' + S.photoNow), 'photo:Zion Canyon');
+    const px = await p.evaluate(() => Array.from(document.getElementById('scene').getContext('2d').getImageData(20, 140, 1, 1).data));
+    assert.ok(px[0] > 90 && px[0] > px[2] * 1.5, 'red rock at the bottom of the photo, not the drawn scenery: ' + px);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'photo-zion.png') });
+    await press('ok');
+    await p.waitForSelector('#panel #go');
+    assert.equal(await p.evaluate(() => mode), 'menu');
     await reach('Cedar City');
     await press('ok');
     assert.ok(await p.$('#panel #go'), 'stops without a side trip go straight back to the trail');
