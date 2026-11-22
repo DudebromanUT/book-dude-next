@@ -363,6 +363,39 @@ function drawSight(k){
   else if(k==='swell'){sky('hot');rect(0,100,W,50,'#d4b483');g.fillStyle='#b8603a';g.beginPath();g.moveTo(0,100);g.lineTo(90,38);g.lineTo(230,52);g.lineTo(W,100);g.fill();for(let j=0;j<4;j++){g.fillStyle=['#d88a5a','#c8a070','#a85030','#e0c098'][j];g.beginPath();g.moveTo(20+j*30,100);g.lineTo(90+j*18,44+j*10);g.lineTo(104+j*18,48+j*10);g.lineTo(40+j*30,100);g.fill()}rect(150,66,60,34,'#8a3a22');for(let i=0;i<5;i++){rect(156+i*11,72,3,10,'#e8d0b0');rect(155+i*11,70,5,3,'#e8d0b0');rect(154+i*11,75,7,1,'#e8d0b0')}}
   else{sky('clear');rect(0,70,W,80,'#c87a4a');rect(0,70,W,4,'#e0a070');rect(150,70,14,80,'#4a2414');rect(152,70,10,80,'#6a3420');for(let i=0;i<6;i++)rect(i*58,86+(i%2)*14,40,2,'#a85a34');rect(0,136,W,14,'#3d7fc0');rect(0,136,W,2,'#9cd0f5');rect(120,62,16,8,'#f2ead8');rect(118,68,20,3,'#7a4a26')}
 }
-function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else if(mode==='sight'&&S&&S.sightNow)drawSight(S.sightNow);else if(mode==='photo'&&S&&S.photoNow)drawPhoto(S.photoNow);else drawTrail();requestAnimationFrame(frame)}
+// The end of the trail: the Salt Lake Valley from the mouth of Mill Creek canyon. The snowy Wasatch behind, the Oquirrhs
+// and the Great Salt Lake far off to the west, the creek winding down past a new cabin, with the wagon parked beside it.
+function drawValley(){
+  const gr=g.createLinearGradient(0,0,0,90);gr.addColorStop(0,'#5a9fd8');gr.addColorStop(1,'#f3dca0');g.fillStyle=gr;g.fillRect(0,0,W,HH);
+  g.fillStyle='#fff3c4';g.beginPath();g.arc(56,24,10,0,7);g.fill();
+  // the Oquirrhs, hazy in the west, and the lake shining at their feet
+  g.fillStyle='#9aa6b8';g.beginPath();g.moveTo(0,78);g.lineTo(30,60);g.lineTo(58,70);g.lineTo(88,58);g.lineTo(120,74);g.lineTo(120,84);g.lineTo(0,84);g.fill();
+  rect(0,80,96,4,'#bfe0f0');rect(6,81,30,1,'#ffffff');rect(48,82,24,1,'#ffffff');
+  // the Wasatch, big and snowy in the east
+  g.fillStyle='#6f7f95';g.beginPath();g.moveTo(110,90);g.lineTo(160,30);g.lineTo(186,52);g.lineTo(214,22);g.lineTo(250,48);g.lineTo(282,26);g.lineTo(320,56);g.lineTo(320,92);g.fill();
+  g.fillStyle='#eef3f7';for(const [px,py] of [[160,30],[214,22],[282,26]]){g.beginPath();g.moveTo(px,py);g.lineTo(px-11,py+14);g.lineTo(px-4,py+11);g.lineTo(px+2,py+16);g.lineTo(px+12,py+13);g.fill()}
+  // the canyon the creek comes out of
+  g.fillStyle='#4f5d70';g.beginPath();g.moveTo(222,92);g.lineTo(236,58);g.lineTo(248,92);g.fill();
+  // the valley floor: grass, then gold fields
+  rect(0,84,W,66,'#8fb05a');rect(0,96,W,54,'#a8b85a');for(let i=0;i<30;i++)rect((i*53)%W,100+(i*17)%46,3,2,'#c8c070');
+  // Mill Creek, winding down from the canyon
+  g.strokeStyle='#5aa0d8';g.lineWidth=3;g.beginPath();g.moveTo(236,90);g.bezierCurveTo(230,104,262,110,240,122);g.bezierCurveTo(222,132,186,128,170,150);g.stroke();
+  g.strokeStyle='#bfe0f0';g.lineWidth=1;g.beginPath();g.moveTo(240,106);g.lineTo(244,110);g.moveTo(200,130);g.lineTo(206,131);g.stroke();
+  // cottonwoods along the creek
+  for(const [tx,ty] of [[206,104],[258,112],[150,134],[272,128]]){rect(tx,ty,3,10,'#5a3a22');g.fillStyle='#4f7a3c';g.beginPath();g.arc(tx+1,ty-3,8,0,7);g.fill();g.fillStyle='#6a9a4a';g.beginPath();g.arc(tx-2,ty-5,4,0,7);g.fill()}
+  // the cabin, with smoke from the chimney
+  rect(96,104,40,22,'#8a5a32');for(let i=0;i<4;i++)rect(96,107+i*5,40,1,'#6a4428');g.fillStyle='#5a3a22';g.beginPath();g.moveTo(92,105);g.lineTo(116,90);g.lineTo(140,105);g.fill();
+  rect(126,90,5,10,'#7a4a2a');rect(112,114,8,12,'#3a2414');rect(100,110,7,6,'#f3dca0');rect(126,110,7,6,'#f3dca0');
+  g.fillStyle='rgba(240,240,240,.7)';for(let i=0;i<3;i++){const y=84-i*8-((last/60)%8),x=129+Math.sin(last/700+i)*3;g.beginPath();g.arc(x,y,3+i,0,7);g.fill()}
+  // the wagon, parked for good, and a fence
+  rect(46,116,34,9,'#7a4a26');g.fillStyle='#f2ead8';g.beginPath();g.moveTo(46,116);g.quadraticCurveTo(48,100,56,99);g.lineTo(72,99);g.quadraticCurveTo(80,100,80,116);g.fill();wheel(54,128,6,0);wheel(74,128,5,0);
+  for(let i=0;i<9;i++)rect(14+i*10,132,2,10,'#6a4428');rect(14,134,82,2,'#6a4428');rect(14,139,82,2,'#6a4428');
+  // whoever made it: Maple, Fig on the roof, BB in the doorway
+  if(S){if(who('dog')){rect(150,122,12,6,'#c07a3a');rect(151,122,9,3,'#1e1812');rect(160,118,6,6,'#c88a48');rect(163,120,1,1,'#111');rect(151,128,2,4,'#c07a3a');rect(159,128,2,4,'#c07a3a')}
+    if(who('cat')){rect(106,94,10,5,'#b8b8c0');rect(114,90,6,5,'#c6c6ce');rect(114,89,2,2,'#b8b8c0');rect(118,89,2,2,'#b8b8c0');rect(103,95,4,3,'#c6c6ce')}
+    if(who('blanket')){rect(112,116,8,10,'#6a72c8');rect(113,118,2,2,'#fff');rect(117,118,2,2,'#fff')}}
+  g.font='13px VT323, monospace';g.textAlign='left';const t='SALT LAKE VALLEY';const w=g.measureText(t).width+12;g.fillStyle='rgba(26,18,12,.7)';g.fillRect(6,HH-20,w,15);g.fillStyle='#f0a030';g.fillText(t,12,HH-9);
+}
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(S&&S.going)off+=dt*40;if(mode==='hunt')drawHunt(dt);else if(mode==='tomb')drawTomb();else if(mode==='sight'&&S&&S.sightNow)drawSight(S.sightNow);else if(mode==='photo'&&S&&S.photoNow)drawPhoto(S.photoNow);else if(mode==='end'&&S&&S.over)drawValley();else drawTrail();requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 setup();

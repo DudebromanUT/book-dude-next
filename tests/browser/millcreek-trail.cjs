@@ -177,6 +177,12 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // The finish: the whole party makes it, 3 stars, on the scoreboard records and in the hall of fame.
     await p.evaluate(() => { finish(); });
     assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Haddam, Katrina, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Side trips seen: 3 \+300 Party and supplies and sights \d+ .* Final score \d+/);
+    // The ending shows the Salt Lake Valley: green fields at the bottom of the scene, not the trail's road.
+    await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => mode), 'end');
+    const field = await p.evaluate(() => Array.from(document.getElementById('scene').getContext('2d').getImageData(300, 146, 1, 1).data));
+    assert.ok(field[1] > field[0] && field[1] > field[2], 'a green valley floor: ' + field);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'valley.png') });
     const saved = await p.evaluate(() => { const a = window.BookDudeArcade.open('millcreek-trail'); return [a.get('records'), a.get('hof')]; });
     assert.equal(saved[0].Haddam.trip.stars, 3, 'on a device not signed in, the wagon leader is the player');
     assert.ok(saved[0].Haddam.trip.score > 0);
