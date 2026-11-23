@@ -41,7 +41,7 @@ function guideHtml() {
 
     (both ? sec('Spending 10 points', ul([
       'On the Progress tab, Fig’s litter box gets cleaner with every point. At 10 it’s clean, and two buttons appear: <b>' + esc(tenMoney) + '</b> or <b>' + cfg.minutes + ' minutes</b>. It’s her choice; no passcode.',
-      '<b>Money:</b> you and the other grown-ups on the school email list get an email saying to add the money. Add it, then tap <b>Grown-up: mark as deposited</b> on the Book Money Jar.',
+      '<b>Money:</b> everyone on the Sunday email list (below) gets an email saying to add the money. Add it, then tap <b>Grown-up: mark as deposited</b> on the Book Money Jar.',
       '<b>Minutes:</b> they wait on the Screen time card until she cashes them in (below).',
       'Tapped the wrong one? Settings → Book money and screen time → Her choices fixes it.'
     ])) : '') +
@@ -55,11 +55,15 @@ function guideHtml() {
       '<b>Piano:</b> on the Piano practice card, tap <b>+</b> for each 15 minutes she practices (passcode). Piano doesn’t earn minutes; it unlocks cashing in.'
     ].filter(Boolean))) : '') +
 
+    sec('The Sunday email', '<p>Every Sunday morning the grown-ups on the list get an email about ' + esc(her === 'her' ? 'her' : her.replace(/’s$/, '') + '’s') + ' week: quizzes and points, money and minutes waiting, books finished and being read, Library tests passed, a few dinner-table questions about each book, and a summary of her chats with COBOL (anything worrying is emailed right away, too). The same list gets the money emails.</p>' +
+      '<p class="hint">The list is kept in the school-email Google script, not in Book Dude, so a Book Dude invite or sign-in doesn’t add anyone. The grown-up who set up the script adds each address there (Script Properties, DIGEST_TO, with commas between addresses).</p>') +
+
     sec('The grown-up passcode', '<p>A 4-digit passcode keeps the grown-up parts grown-up: entering points, approving screen time, checking off piano, marking money deposited, and changing settings. Once typed, it stays open for 5 minutes. Forgot it? <b>Forgot the passcode?</b> on the passcode box resets it.</p>') +
 
     sec('Your to-do list', ul([
       '<b>During the week:</b> tap + on Piano practice after she practices.',
       '<b>Friday to Sunday:</b> approve screen time when she cashes it in, and give it on the device.',
+      '<b>Sunday:</b> read the weekly email, and ask her a dinner-table question or two.',
       '<b>When the money email comes:</b> add it to ' + esc(where || 'her account') + ', then mark it deposited.',
       '<b>Now and then:</b> give home points for a book with no AR quiz, and once a quarter, check the AR card against the school’s report (<b>Grown-up: match the school’s AR report</b>).'
     ])) +
