@@ -1,6 +1,6 @@
 /*
  * The Dude: the crew's names, the daily sayings, the story in "Meet the Dude",
- * the Secret Files she unlocks with AR points, and the jokes on the Book Money Jar.
+ * and the jokes on the Book Money Jar.
  * Edit freely, then run `python3 scripts/build.py` so installed apps pick up the change.
  *
  * Placeholders: {dog} and {cat} become the names below. Jar and fact lines can also use
@@ -227,7 +227,7 @@ window.BOOK_DUDE = {
       "more": [
         "Yes, geologist is on there twice. He missed the rocks. And yes, fairy, for one very confusing summer involving a boy who refused to grow up. He will not explain.",
         "Being a **polymath** has its perks. As a neurologist, he learned that reading builds new connections between your **neurons**, like trails that get wider every time you walk them. As a herpetologist, he is the world’s leading expert on the yellow spotted lizards in Holes, and does not recommend digging near them. As a marine biologist, he spent one long voyage trying to convince Captain Ahab that the whale was not personally out to get him. (Read Moby Dick to see how that went.) As a teuthologist, he met Gerald the octopus, who claims to be related to the giant squid in Twenty Thousand Leagues Under the Sea. The squid says this is not true.",
-        "Ask him about any of his jobs and he **scats** a little jazz, taps his nose and says, “Earn a few points and I’ll tell you.” Every time you earn AR points, you unlock another of his Secret Files on the Progress tab. Bobby Joe will hand it to you, alphabetized."
+        "Ask him about any of his jobs and he **scats** a little jazz, taps his nose and says, “Read a few more books and maybe I’ll tell you.” He never does. Bobby Joe has the paperwork, alphabetized, and is not sharing either."
       ]
     },
     {
@@ -291,7 +291,7 @@ window.BOOK_DUDE = {
         },
         {
           "art": "bobby",
-          "name": "Bobby Joe, Head of Secret Files",
+          "name": "Bobby Joe, Head of Spelling",
           "text": "Secretary bird. Stomps typos on sight."
         },
         {
@@ -373,39 +373,6 @@ window.BOOK_DUDE = {
     }
   ],
   signoff: 'The Dude',
-
-  // The Secret Files: one of the Dude's old jobs unlocks at each point total (all-time AR points).
-  // Spaced for about 250 points a year: one every few weeks, with the finale at 300.
-  files: [
-    { at: 5, job: 'Geologist', title: 'Junior Rock Licker',
-      text: 'My first job was geologist. Here’s a real fact: geologists lick rocks. A wet rock shows its true colors. I licked about four thousand rocks. Maybe four thousand and one. My tongue still knows what granite tastes like. Gravelly. Do not recommend.' },
-    { at: 20, job: 'Chemist', title: 'Bouncy Pudding Chemist',
-      text: 'As a chemist, I tried to invent a pudding that wouldn’t spill. It worked too well. It bounced. Off the table, off the ceiling, out the window, and as far as I know, it is still bouncing somewhere in Nevada. If you see it, don’t eat it.' },
-    { at: 40, job: 'Gold miner', title: 'Pea-Sized Gold Miner',
-      text: 'I spent a whole summer panning for gold in a freezing mountain stream. I found exactly one nugget, about the size of a pea. I traded it for a used copy of Treasure Island. Best trade I ever made. The book had way more treasure in it.' },
-    { at: 60, job: 'Cowboy', title: 'Cowboy Who Lost the Cows',
-      text: 'I was a cowboy for one long season. My horse was named Pancake. Every night I read by the campfire, and every morning the cows were gone. I finished eleven books and lost forty-two cows. Pancake was not impressed. The cows were fine. They went home. Cows know the way.' },
-    { at: 80, job: 'Marine biologist', title: 'Octopus Wrangler',
-      text: 'Out on the ocean I studied octopuses. One of them, Gerald, could open jars, unscrew bottles, and take the sunglasses right off my face. That’s when I started losing my sunglasses. I like to think Gerald is wearing them somewhere, reading.' },
-    { at: 100, job: 'Physicist', title: 'Bedtime Physicist',
-      text: 'As a physicist, I made one important discovery: bedtime arrives 40% faster when you are in the middle of a good chapter. I measured it very carefully, with a stopwatch and a flashlight under the covers. Nobody gave me a prize. I know I’m right.' },
-    { at: 125, job: 'Doctor', title: 'Dr. Two-Chapters',
-      text: 'When I was a doctor, I gave every patient the same prescription: two chapters before bed, and call me in the morning. Sniffles? Two chapters. Grumpy? Two chapters. Broken arm? Okay, a cast. And then two chapters.' },
-    { at: 150, job: 'Teacher', title: 'Teacher of the Year (Unofficial)',
-      text: 'I taught fifth grade. My class read so many books that the library ran out of shelves, and we had to build new ones out of pizza boxes. They held up surprisingly well. They smelled amazing.' },
-    { at: 175, job: 'Photographer', title: 'Blurry Hummingbird Photographer',
-      text: 'I spent three years trying to photograph a hummingbird. I took four thousand pictures of blurry hummingbirds and one perfect, crystal-clear picture of my own thumb. It’s framed. It’s on the wall. Look for it.' },
-    { at: 200, job: 'Botanist', title: 'Plant Whisperer',
-      text: 'As a botanist, I grew a plant that only grows when someone reads out loud to it. It’s the one hanging by the bookshelf. Its name is Chapter. If it ever looks droopy, you know what to do.' },
-    { at: 225, job: 'Video game developer', title: 'Final Boss Designer',
-      text: 'I made exactly one video game. The final boss could only be defeated by reading it a bedtime story. It sold eleven copies, all to librarians. All eleven of them beat it on the first try.' },
-    { at: 250, job: 'Geologist (again)', title: 'Geologist, Again',
-      text: 'I went back to geology because I missed the rocks. The rocks did not miss me. Rocks are like that. I licked one, for old times’ sake, and decided I’d had enough.' },
-    { at: 275, job: 'Fairy', title: 'Tooth Fairy, Retired',
-      text: 'Okay. Fine. For one summer, and I am not explaining how, I was a tooth fairy. Tiny wings. Tiny hat. Very long nights. I got paid in quarters, which is how I bought the armchair. The wings are in a box in the attic. No, you can’t see them. They itch.' },
-    { at: 300, job: 'All of them', title: 'Honorary Dude',
-      text: 'Three hundred points. You know what that means? You’ve been a cowboy, a scientist, a detective, a dragon rider, and who knows what else, all without leaving your chair. That’s the whole secret. You’re officially an Honorary Dude now. (Sorry. It’s the only title I’ve got.)' }
-  ],
 
   // The visiting pets: one comes by each time the app opens, in turn. Tap a pet to hear a line.
   // A blank name makes the pet go by what it is (for example "Red-tailed hawk").

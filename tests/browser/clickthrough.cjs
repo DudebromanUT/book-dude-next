@@ -340,11 +340,6 @@ async function clickThrough(BASE) {
   await click('[data-act="edit-goal"]', 300);
   await click('[data-act="remove-goal"]', 300);
   note('goal removed', await text('.hero'));
-  await click('[data-act="open-file"][data-i="1"]', 300);
-  note('locked file', await toast());
-  await openSheet('[data-act="open-file"][data-i="0"]');
-  note('file sheet', await sheet());
-  await click('#sheet .row-actions [data-act="close-sheet"]', 300);
   await click('[data-act="shelf-go"]', 400);
   note('shelf-go', await text('#main .chips [aria-pressed="true"]') + ' / hash=' + await p.evaluate(() => location.hash));
 

@@ -60,7 +60,7 @@ function quizBox(b, r) {
 }
 
 // Home points: for a book with no AR quiz (a series the school doesn't quiz, say), a grown-up gives the points here.
-// They count for book money, screen time and the Secret Files on top of everything else, and never as AR points.
+// They count for book money and screen time on top of everything else, and never as AR points.
 function homeBox(b, r) {
   const ask = hasCode() ? ' A grown-up gives them.' : '';
   if (r.homePoints !== null) {

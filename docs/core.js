@@ -181,8 +181,8 @@
   const isExam = id => String(id).startsWith(EXAM_PREFIX);
 
   /**
-   * Home points: points a grown-up gave for books with no AR quiz. They count for book money, screen time and the
-   * Secret Files on top of everything else (a school total doesn't know about them), and never as AR points.
+   * Home points: points a grown-up gave for books with no AR quiz. They count for book money and screen time
+   * on top of everything else (a school total doesn't know about them), and never as AR points.
    */
   function homePoints(records) {
     let sum = 0;
@@ -306,7 +306,7 @@
   }
 
   /**
-   * The points that count for book money, screen time and the Secret Files: her school AR total above the
+   * The points that count for book money and screen time: her school AR total above the
    * starting line once a grown-up has typed it in (plus quizzes from the school's emails since), otherwise the quiz results entered in this app; plus the points
    * from Book Dude's own tests either way (the school total doesn't know about them).
    */

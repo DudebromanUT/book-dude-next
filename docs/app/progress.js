@@ -1,5 +1,5 @@
-/* The Progress tab: points and goals, her choices of money or minutes, the book money jar, screen time, Secret Files,
- * the chart, and collections finished. */
+/* The Progress tab: points and goals, her choices of money or minutes, the book money jar, screen time, the chart, and
+ * collections finished. */
 
 import { C, $, esc, today, thisYear, fmtNum, plural, fmtDay, localDay } from './util.js';
 import { icon } from './icons.js';
@@ -7,7 +7,7 @@ import { collLabel, BOOKS, BY_ID, COLLECTIONS } from './books.js';
 import { state, saveUi, saveSetting } from './state.js';
 import { main, toast } from './page.js';
 import { greeting, revealChip, applySizes, row } from './cards.js';
-import { rewardPoints, jarHtml, screenHtml, filesHtml } from './money.js';
+import { rewardPoints, jarHtml, screenHtml } from './money.js';
 import { pianoHtml } from './piano.js';
 import { quizLine } from './shelves.js';
 import { examTitle } from './cobol.js';
@@ -152,7 +152,6 @@ export function renderProgress() {
       '</div>' +
       (year && m.undated ? '<p class="notice soft" role="note">' + plural(m.undated, 'finished book has', 'finished books have') + ' no finish date, so ' + (m.undated === 1 ? 'it counts' : 'they count') + ' only in All time.</p>' : '') +
       backupNudge +
-      filesHtml(total) +
       chartHtml(m, year) +
       (awaitingList.length ? '<section><h2 class="section-title">Ready for a quiz <small>' + awaitingList.length + '</small></h2><div class="list">' +
         awaitingList.map(([b, r]) => row(b, '<span>' + (r.finishedDate ? 'Finished ' + esc(fmtDay(r.finishedDate)) : 'Finished') + '</span>' + quizLine(b, r))).join('') + '</div></section>' : '') +

@@ -1,11 +1,11 @@
-/* Book money, screen time and the Secret Files: the jar and the screen-time card on the Progress tab, the
- * grown-up settings on the More tab, her school AR total, and the files she unlocks with AR points. */
+/* Book money and screen time: the jar and the screen-time card on the Progress tab, the grown-up settings on the More
+ * tab, and her school AR total. */
 
 import { C, $, esc, today, fmtNum, plural, fmtDay, DUDE, fill, dayOfYear } from './util.js';
 import { icon } from './icons.js';
 import { BOOKS, BY_ID } from './books.js';
 import { state, saveSetting } from './state.js';
-import { sheet, confirmBox, toast, celebrate, sheetBar, showBox, showConfirm } from './page.js';
+import { confirmBox, toast, celebrate, showBox, showConfirm } from './page.js';
 import { renderProgress } from './progress.js';
 import { renderMore } from './more.js';
 import { asGrownup, isOpen, keepOpen, codePanelHtml } from './grownup.js';
@@ -22,7 +22,7 @@ const money = n => { const s = moneyFormat.format(n); return s.endsWith('.00') ?
 // One payout in a sentence: "$100 for your Barnes & Noble account", or the non-money prize.
 export const rewardLabel = cfg => (cfg.perPoint > 0 ? money(cfg.every * cfg.perPoint) + ' for ' + cfg.where : prizeText(cfg.prize));
 
-// The points that count for book money, screen time and the Secret Files: her school total above the starting
+// The points that count for book money and screen time: her school total above the starting
 // line once a grown-up has typed it in, otherwise the quiz results entered in this app; plus Book Dude's own tests.
 export function rewardPoints() {
   return C.rewardPoints(C.metrics(BOOKS, state.records, '').earned, state.settings.reward, C.examPoints(state.records) + C.homePoints(state.records));
@@ -67,7 +67,7 @@ export async function tellPayouts() {
 // One choice for 10 points, the jar side: "$10 in the jar", or "10 points in the jar" for a reward that isn't money.
 const jarChoiceLabel = cfg => (cfg.perPoint > 0 ? money(10 * cfg.perPoint) : '10 points') + ' in the jar';
 
-// What new points earned her, in one sentence for a toast (points to spend, book money, screen time, a Secret File), or ''.
+// What new points earned her, in one sentence for a toast (points to spend, book money, screen time), or ''.
 export function pointsNews(before, after) {
   const cfg = C.reward(state.settings.reward);
   const was = C.choices(before, cfg), now = C.choices(after, cfg);
@@ -75,8 +75,6 @@ export function pointsNews(before, after) {
   if (now.open > was.open) news.push('You have ' + fmtNum(now.open * 10) + ' points to spend on the Progress tab: ' + jarChoiceLabel(cfg) + ' or ' + cfg.minutes + ' minutes for every 10.');
   if (cfg.on && C.rewardStatus(now.jarPoints, cfg).earned > C.rewardStatus(was.jarPoints, cfg).earned) news.push('Book money is waiting: ' + rewardLabel(cfg) + '!');
   if (now.toMinutes > was.toMinutes) news.push('+' + (now.toMinutes - was.toMinutes) * cfg.minutes + ' minutes of screen time.');
-  const unlocked = DUDE.files.filter(f => before < f.at && after >= f.at);
-  if (unlocked.length) news.push('Secret File unlocked: ' + fill(unlocked[unlocked.length - 1].title) + '!');
   return news.join(' ');
 }
 
@@ -87,13 +85,6 @@ function pointsTyped(value) {
 }
 
 const JAR_SVG = '<svg viewBox="0 0 120 150" aria-hidden="true" focusable="false"><defs><clipPath id="jar-clip"><path d="M34 30h52v10c12 6 18 17 18 32v50c0 13-9 22-22 22H38c-13 0-22-9-22-22V72c0-15 6-26 18-32z"/></clipPath><linearGradient id="jar-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7D774"/><stop offset="1" stop-color="#D49A2A"/></linearGradient></defs><path class="jar-back" d="M34 30h52v10c12 6 18 17 18 32v50c0 13-9 22-22 22H38c-13 0-22-9-22-22V72c0-15 6-26 18-32z"/><g clip-path="url(#jar-clip)"><g class="jar-fill" data-fill="__FILL__"><path fill="url(#jar-gold)" d="M0 40q15-5 30 0t30 0 30 0 30 0V150H0z"/><g class="jar-coins"><circle cx="34" cy="132" r="8"/><circle cx="56" cy="138" r="8"/><circle cx="80" cy="131" r="8"/><circle cx="96" cy="139" r="7"/><circle cx="45" cy="116" r="8"/><circle cx="69" cy="118" r="8"/><circle cx="88" cy="112" r="7"/><circle cx="28" cy="100" r="7"/><circle cx="56" cy="98" r="8"/><circle cx="80" cy="95" r="7"/><circle cx="40" cy="80" r="7"/><circle cx="66" cy="78" r="8"/><circle cx="90" cy="76" r="6"/><circle cx="52" cy="60" r="7"/><circle cx="76" cy="58" r="7"/></g></g></g><path class="jar-glass" d="M34 30h52v10c12 6 18 17 18 32v50c0 13-9 22-22 22H38c-13 0-22-9-22-22V72c0-15 6-26 18-32z"/><path class="jar-shine" d="M26 74c-3 12-3 32 0 46"/><rect class="jar-lid" x="29" y="17" width="62" height="15" rx="4"/><rect class="jar-label" x="32" y="84" width="56" height="30" rx="4"/><text class="jar-label-text" x="60" y="97" text-anchor="middle">BOOK</text><text class="jar-label-text" x="60" y="108" text-anchor="middle">MONEY</text></svg>';
-
-function lastFile(total) {
-  let hit = null;
-  for (const f of DUDE.files) if (total >= f.at) hit = f;
-  return hit;
-}
-const nextFile = total => DUDE.files.find(f => total < f.at) || null;
 
 function factLine(total) {
   if (!total || !DUDE.facts.length) return 'Earn your first points and the Dude will do some very serious math about them.';
@@ -116,8 +107,6 @@ export function jarHtml(total) {
   const full = st.owed > 0;
   // A payout waiting with nothing yet toward the next one (the usual sight with $10 payouts) shows what's waiting.
   const waiting = full && !st.into;
-  const title = lastFile(total);
-  const next = nextFile(total);
   const school = cfg.school !== null;
   const counted = school ? ' points since the starting line' : ' points all time';
   return '<section class="jar-card' + (full ? ' full' : '') + '" aria-label="Book Money Jar">' +
@@ -135,8 +124,6 @@ export function jarHtml(total) {
     (full ? '<div class="jar-owed"><b>' + (st.money ? money(st.owedMoney) + ' is waiting to go into ' + esc(cfg.where) : plural(st.owed, 'reward is', 'rewards are') + ' waiting for a grown-up') + '</b>' +
       '<button type="button" class="btn small" data-act="reward-given">' + (st.money ? 'Grown-up: mark as deposited' : 'Grown-up: mark one as given') + '</button></div>' : '') +
     '<div class="jar-foot">' +
-      '<p class="jar-title"><span>Your title</span><b>' + esc(title ? fill(title.title) : 'Fresh Bookworm') + '</b></p>' +
-      '<p class="jar-next">' + (next ? 'Next Secret File opens at ' + next.at + ' points.' : 'Every Secret File is open. Legend.') + '</p>' +
       '<p class="jar-fact">' + esc(factLine(total)) + '</p>' +
       '<p class="jar-tally">' + fmtNum(total) + counted + (jarPoints !== total ? ' · ' + fmtNum(jarPoints) + ' in the jar' : '') + (st.money
         ? ' = ' + money(st.totalMoney) + ' · payouts earned: ' + st.earned + (cfg.paid ? ', deposited: ' + cfg.paid : '')
@@ -181,48 +168,6 @@ function cashInHtml() {
     !open ? 'Cash-in opens Friday after school.' : ''].filter(Boolean).join(' ');
   return '<div class="jar-owed cash-in' + (ready ? ' ready' : ' locked') + '"><b>' + (ready ? 'Cash-in is open! Any screen: iPad, Switch, laptop or TV.' : esc(why)) + '</b>' +
     '<button type="button" class="btn small' + (ready ? ' primary' : '') + '" data-act="minutes-given">' + (ready ? 'Cash in (a grown-up approves)' : 'Grown-up: cash in anyway') + '</button></div>';
-}
-
-export function filesHtml(total) {
-  if (!DUDE.files.length) return '';
-  const open = DUDE.files.filter(f => total >= f.at).length;
-  return '<section><h2 class="section-title">The Dude’s Secret Files <small>' + open + ' of ' + DUDE.files.length + ' unlocked</small></h2>' +
-    '<p class="hint files-hint">A story from each of the Dude’s old jobs. Earn AR points to open them.</p>' +
-    '<div class="files">' + DUDE.files.map((f, i) => {
-      const unlocked = total >= f.at;
-      return '<button type="button" class="file' + (unlocked ? '' : ' locked') + '" data-act="open-file" data-i="' + i + '" aria-label="' +
-        esc(unlocked ? 'Secret file ' + (i + 1) + ': ' + fill(f.title) : 'Locked secret file ' + (i + 1) + ', opens at ' + f.at + ' points') + '">' +
-        '<span class="file-no">File ' + (i + 1) + '</span>' +
-        (unlocked ? '<b>' + esc(fill(f.title)) + '</b><span class="file-job">' + esc(fill(f.job)) + '</span>'
-          : '<b>' + icon('lock') + 'Top secret</b><span class="file-job">Opens at ' + f.at + ' pts</span>') +
-        '</button>';
-    }).join('') + '</div></section>';
-}
-
-function openFile(i) {
-  const f = DUDE.files[i];
-  const total = rewardPoints();
-  if (!f) return;
-  if (total < f.at) {
-    toast(fmtNum(Math.round((f.at - total) * 100) / 100) + ' more points to open this one. ' + DUDE.dog + ' is guarding it.');
-    return;
-  }
-  const open = DUDE.files.map((x, j) => (total >= x.at ? j : -1)).filter(j => j >= 0);
-  const pos = open.indexOf(i);
-  const prev = open[pos - 1], next = open[pos + 1];
-  state.openId = null;
-  sheet.innerHTML = sheetBar('Secret file ' + (i + 1)) + '<div class="sheet-body file-sheet">' +
-    '<p class="stamp" aria-hidden="true">Top secret</p>' +
-    '<div><p class="file-label">File ' + (i + 1) + ' · ' + esc(fill(f.job)) + '</p><h1>' + esc(fill(f.title)) + '</h1></div>' +
-    '<div class="file-paper"><img class="file-face" src="img/dude-face.jpg" alt="" width="56" height="56"><p class="desc">' + esc(fill(f.text)) + '</p>' +
-      '<p class="signoff">' + esc(fill(DUDE.signoff)) + '</p></div>' +
-    '<div class="row-actions">' +
-      (prev !== undefined ? '<button type="button" class="btn" data-act="open-file" data-i="' + prev + '">Previous file</button>' : '') +
-      (next !== undefined ? '<button type="button" class="btn primary" data-act="open-file" data-i="' + next + '">Next file</button>'
-        : '<button type="button" class="btn primary" data-act="close-sheet">Back to reading</button>') +
-    '</div></div>';
-  if (!sheet.open) sheet.showModal();
-  sheet.scrollTop = 0;
 }
 
 export async function saveReward(patch) {
@@ -345,7 +290,6 @@ const guardAll = handlers => Object.fromEntries(Object.entries(handlers).map(([n
 
 export const actions = {
   'school-sync': () => syncSchool(false),
-  'open-file': el => openFile(Number(el.dataset.i)),
   'unlock-panel': () => asGrownup(renderMore),
   // Her pick for the next 10 points: the jar or screen time. No passcode: it's her choice.
   choose: async el => {

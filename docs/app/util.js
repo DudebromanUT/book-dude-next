@@ -30,7 +30,7 @@ export function hash(s) {
 }
 
 // The Dude's crew and words live in dude.js so they are easy to edit.
-export const DUDE = Object.assign({ dog: 'Maple', cat: 'Fig', sayings: [], story: [], signoff: 'The Dude', files: [], jar: [], jarFull: '', facts: [], pets: {} }, window.BOOK_DUDE || {});
+export const DUDE = Object.assign({ dog: 'Maple', cat: 'Fig', sayings: [], story: [], signoff: 'The Dude', jar: [], jarFull: '', facts: [], pets: {} }, window.BOOK_DUDE || {});
 export const fill = (s, vars) => String(s || '').replace(/\{(\w+)\}/g, (m, k) =>
   k === 'dog' ? DUDE.dog : k === 'cat' ? DUDE.cat : vars && Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m);
 

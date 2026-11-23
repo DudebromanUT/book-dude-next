@@ -848,10 +848,7 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
   margin-top: 8px; padding: 10px 12px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-text);
 }
 .jar-foot { grid-column: 1 / -1; display: grid; gap: 6px; margin-top: 10px; padding-top: 12px; border-top: 1.5px dashed color-mix(in srgb, var(--gold) 40%, var(--line)); }
-.jar-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.jar-title span { font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
-.jar-title b { font-family: var(--serif); font-size: 1.15rem; }
-.jar-next, .jar-tally { font-size: .82rem; color: var(--muted); }
+.jar-tally { font-size: .82rem; color: var(--muted); }
 .jar-fact { font-size: .92rem; color: var(--ink-2); }
 .jar-foot .row-actions { margin-top: 2px; }
 
@@ -1031,44 +1028,6 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .reader-list .row-actions { margin-top: 0; gap: 8px; }
 .invite-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.7rem; font-weight: 700; letter-spacing: .08em; text-align: center; padding: 14px 10px; border: 2px dashed var(--line-strong); border-radius: 12px; color: var(--ink); user-select: all; -webkit-user-select: all; }
 #account-panel .error { margin-top: 8px; }
-
-/* ---------- The Dude's Secret Files ---------- */
-.files-hint { margin: -6px 0 12px; }
-.files { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
-@media (min-width: 720px) { .files { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
-.file {
-  --manila: #E8CF97; --manila-dark: #C9AA67;
-  position: relative; display: grid; gap: 3px; align-content: start; min-height: 104px; margin-top: 10px; padding: 14px 12px 12px;
-  border: 0; border-radius: 3px 10px 10px 10px; text-align: left; color: #3A2A14;
-  background: var(--grain), linear-gradient(170deg, #F1DCAA, var(--manila)); box-shadow: 0 2px 0 var(--manila-dark), var(--shadow);
-}
-.file::before {
-  content: ""; position: absolute; left: 0; top: -10px; width: 46%; height: 12px; border-radius: 6px 10px 0 0;
-  background: #EDD59F; box-shadow: inset 0 1px 0 rgb(255 255 255 / .35);
-}
-.file-no { font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8A6A30; }
-.file b { font-family: var(--serif); font-size: 1rem; line-height: 1.2; display: flex; align-items: center; gap: 6px; }
-.file b svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.file-job { font-size: .78rem; color: #6E5530; }
-.file.locked { color: #6E5E4A; background: var(--grain), repeating-linear-gradient(135deg, #DCCDAE 0 10px, #D5C4A2 10px 20px); box-shadow: 0 2px 0 #B9A57E, var(--shadow); }
-.file.locked::before { background: #D9C9A8; }
-@media (prefers-color-scheme: dark) {
-  .file { filter: brightness(.88); }
-}
-.file-sheet { position: relative; }
-.file-sheet .stamp {
-  position: absolute; right: 18px; top: 2px; padding: 4px 12px; border: 3px solid #B23A2B; border-radius: 6px; color: #B23A2B;
-  font: 900 .9rem var(--sans); letter-spacing: .14em; text-transform: uppercase; transform: rotate(8deg); opacity: .85;
-}
-.file-label { font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.file-sheet h1 { font-size: clamp(1.7rem, 7vw, 2.3rem); margin-top: 4px; padding-right: 110px; }
-.file-paper {
-  position: relative; padding: 20px 18px 14px; border-radius: 6px 14px 14px 14px; color: #33240F;
-  background: var(--grain), linear-gradient(175deg, #FBF1D6, #F1DFB2); box-shadow: 0 2px 0 #D2B97F, var(--shadow);
-}
-.file-paper .desc { color: #33240F; }
-.file-face { float: left; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin: 2px 12px 4px 0; box-shadow: 0 0 0 2px #FBF1D6, 0 0 0 3.5px #C9A866; }
-.file-paper .signoff { color: #7A3D1D; clear: both; }
 
 /* Career tags in the story */
 .careers { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; }
