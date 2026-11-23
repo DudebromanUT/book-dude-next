@@ -139,12 +139,20 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.deepEqual(hits[1].slice(0, 2), [true, 60]); assert.match(hits[1][2], /^Got it!/);
     assert.deepEqual(hits[2].slice(0, 2), [true, 120]); assert.match(hits[2][2], /^Heart shot!/);
     assert.deepEqual(hits[3], [true, true, 1], 'a miss scares the rabbit and kicks up dust');
+    // Mabel runs out for each animal that went down, one at a time, and drags it back.
+    await p.waitForFunction(() => hunt.fetch.state === 'out');
+    assert.equal(await p.evaluate(() => hunt.fetch.queue.length), 1, 'the second deer waits its turn');
+    if (process.env.SHOTS) { await p.waitForTimeout(700); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-fetch.png') }); }
+    await p.waitForFunction(() => hunt.fetch.fetched === 2 && hunt.fetch.state === 'home', null, { timeout: 20000 });
+    assert.equal(await p.evaluate(() => hunt.an.filter(a => a.dead).length), 0, 'both deer were dragged off the field');
     await p.waitForTimeout(400);
     if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt.png') });
     // Stopping brings back what she can carry, and says what got away.
     await p.evaluate(() => { hunt.lost = 1; });
     await press('hs');
     assert.match(await panel(), /You brought down a deer, a deer: 120 lbs of meat, but you could only carry 100 lbs back to the wagon\./);
+    await press('ok');
+    assert.match(await panel(), /^Mabel fetched all 2 and wants to know when we're going again\./);
     for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) { const t = await panel(); if (/A wounded animal got away/.test(t)) break; await press('ok'); }
     assert.match(await panel(), /A wounded animal got away\./);
     for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) await press('ok');

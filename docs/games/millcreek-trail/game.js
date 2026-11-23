@@ -289,10 +289,39 @@ const HUNT_TIME=40,RELOAD=.8;
 const huntDist=y=>clamp((142-y)/40,0,1);
 // The crosshair's sway, in scene pixels, at hunt time t.
 const sway=t=>[Math.sin(t*1.7)*1.4+Math.sin(t*3.1+1)*.8,Math.cos(t*1.3)*1.1+Math.sin(t*2.3)*.6];
+// Mabel fetches: when an animal goes down she runs out from the bottom of the view, grabs it and drags it back, slower
+// the heavier it is. One at a time; the rest wait their turn. She stays home if she isn't with the party, or is riding
+// in the wagon. The meat counts when the animal goes down either way.
+const home=()=>[22,HH+8];
+const fetcher=()=>{const d=who('dog');return d&&!d.ride?d:null};
+const depthScale=y=>.4+.6*(1-huntDist(y));
+function moveDog(dt){
+  const f=hunt.fetch,dog=fetcher();
+  if(!dog){for(const a of f.queue)a.gone=true;f.queue=[];return}
+  if(f.state==='home'&&f.queue.length){f.target=f.queue.shift();f.state='out'}
+  if(f.state==='home')return;
+  const a=f.target,s=AN[a.k],tx=a.x+s.w*a.sc/2,ty=a.y+s.h*a.sc;
+  const [gx,gy]=f.state==='out'?[tx,ty]:home(),dx=gx-f.x,dy=gy-f.y,dist=Math.hypot(dx,dy);
+  const speed=f.state==='out'?110:90/(1+s.lb/80);
+  f.dir=dx>=0?1:-1;f.ph+=dt*(f.state==='out'?16:9);
+  if(dist<=speed*dt){f.x=gx;f.y=gy;
+    if(f.state==='out'){f.state='back';a.carried=true;hunt.msg=dog.n+' grabbed the '+a.k+(s.lb>=100?'. This may take a while.':'!');hunt.msgT=1.8}
+    else{a.gone=true;f.fetched++;f.state='home';f.target=null;hunt.msg=dog.n+' brought back the '+a.k+'. Good dog.';hunt.msgT=1.8}
+  }else{f.x+=dx/dist*speed*dt;f.y+=dy/dist*speed*dt}
+  if(a.carried){const sc=a.sc;a.x=f.x-(f.dir>0?s.w*sc+2:-6)-0;a.y=f.y-s.h*sc}
+}
+function drawDog(){
+  const f=hunt.fetch;if(f.state==='home'||!fetcher())return;
+  const sc=depthScale(f.y)*1.1,x=f.x,y=f.y,l=Math.sin(f.ph)>0?1:0;
+  const r=(dx,dy,w,h,c)=>rect(f.dir>0?x+dx*sc:x-(dx+w)*sc,y+dy*sc,Math.max(1,w*sc),Math.max(1,h*sc),c);
+  r(-7,-9,14,6,'#c07a3a');r(-6,-9,10,3,'#1e1812');r(-9,-13,2,5,'#1e1812');
+  r(5,-14,7,7,'#c88a48');r(6,-16,2,2,'#c88a48');r(9,-13,1,1,'#111');r(11,-11,2,2,'#1e1812');
+  r(-6,-3,2,3+l,'#c07a3a');r(4,-3,2,4-l,'#c07a3a');
+}
 function startHunt(){
   if(S.bullets<1)return say('You do not have any bullets.',menu);
   const q=[];day(false,q);
-  hunt={an:[],t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
+  hunt={an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
   mode='hunt';cv.style.touchAction='none';
   screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap Fire to shoot.</div><p class="small">The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="hs">Stop hunting</button></div>`,{fire:fire,hs:endHunt});
 }
@@ -300,6 +329,7 @@ function endHunt(){
   if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';
   const m=hunt.meat,c=Math.min(100,m);S.food+=c;const q=hunt.q;
   q.push(m?`You brought down ${hunt.kills.join(', ')}: ${m} lbs of meat${m>100?', but you could only carry 100 lbs back to the wagon':''}.`:'You came back empty handed.');
+  if(hunt.fetch.fetched){const d=S.party.find(p=>p.kind==='dog');q.push(`${d.n} fetched ${hunt.fetch.fetched===1?'it':'all '+hunt.fetch.fetched} and wants to know when we're going again.`)}
   if(hunt.lost)q.push(`${hunt.lost===1?'A wounded animal':hunt.lost+' wounded animals'} got away.`);
   runQ(q,menu);
 }
@@ -322,7 +352,7 @@ function landShot(sh){
   // Nearer animals stand in front of farther ones.
   const live=hunt.an.filter(a=>!a.dead).sort((p,q)=>p.z-q.z);
   for(const a of live){const b=huntBoxes(a);
-    if(inBox(sh.x,sh.y,b.heart)||(a.wounded&&inBox(sh.x,sh.y,b.body))){a.dead=true;hunt.meat+=AN[a.k].lb;hunt.kills.push('a '+a.k);hunt.msg=(a.wounded?'Got it! The ':'Heart shot! The ')+a.k+' is down. '+AN[a.k].lb+' lbs.';hunt.msgT=2;spook(sh.x,a);return}
+    if(inBox(sh.x,sh.y,b.heart)||(a.wounded&&inBox(sh.x,sh.y,b.body))){a.dead=true;hunt.fetch.queue.push(a);hunt.meat+=AN[a.k].lb;hunt.kills.push('a '+a.k);hunt.msg=(a.wounded?'Got it! The ':'Heart shot! The ')+a.k+' is down. '+AN[a.k].lb+' lbs.';hunt.msgT=2;spook(sh.x,a);return}
     if(inBox(sh.x,sh.y,b.body)){a.wounded=true;a.flee=true;a.graze=0;a.d=sh.x<a.x+AN[a.k].w*a.sc/2?1:-1;hunt.msg='Hit, but not the heart. The '+a.k+' is wounded and running!';hunt.msgT=2;spook(sh.x,a);return}
   }
   hunt.puffs.push({x:sh.x,y:sh.y,t:.6});hunt.msg=pick(['Missed.','Missed. Check the wind.','Missed. Too low?','Missed. The shot scared everything nearby.']);hunt.msgT=1.6;spook(sh.x,null);
@@ -406,7 +436,8 @@ function drawSights(cx,cy){
 }
 function drawHunt(dt){
   hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);hunt.recoil=Math.max(0,(hunt.recoil||0)-dt*5);
-  if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
+  moveDog(dt);
+  if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0&&hunt.fetch.state==='home'&&!hunt.fetch.queue.length)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
   // The wind drifts toward a new speed every few seconds, with gusts.
   hunt.windT-=dt;if(hunt.windT<=0){hunt.windTo=RI(-14,14);hunt.windT=R(2.5,5)}
   hunt.wind+=clamp(hunt.windTo-hunt.wind,-4*dt,4*dt);const wind=hunt.wind+Math.sin(hunt.T*2.1)*1.2;
@@ -419,7 +450,7 @@ function drawHunt(dt){
   sky('clear');far('plains');rect(0,100,W,50,'#b9b45a');for(let i=0;i<14;i++)rect((i*41)%W,104+(i*13)%40,3,4,'#8a8a44');
   rect(0,108,W,1,'#a8a450');rect(0,120,W,1,'#a8a450');
   for(const a of hunt.an.filter(x=>x.x<-60||x.x>W+60))if(a.wounded&&!a.dead)hunt.lost++;
-  hunt.an=hunt.an.filter(a=>a.x>=-60&&a.x<=W+60);
+  hunt.an=hunt.an.filter(a=>!a.gone&&(a.dead||(a.x>=-60&&a.x<=W+60)));
   // Farthest first, so nearer animals are drawn in front.
   for(const a of hunt.an.slice().sort((p,q)=>q.z-p.z)){const s=AN[a.k],w=s.w*a.sc,h=s.h*a.sc;
     if(!a.dead){
@@ -434,6 +465,7 @@ function drawHunt(dt){
     if(a.k==='elk'){rect(hx,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx+6*a.sc,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx-2*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0');rect(hx+6*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0')}
     if(a.wounded)rect(a.x+w*.5,a.y+h*.35,Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');
   }
+  drawDog();
   for(const p of hunt.puffs){p.t-=dt;const r=2+(.6-p.t)*6;g.fillStyle=`rgba(210,190,150,${Math.max(0,p.t/.6)})`;g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}
   hunt.puffs=hunt.puffs.filter(p=>p.t>0);
   if(hunt.flash>0)hunt.flash-=dt;
