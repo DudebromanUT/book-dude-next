@@ -9,6 +9,7 @@ import { greeting } from './cards.js';
 import { rewardPanelHtml } from './money.js';
 import { coversItem } from './offline.js';
 import { accountPanelHtml } from './account.js';
+import { guideButtonHtml } from './guide.js';
 import { activeKid, activeKidName } from './cloud.js';
 
 const ACCENTS = { leather: 'Leather', rug: 'Rug red', brass: 'Brass', ivy: 'Ivy', teal: 'Teal', navy: 'Navy', plum: 'Plum', berry: 'Berry' };
@@ -41,6 +42,7 @@ export function renderMore() {
 
   main.innerHTML =
     '<header class="view-head"><div><p class="kicker">' + esc(greeting()) + '</p><h1>Settings</h1></div></header>' +
+    guideButtonHtml() +
     '<div class="settings-grid">' +
     '<div>' +
       '<section class="panel meet"><span class="face"><img src="img/dude-face.jpg" alt="" width="96" height="96"></span><div><h2>About the Dude</h2>' +

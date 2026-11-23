@@ -347,6 +347,9 @@ async function clickThrough(BASE) {
   await click('.tab[data-tab="more"]', 400);
   // Covers save in the background at their own pace (tests/covers.test.cjs covers that), so that line is left out.
   note('more', (await text('#main')).replace(/ (?:Saving book covers…|Book covers saved).*?(?= Running in the browser| Installed)/, ''));
+  await openSheet('[data-act="guide"]');
+  note('guide', await sheet());
+  await click('#sheet .row-actions [data-act="close-sheet"]', 300);
   await arm(); await p.fill('#reader-name', 'Maddy'); await p.dispatchEvent('#reader-name', 'change');
   note('name', await toast());
   await click('[data-act="accent"][data-accent="teal"]', 300);
