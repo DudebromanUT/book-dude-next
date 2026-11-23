@@ -106,6 +106,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#panel #fire');
     assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap Fire to shoot\. The wind pushes your bullet sideways/);
     assert.equal(await p.evaluate(() => mode + ':' + getComputedStyle(document.getElementById('scene')).touchAction), 'hunt:none', 'dragging aims, it doesn\'t scroll the page');
+    assert.deepEqual(await p.evaluate(() => [scene.width, scene.height]), [640, 300], 'the hunt is drawn at double resolution');
     // Dragging moves the crosshair by the finger's movement, not to where the finger is.
     const box = await p.locator('#scene').boundingBox();
     const aim0 = await p.evaluate(() => [hunt.ax, hunt.ay]);
@@ -158,6 +159,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) await press('ok');
     await p.waitForSelector('#panel #go');
     assert.equal(await p.evaluate(() => mode + ':' + document.getElementById('scene').style.touchAction), 'menu:');
+    assert.deepEqual(await p.evaluate(() => [scene.width, scene.height]), [320, 150], 'the rest of the game keeps its original pixels');
 
     // Side trips: offered once from a nearby stop; taking one costs days and shows its own scene.
     const reach = name => p.evaluate(n => { S.li = LM.findIndex(l => l.n === n) - 1; S.miles = LM[S.li + 1].m; arrive(); }, name);

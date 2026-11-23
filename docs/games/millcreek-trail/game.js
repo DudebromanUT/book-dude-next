@@ -5,7 +5,11 @@
  * for the family scoreboard. Stars: 3 if the whole party makes it, 2 if both grown-ups do, 1 for making it at all. */
 'use strict';
 const $=s=>document.querySelector(s);
+// The scene is drawn in 320 x 150 coordinates. The hunt alone runs at double resolution (640 x 300, with half-pixel
+// detail); everything else keeps the original 320 x 150 pixels.
 const cv=$('#scene'),g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+let RES=1;
+function setRes(n){if(RES===n)return;RES=n;cv.width=320*n;cv.height=150*n;g.setTransform(n,0,0,n,0,0);g.imageSmoothingEnabled=false}
 const P=$('#panel');
 const R=(a,b)=>a+Math.random()*(b-a),RI=(a,b)=>Math.floor(R(a,b+1)),ch=p=>Math.random()<p,pick=a=>a[Math.floor(Math.random()*a.length)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -322,11 +326,11 @@ function startHunt(){
   if(S.bullets<1)return say('You do not have any bullets.',menu);
   const q=[];day(false,q);
   hunt={an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
-  mode='hunt';cv.style.touchAction='none';
+  mode='hunt';cv.style.touchAction='none';setRes(2);
   screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap Fire to shoot.</div><p class="small">The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="hs">Stop hunting</button></div>`,{fire:fire,hs:endHunt});
 }
 function endHunt(){
-  if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';
+  if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';setRes(1);
   const m=hunt.meat,c=Math.min(100,m);S.food+=c;const q=hunt.q;
   q.push(m?`You brought down ${hunt.kills.join(', ')}: ${m} lbs of meat${m>100?', but you could only carry 100 lbs back to the wagon':''}.`:'You came back empty handed.');
   if(hunt.fetch.fetched){const d=S.party.find(p=>p.kind==='dog');q.push(`${d.n} fetched ${hunt.fetch.fetched===1?'it':'all '+hunt.fetch.fetched} and wants to know when we're going again.`)}
@@ -370,7 +374,9 @@ const endDrag=()=>{drag=null};cv.addEventListener('pointerup',endDrag);cv.addEve
 
 /* drawing */
 const W=320,HH=150;
-const rect=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h)};
+// Whole pixels at the normal resolution, half pixels during the hunt.
+const snap=v=>Math.round(v*RES)/RES;
+const rect=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(snap(x),snap(y),RES>1?Math.max(.5,snap(w)):w,RES>1?Math.max(.5,snap(h)):h)};
 function sky(w){const c={clear:['#4f9fdc','#bfe3f5'],warm:['#4f9fdc','#f3dca0'],hot:['#5aa8dc','#f7cf72'],cloudy:['#8596a6','#c8d0d6'],rain:['#5a6773','#98a3ad'],cold:['#93b2c8','#dfe9ef'],snow:['#aebbc4','#eef2f4']}[w]||['#4f9fdc','#bfe3f5'];const gr=g.createLinearGradient(0,0,0,100);gr.addColorStop(0,c[0]);gr.addColorStop(1,c[1]);g.fillStyle=gr;g.fillRect(0,0,W,HH);
   if(['clear','warm','hot'].includes(w)){g.fillStyle='#fff3c4';g.beginPath();g.arc(262,26,11,0,7);g.fill()}
   if(['cloudy','rain','snow','cold'].includes(w))for(let i=0;i<4;i++){const x=((i*97-off*.05)%380+380)%380-40;rect(x,14+i*7,44,7,'rgba(255,255,255,.7)');rect(x+8,9+i*7,26,6,'rgba(255,255,255,.7)')}}
@@ -434,6 +440,40 @@ function drawSights(cx,cy){
   rect(cx-15,ty,12,1,'#5a5a66');rect(cx+3,ty,12,1,'#5a5a66');
   if(hunt.flash>0){g.fillStyle='rgba(255,220,120,.95)';g.beginPath();g.moveTo(cx,ty-2);g.lineTo(cx-7,ty-10);g.lineTo(cx-2,ty-9);g.lineTo(cx,ty-16);g.lineTo(cx+2,ty-9);g.lineTo(cx+7,ty-10);g.closePath();g.fill()}
 }
+// One hunting animal, drawn facing its way (a.d) at its size (a.sc): legs that walk, body and belly, neck and head (lowered
+// while grazing), an eye and an ear, and what makes each kind itself. Half-pixel detail at the hunt's double resolution.
+const LOOK={deer:{c:'#9a6a3a',belly:'#e8d8b8',dark:'#6a4424'},elk:{c:'#b08a5a',belly:'#e8d0a0',dark:'#5a3a22'},bear:{c:'#2a1e16',belly:'#3a2a1e',dark:'#140e0a'},
+  rabbit:{c:'#a08a70',belly:'#e8e0d0',dark:'#6a5a48'},squirrel:{c:'#8a6a4a',belly:'#d8c0a0',dark:'#5a4430'}};
+function drawAnimal(a){
+  const s=AN[a.k],L=LOOK[a.k],u=a.sc,w=s.w*u,h=s.h*u,low=a.graze>0&&!a.flee;
+  const r=(dx,dy,dw,dh,c)=>rect(a.d>0?a.x+dx:a.x+w-dx-dw,a.y+dy,Math.max(.5,dw),Math.max(.5,dh),c);
+  const step=Math.sin(a.ph),lw=Math.max(.5,1.6*u),hop=a.k==='rabbit'||a.k==='squirrel';
+  // legs: the far pair a shade darker, the near pair in front
+  const leg=(fx,ph,c)=>{const lift=hop?Math.max(0,step)*1.5*u:Math.max(0,Math.sin(a.ph+ph))*1.6*u;r(w*fx,h*.66,lw,h*.34-lift,c)};
+  leg(.1,Math.PI,L.dark);leg(.74,0,L.dark);leg(.2,0,L.c);leg(.84,Math.PI,L.c);
+  // tail behind
+  if(a.k==='deer')r(-1.2*u,h*.26,1.8*u,2.4*u,'#f4ecdc');
+  if(a.k==='rabbit')r(-1.4*u,h*.4,2*u,2*u,'#f4ecdc');
+  if(a.k==='squirrel'){r(-2.5*u,h*.05,3*u,h*.55,L.c);r(-3.5*u,-h*.2,3*u,h*.35,L.c);r(-3*u,-h*.2,1*u,h*.3,L.belly)}
+  // body, belly, and the bear's hump or the elk's pale rump
+  r(0,h*.26,w,h*.44,L.c);r(w*.18,h*.6,w*.6,h*.1,L.belly);
+  if(a.k==='bear')r(w*.55,h*.16,w*.28,h*.14,L.c);
+  if(a.k==='elk')r(0,h*.28,w*.16,h*.3,'#e0c898');
+  // neck and head (down to the grass while grazing)
+  const hs=Math.max(1,h*.4),hy=low?h*.36:0,hx=w-2*u;
+  r(w*.8,(low?h*.3:h*.1),w*.16,h*.3,a.k==='elk'?L.dark:L.c);
+  r(hx,hy,hs,hs,a.k==='elk'?L.dark:L.c);
+  r(hx+hs-.5,hy+hs*.55,Math.max(.5,1.4*u),Math.max(.5,hs*.35),a.k==='bear'?'#6a4a30':L.dark);
+  r(hx+hs*.55,hy+hs*.25,Math.max(.5,.9*u),Math.max(.5,.9*u),'#111');
+  if(a.k==='rabbit'){r(hx+hs*.15,hy-4*u,1*u,4.5*u,L.c);r(hx+hs*.45,hy-3.5*u,1*u,4*u,L.dark)}
+  else if(a.k==='bear'){r(hx,hy-1*u,1.6*u,1.6*u,L.c);r(hx+hs*.6,hy-1*u,1.6*u,1.6*u,L.c)}
+  else r(hx+hs*.1,hy-1.6*u,1.2*u,2*u,L.dark);
+  // antlers: a small rack for a deer, a big one with tines for an elk
+  if(a.k==='deer'){const ax=hx+hs*.3;r(ax,hy-4*u,.8*u,4*u,'#d8c8a0');r(ax-1.6*u,hy-4*u,2*u,.8*u,'#d8c8a0');r(ax+.6*u,hy-6*u,.8*u,2.4*u,'#d8c8a0')}
+  if(a.k==='elk'){const ax=hx+hs*.2;r(ax,hy-8*u,.9*u,8*u,'#e0d0a8');r(ax-5*u,hy-8*u,5.5*u,.9*u,'#e0d0a8');
+    for(const t of [-4.6,-2.8,-1])r(ax+t*u,hy-11*u,.9*u,3*u,'#e0d0a8');r(ax+1.6*u,hy-6*u,.9*u,2.6*u,'#e0d0a8')}
+  if(a.wounded)r(w*.45,h*.36,Math.max(1,2*u),Math.max(1,2*u),'#c03020');
+}
 function drawHunt(dt){
   hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);hunt.recoil=Math.max(0,(hunt.recoil||0)-dt*5);
   moveDog(dt);
@@ -458,12 +498,7 @@ function drawHunt(dt){
       const v=a.graze>0&&!a.flee?0:s.sp*a.sc*(a.flee?(a.wounded?2.4:2):.7);a.x+=a.d*v*dt;if(v)a.ph+=dt*12*(a.flee?1.6:1);
     }
     if(a.dead){rect(a.x,a.y+h-Math.max(2,5*a.sc),w,Math.max(2,5*a.sc),s.c);rect(a.x+w/2,a.y+h-Math.max(3,7*a.sc),Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');continue}
-    const l=Math.sin(a.ph)>0?2*a.sc:0,hx=a.d>0?a.x+w-2*a.sc:a.x-h*.35+2*a.sc,hy=a.graze>0&&!a.flee?a.y+h*.35:a.y;
-    rect(a.x,a.y+h*.25,w,h*.5,s.c);rect(hx,hy,Math.max(1,h*.4),Math.max(1,h*.4),s.c);
-    rect(a.x+2*a.sc,a.y+h*.75,Math.max(1,2*a.sc),h*.25-l,s.c);rect(a.x+w-4*a.sc,a.y+h*.75,Math.max(1,2*a.sc),h*.25-(2*a.sc-l),s.c);
-    if(a.k==='deer')rect(hx+a.sc,hy-4*a.sc,1,4*a.sc,'#6a4a2a');
-    if(a.k==='elk'){rect(hx,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx+6*a.sc,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx-2*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0');rect(hx+6*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0')}
-    if(a.wounded)rect(a.x+w*.5,a.y+h*.35,Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');
+    drawAnimal(a);
   }
   drawDog();
   for(const p of hunt.puffs){p.t-=dt;const r=2+(.6-p.t)*6;g.fillStyle=`rgba(210,190,150,${Math.max(0,p.t/.6)})`;g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}
