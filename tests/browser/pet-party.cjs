@@ -83,7 +83,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.equal(await p.$('.party'), null, 'a tap ends the party');
     assert.match(await fig(), /Smelly Cat .* Clean: 65% · 6\.5 of 10 points scooped .* Scoops Saved 1/);
 
-    // Screen time: Maple chases a ball.
+    // Screen time: Maple chases Duck Duck.
     await save('holes--louis-sachar', { status: 'finished', earnedPoints: 3.5, quizDate: '2026-11-19' });
     await progress();
     await p.$eval('#pet-meters [data-act="choose"][data-to="minutes"]', e => e.click());

@@ -898,6 +898,8 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .meter-cloud path { fill: none; stroke: #7FAE45; stroke-width: 2.5; stroke-linecap: round; }
 .meter-tuft path { fill: none; stroke: #7D776C; stroke-width: 2; stroke-linecap: round; }
 .meter-cloud { animation: meter-float 2.4s ease-in-out infinite; }
+.meter-duck { animation: duck-bob 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes duck-bob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-4px) rotate(6deg); } }
 /* Fig's Litter-Robot */
 .robot { width: 100%; max-width: 240px; display: block; margin: 0 auto; overflow: visible; }
 .robot-body { fill: #F4F4F2; stroke: #C9C6BF; stroke-width: 2; }
@@ -938,8 +940,9 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .party-fig .party-pet .critter-body { animation: party-dance .5s ease-in-out infinite alternate; }
 .party-maple .party-pet { animation: party-cross 3.6s linear forwards; }
 .party-maple .party-pet .critter-body { animation: party-bounce .45s ease-in-out infinite alternate; }
-.party .ball { position: absolute; bottom: 40vh; left: -30px; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #F7F06A, #C9C22E); box-shadow: inset 0 0 0 2px rgb(0 0 0 / .1);
+.party .ball { position: absolute; bottom: 40vh; left: -30px; width: 40px; height: 34px; display: block;
   animation: party-cross-ball 3.6s linear forwards, party-ball-bounce .45s ease-in infinite alternate; }
+.party .ball svg { width: 100%; height: 100%; display: block; }
 .party .bill { position: absolute; top: -40px; width: 38px; height: 20px; border-radius: 3px; background: #7CB66A; color: #1F4D1A; font: 800 13px/20px system-ui, sans-serif; text-align: center; box-shadow: 0 1px 2px rgb(0 0 0 / .2);
   animation: party-bill 3.6s linear forwards; }
 .party .b0 { left: 6%; } .party .b1 { left: 20%; animation-delay: .3s; } .party .b2 { left: 34%; animation-delay: .7s; } .party .b3 { left: 48%; animation-delay: .1s; }
@@ -957,7 +960,7 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .meter .d1 { animation-delay: .4s; } .meter .d2 { animation-delay: .8s; } .meter .d3 { animation-delay: 1.2s; }
 .meter .d4 { animation-delay: 1.6s; } .meter .d5 { animation-delay: 2s; } .meter .d6 { animation-delay: .2s; } .meter .d7 { animation-delay: 1s; }
 @keyframes meter-float { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-4px); opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .meter-cloud, .robot-fly, .robot, .robot.full .robot-drawer, .robot-sparkle path { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .meter-cloud, .meter-duck, .robot-fly, .robot, .robot.full .robot-drawer, .robot-sparkle path { animation: none; } }
 /* Piano practice */
 .piano-week { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .piano-day { display: grid; grid-template-columns: 6.5em 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: var(--surface-2); }

@@ -1,25 +1,33 @@
 /* The pets' meters on the Progress tab, for laughs:
- *   Maple's Fart-o-Meter: her AR points this quarter, against her quarter goal (arReport, docs/core.js). Each Library
- *   test she passes this quarter is a can of beans for Maple: more stink clouds.
+ *   Maple's Zoomies-o-Meter: her AR points this quarter, against her quarter goal (arReport, docs/core.js). Each Library
+ *   test she passes this quarter is a squeak of Duck Duck, Maple's squeaky duck: more Duck Ducks around the gauge.
  *   Fig's Litter-Robot: the waste drawer starts full and gross, and every point (AR, Library tests, home points)
  *   scoops some out; at 10 it's sparkling clean and she can spend the 10 points on money or screen time. Spending
  *   fills it right back up (Fig is reliable like that). The spend buttons live here, and spending sets off a party
- *   (party below): Fig dances for money, Maple chases a ball for screen time.
+ *   (party below): Fig dances for money, Maple chases Duck Duck for screen time.
  * No sounds. */
 
 import { C, esc, today, fmtNum, reducedMotion } from './util.js';
 import { state } from './state.js';
 
 const MAPLE = [
-  [0, 'Barely a Squeak', 'Maple is suspiciously quiet. Read a book and wake her up.'],
-  [20, 'Silent but Deadly', 'Nobody heard it. Everybody smelled it.'],
-  [40, 'Squeaky Toy', 'Maple says it was the couch. It was not the couch.'],
-  [60, 'Window Rattler', 'The Dude opened a window. Then he opened another window.'],
-  [80, 'Clear the Room!!', 'Fig has left the building. Bobby Joe is wearing a gas mask.'],
-  [100, 'LEGENDARY TOOT', 'Quarter goal smashed! Maple is very proud and only a little sorry.']
+  [0, 'Napping', 'Maple is asleep with Duck Duck under her chin. Read a book and wake her up.'],
+  [20, 'Sniffing Around', 'Maple is looking for Duck Duck. Duck Duck is under the couch. Again.'],
+  [40, 'Tail Going', 'The tail is wagging so hard the whole back half of Maple is wagging.'],
+  [60, 'Running Laps', 'Maple did three laps of the living room with Duck Duck. Squeak. Squeak. SQUEAK.'],
+  [80, 'FULL ZOOMIES', 'Fig has left the room. Maple has not slowed down. Duck Duck is holding on for dear life.'],
+  [100, 'SOUND BARRIER', 'Quarter goal smashed! Maple ran so fast she broke the sound barrier. Duck Duck squeaked the whole way.']
 ];
-const BEANS = ['No beans yet. Pass a Library test to feed Maple a can.', 'One can of beans. Maple is interested.', 'Two cans. Maple is making plans.',
-  'Three cans. Maple’s farts now have farts.', 'Four cans. The neighbors have questions.', 'Five cans. Scientists want to study Maple.'];
+const SQUEAKS = ['No squeaks yet. Pass a Library test and Maple squeaks Duck Duck.', 'One squeak. Maple’s ears perk up.', 'Two squeaks. Maple is doing the play bow.',
+  'Three squeaks. Fig is covering her ears.', 'Four squeaks. Duck Duck is getting a sore throat.', 'Five squeaks. Duck Duck has squeaked more than any duck in history.'];
+// Duck Duck, Maple's squeaky toy duck, drawn around her gauge: one more for each level and each squeak (up to 8).
+const DUCK_SPOTS = [[22, 104], [178, 104], [10, 76], [190, 76], [30, 46], [170, 46], [62, 14], [138, 14]];
+function ducks(n) {
+  return DUCK_SPOTS.slice(0, n).map(([x, y], i) => '<g class="meter-duck d' + i + '">' +
+    '<ellipse cx="' + x + '" cy="' + y + '" rx="7" ry="5" fill="#F7D046"/><circle cx="' + (x + 5) + '" cy="' + (y - 5) + '" r="3.6" fill="#F7D046"/>' +
+    '<path d="M ' + (x + 8) + ' ' + (y - 6) + ' l 4 1.2 l -4 1.4 z" fill="#F08A24"/><circle cx="' + (x + 6) + '" cy="' + (y - 6) + '" r=".9" fill="#1E1A18"/>' +
+    '<path d="M ' + (x - 3) + ' ' + (y - 1) + ' q 3 -3 6 0" stroke="#E0B030" stroke-width="1.2" fill="none"/></g>').join('');
+}
 // Fig's drawer as she scoops it out, from overflowing to spotless: [clean from, status, line].
 const DRAWER = [
   [0, 'DRAWER FULL', 'Fig is filing a complaint with management. Earn points to scoop it out!'],
@@ -53,7 +61,6 @@ function clouds(n, spots) {
   return spots.slice(0, n).map(([x, y], i) => '<g class="meter-cloud d' + i + '">' +
     '<path d="M ' + (x - 7) + ' ' + y + ' q 3 -6 7 0 t 7 0" /><path d="M ' + (x - 5) + ' ' + (y - 7) + ' q 3 -5 6 0 t 6 0" /></g>').join('');
 }
-const GAUGE_SPOTS = [[22, 108], [178, 108], [10, 80], [190, 80], [30, 50], [170, 50], [60, 18], [140, 18]];
 const ROBOT_SPOTS = [[40, 140], [162, 140], [34, 118], [168, 118], [44, 96], [158, 96], [30, 160], [172, 160]];
 
 // A cartoon Litter-Robot: the globe with Fig's face in the doorway, and the waste drawer filling up below.
@@ -104,37 +111,37 @@ function figCard(total) {
     '<p class="robot-scoops"><span>Scoops Saved</span><b>' + fmtNum(ch.toJar + ch.toMinutes) + '</b></p></div>';
 }
 
-function mapleCard(lvl, gaugeSvg, points, goal, beans) {
-  return '<div class="meter maple"><h3>Maple’s Fart-o-Meter</h3>' + gaugeSvg +
+function mapleCard(lvl, gaugeSvg, points, goal, squeaks) {
+  return '<div class="meter maple"><h3>Maple’s Zoomies-o-Meter</h3>' + gaugeSvg +
     '<p class="meter-level">' + esc(lvl[1]) + '</p><p class="meter-line">' + esc(lvl[2]) + '</p>' +
     '<p class="meter-num"><b>' + fmtNum(points) + '</b> of ' + fmtNum(goal) + ' AR points this quarter</p>' +
-    '<p class="meter-bonus">' + esc(BEANS[Math.min(beans, BEANS.length - 1)] + (beans > 5 ? ' (' + beans + ' cans!)' : '')) + '</p></div>';
+    '<p class="meter-bonus">' + esc(SQUEAKS[Math.min(squeaks, SQUEAKS.length - 1)] + (squeaks > 5 ? ' (' + squeaks + ' squeaks!)' : '')) + '</p></div>';
 }
 
 export function metersHtml(total) {
   const day = today(), year = C.schoolYear(day), t = C.arTrack(state.settings.arTrack);
   const q = C.quarterOf(day, t), r = C.arReport(state.records, state.settings.arTrack, year), now = r.quarters[q - 1];
-  // Book Dude tests passed this quarter (not the think-about-it bonuses).
-  let beans = 0;
+  // Book Dude tests passed this quarter (not the think-about-it bonuses): squeaks of Duck Duck.
+  let squeaks = 0;
   for (const id of Object.keys(state.records)) {
     const rec = state.records[id];
     if (!C.isExam(id) || /:think$/.test(id) || typeof rec.earnedPoints !== 'number' || C.schoolYear(rec.quizDate) !== year || C.quarterOf(rec.quizDate, t) !== q) continue;
-    beans++;
+    squeaks++;
   }
   const goal = r.goal.quarter;
   const ar = Math.round(now.ar * 100) / 100;
   const pa = goal ? ar / goal * 100 : 0;
   const ml = level(MAPLE, pa);
   return '<section class="panel meters" id="pet-meters"><h2 class="section-title">Pet-o-Meters <small>Quarter ' + q + '</small></h2><div class="meter-row">' +
-    mapleCard(ml, gauge('maple', pa, ['#B9D98C', '#D9D46A', '#D9A74A', '#B8743A', '#7A4B2A'], 'img/dog.jpg', 'Maple’s Fart-o-Meter: ' + ml[1],
-      clouds(Math.min(8, MAPLE.indexOf(ml) + beans), GAUGE_SPOTS)), ar, goal, beans) +
+    mapleCard(ml, gauge('maple', pa, ['#9FD3F0', '#9DD08A', '#F2D26A', '#F2A048', '#E2603C'], 'img/dog.jpg', 'Maple’s Zoomies-o-Meter: ' + ml[1],
+      ducks(Math.min(8, MAPLE.indexOf(ml) + squeaks))), ar, goal, squeaks) +
     figCard(total) +
-    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass feeds her a can of beans. Every point scoops Fig’s drawer: AR, Library tests and home points.</p></section>';
+    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass is a squeak of Duck Duck. Every point scoops Fig’s drawer: AR, Library tests and home points.</p></section>';
 }
 
 /* The party when she spends 10 points (no sound, tap to skip, about 4 seconds):
  *   'jar': Fig dances across the screen while dollar bills float down.
- *   'minutes': Maple bounces across the screen chasing a ball. */
+ *   'minutes': Maple bounces across the screen chasing Duck Duck. */
 export function party(kind) {
   const art = window.BookPets && window.BookPets.art;
   if (!art) return;
@@ -142,9 +149,9 @@ export function party(kind) {
   const el = document.createElement('div');
   el.className = 'party ' + (fig ? 'party-fig' : 'party-maple') + (reducedMotion() ? ' still' : '');
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = (fig ? Array.from({ length: 14 }, (_, i) => '<i class="bill b' + (i % 7) + '">$</i>').join('') : '<i class="ball"></i>') +
+  el.innerHTML = (fig ? Array.from({ length: 14 }, (_, i) => '<i class="bill b' + (i % 7) + '">$</i>').join('') : '<i class="ball"><svg viewBox="0 0 30 26" aria-hidden="true"><ellipse cx="13" cy="17" rx="12" ry="8" fill="#F7D046"/><circle cx="21" cy="8" r="6" fill="#F7D046"/><path d="M 26 7 l 4 1.5 l -4 1.8 z" fill="#F08A24"/><circle cx="22.5" cy="6.5" r="1.2" fill="#1E1A18"/><path d="M 6 15 q 6 -5 12 0" stroke="#E0B030" stroke-width="1.6" fill="none"/></svg></i>') +
     '<span class="critter walking here critter-' + (fig ? 'fig' : 'maple') + ' party-pet"><span class="critter-body">' + art[fig ? 'fig' : 'maple'] + '</span></span>' +
-    '<p class="party-say">' + (fig ? 'Ka-ching! Fig is doing her happy dance.' : 'Screen time! Maple wants the ball.') + '<span class="party-sub">' + (fig ? 'Fig celebrated by making a fresh one.' : 'Fig made a fresh one while you weren’t looking.') + '</span></p>';
+    '<p class="party-say">' + (fig ? 'Ka-ching! Fig is doing her happy dance.' : 'Screen time! Maple wants Duck Duck. Squeak!') + '<span class="party-sub">' + (fig ? 'Fig celebrated by making a fresh one.' : 'Fig made a fresh one while you weren’t looking.') + '</span></p>';
   const host = document.querySelector('dialog[open]') || document.body;
   host.appendChild(el);
   const done = () => el.remove();
