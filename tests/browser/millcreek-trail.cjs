@@ -167,6 +167,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // Stopping brings back what she can carry, and says what got away.
     await p.evaluate(() => { hunt.lost = 1; });
     await press('hs');
+    // The hunt took a day, so news from the day (someone feeling better, or worse) can come first.
+    for (let i = 0; i < 12 && !/You brought down/.test(await panel()) && await p.$('#panel #ok'); i++) await press('ok');
     assert.match(await panel(), /You brought down a deer, a deer: 120 lbs of meat, but you could only carry 100 lbs back to the wagon\./);
     await press('ok');
     assert.match(await panel(), /^Mabel fetched all 2 and wants to know when we're going again\./);
