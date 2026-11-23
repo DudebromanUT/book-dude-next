@@ -104,7 +104,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.evaluate(() => { S.bullets = 40; });
     await press('hunt');
     await p.waitForSelector('#panel #fire');
-    assert.match(await panel(), /^Drag on the picture to aim\. Tap Fire to shoot\. The wind pushes your bullet sideways/);
+    assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap Fire to shoot\. The wind pushes your bullet sideways/);
     assert.equal(await p.evaluate(() => mode + ':' + getComputedStyle(document.getElementById('scene')).touchAction), 'hunt:none', 'dragging aims, it doesn\'t scroll the page');
     // Dragging moves the crosshair by the finger's movement, not to where the finger is.
     const box = await p.locator('#scene').boundingBox();
