@@ -277,21 +277,66 @@ function tomb(m,next){
   tombInfo={n:m.n,d:dateStr()};
   screen(`<div class="msg">${esc(deathLine(m))}</div><label class="mt10"><span class="small">Write an epitaph</span><input id="epi" maxlength="60" value="${esc(def)}"></label><div class="btns"><button class="pri" id="ok">Continue</button></div>`,{ok:()=>{m.epi=$('#epi').value;S.log.push(`Epitaph for ${m.n}: ${m.epi}`);mode=S.going?'going':'menu';next()}});
 }
+/* Hunting, big-game style. Drag on the scene to move the rifle's crosshair (it sways a little, like a real rifle), and
+   tap Fire. Animals stand near, in the middle distance, or far off. A bullet takes time to get there (so lead a running
+   animal), drops over distance (aim high on far ones), and the wind pushes it sideways (aim into the wind). A heart shot,
+   just behind the front leg, brings an animal down; a body shot wounds it, and it bolts: one more hit before it gets
+   away. A miss spooks the animals near where it landed. The scope in the corner shows the crosshair up close. */
 const AN={rabbit:{w:10,h:7,lb:3,sp:70,c:'#a08a70'},squirrel:{w:7,h:6,lb:1,sp:85,c:'#8a6a4a'},deer:{w:22,h:16,lb:60,sp:55,c:'#9a6a3a'},elk:{w:30,h:22,lb:250,sp:34,c:'#8a5a32'},bear:{w:26,h:18,lb:120,sp:38,c:'#2a1e16'}};
+// The three distances: how big an animal looks, where its feet are, what lives there, and its name for the messages.
+const BAND=[{sc:1,y:[128,142],k:['rabbit','rabbit','squirrel','deer']},{sc:.62,y:[112,119],k:['deer','deer','bear','rabbit']},{sc:.4,y:[102,106],k:['elk','elk','deer','bear']}];
+const HUNT_TIME=40,RELOAD=.8;
+const huntDist=y=>clamp((142-y)/40,0,1);
+// The crosshair's sway, in scene pixels, at hunt time t.
+const sway=t=>[Math.sin(t*1.7)*1.4+Math.sin(t*3.1+1)*.8,Math.cos(t*1.3)*1.1+Math.sin(t*2.3)*.6];
 function startHunt(){
   if(S.bullets<1)return say('You do not have any bullets.',menu);
-  const q=[];day(false,q);hunt={an:[],t:30,meat:0,spawn:.3,flash:0,q};mode='hunt';
-  screen(`<div class="msg">Tap an animal to shoot. Each shot uses one bullet. You can carry 100 lbs back to the wagon.</div><div id="hh" class="small"></div><div class="btns"><button id="hs">Stop hunting</button></div>`,{hs:endHunt});
+  const q=[];day(false,q);
+  hunt={an:[],t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
+  mode='hunt';cv.style.touchAction='none';
+  screen(`<div class="msg">Drag on the picture to aim. Tap Fire to shoot.</div><p class="small">The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="hs">Stop hunting</button></div>`,{fire:fire,hs:endHunt});
 }
-function endHunt(){if(mode!=='hunt')return;mode='menu';const m=hunt.meat,c=Math.min(100,m);S.food+=c;const q=hunt.q;q.push(m?`You shot ${m} lbs of meat${m>100?', but could only carry 100 lbs back to the wagon':''}.`:'You came back empty handed.');runQ(q,menu)}
-cv.addEventListener('pointerdown',e=>{
-  if(mode!=='hunt'||S.bullets<1)return;
-  const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*320/r.width,y=(e.clientY-r.top)*150/r.height;
-  S.bullets--;hunt.flash=.12;hunt.sx=x;hunt.sy=y;
-  const a=hunt.an.find(a=>!a.dead&&x>a.x-7&&x<a.x+AN[a.k].w+7&&y>a.y-7&&y<a.y+AN[a.k].h+7);
-  if(a){a.dead=true;hunt.meat+=AN[a.k].lb}
-  if(S.bullets<1)setTimeout(endHunt,400);
+function endHunt(){
+  if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';
+  const m=hunt.meat,c=Math.min(100,m);S.food+=c;const q=hunt.q;
+  q.push(m?`You brought down ${hunt.kills.join(', ')}: ${m} lbs of meat${m>100?', but you could only carry 100 lbs back to the wagon':''}.`:'You came back empty handed.');
+  if(hunt.lost)q.push(`${hunt.lost===1?'A wounded animal':hunt.lost+' wounded animals'} got away.`);
+  runQ(q,menu);
+}
+function fire(){
+  if(mode!=='hunt'||hunt.reload>0||S.bullets<1)return;
+  S.bullets--;hunt.reload=RELOAD;
+  const [dx,dy]=sway(hunt.T),x=hunt.ax+dx,y=hunt.ay+dy,d=huntDist(y);
+  hunt.shots.push({x:x+hunt.wind*(.25+d),y:y+1+9*d,t:.1+.5*d});
+  hunt.flash=.1;hunt.fx=x;hunt.fy=y;
+}
+// Where an animal is now, and its heart: [x, y, w, h] boxes in scene pixels.
+function huntBoxes(a){
+  const s=AN[a.k],w=s.w*a.sc,h=s.h*a.sc,x=a.x,y=a.y;
+  const body=[x,y+h*.2,w,h*.6];
+  const vw=Math.max(2.5,w*.2),vh=Math.max(2.5,h*.3),vx=a.d>0?x+w*.62:x+w*.38-vw;
+  return {body,heart:[vx,y+h*.4,vw,vh]};
+}
+const inBox=(x,y,b)=>x>=b[0]&&x<=b[0]+b[2]&&y>=b[1]&&y<=b[1]+b[3];
+function landShot(sh){
+  // Nearer animals stand in front of farther ones.
+  const live=hunt.an.filter(a=>!a.dead).sort((p,q)=>p.z-q.z);
+  for(const a of live){const b=huntBoxes(a);
+    if(inBox(sh.x,sh.y,b.heart)||(a.wounded&&inBox(sh.x,sh.y,b.body))){a.dead=true;hunt.meat+=AN[a.k].lb;hunt.kills.push('a '+a.k);hunt.msg=(a.wounded?'Got it! The ':'Heart shot! The ')+a.k+' is down. '+AN[a.k].lb+' lbs.';hunt.msgT=2;spook(sh.x,a);return}
+    if(inBox(sh.x,sh.y,b.body)){a.wounded=true;a.flee=true;a.graze=0;a.d=sh.x<a.x+AN[a.k].w*a.sc/2?1:-1;hunt.msg='Hit, but not the heart. The '+a.k+' is wounded and running!';hunt.msgT=2;spook(sh.x,a);return}
+  }
+  hunt.puffs.push({x:sh.x,y:sh.y,t:.6});hunt.msg=pick(['Missed.','Missed. Check the wind.','Missed. Too low?','Missed. The shot scared everything nearby.']);hunt.msgT=1.6;spook(sh.x,null);
+}
+// The bang (and a miss landing nearby) sends the animals near it running away from it.
+function spook(x,skip){for(const a of hunt.an)if(a!==skip&&!a.dead&&Math.abs(a.x-x)<80){a.flee=true;a.graze=0;a.d=a.x>x?1:-1}}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{if(mode!=='hunt')return;e.preventDefault();drag={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(err){/* not supported */}});
+cv.addEventListener('pointermove',e=>{
+  if(mode!=='hunt'||!drag)return;e.preventDefault();
+  const r=cv.getBoundingClientRect(),k=.7*W/r.width;
+  hunt.ax=clamp(hunt.ax+(e.clientX-drag.x)*k,4,W-4);hunt.ay=clamp(hunt.ay+(e.clientY-drag.y)*k,16,HH-4);drag={x:e.clientX,y:e.clientY};
 });
+const endDrag=()=>{drag=null};cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
 
 /* drawing */
 const W=320,HH=150;
@@ -343,17 +388,58 @@ function weatherFx(w){if(w==='rain'){g.fillStyle='rgba(200,220,240,.6)';for(let 
 function drawTrail(){const sf=PIC[LM[0].n];if((!S||(S.li===0&&S.miles<1&&!S.going))&&sf&&sf.complete&&sf.naturalWidth)return drawPhoto(LM[0].n);const ter=S?terrain():'plains',w=S?S.weather:'clear';sky(w);far(ter);ground(ter);landmark();party();weatherFx(w)}
 function drawTomb(){sky('cloudy');far(S?terrain():'plains');ground(S?terrain():'plains');rect(132,58,56,62,'#8a8a90');g.fillStyle='#8a8a90';g.beginPath();g.arc(160,60,28,Math.PI,0);g.fill();rect(132,58,56,2,'#a8a8ae');g.fillStyle='#2a2a30';g.textAlign='center';g.font='16px VT323, monospace';g.fillText('R.I.P.',160,62);g.font='14px VT323, monospace';g.fillText(tombInfo?tombInfo.n.slice(0,10):'',160,80);g.font='11px VT323, monospace';g.fillText(tombInfo?tombInfo.d:'',160,96);rect(124,118,72,4,'#6a5a40')}
 function drawHunt(dt){
-  hunt.t-=dt;if(hunt.t<=0){hunt.t=0;endHunt();return drawTrail()}
-  hunt.spawn-=dt;if(hunt.spawn<=0){const k=pick(['rabbit','rabbit','squirrel','deer','deer','elk','bear']),d=ch(.5)?1:-1;hunt.an.push({k,d,x:d>0?-36:W+4,y:RI(98,138)-AN[k].h,dead:false,ph:0});hunt.spawn=R(.6,1.5)}
+  hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);
+  if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
+  // The wind drifts toward a new speed every few seconds, with gusts.
+  hunt.windT-=dt;if(hunt.windT<=0){hunt.windTo=RI(-14,14);hunt.windT=R(2.5,5)}
+  hunt.wind+=clamp(hunt.windTo-hunt.wind,-4*dt,4*dt);const wind=hunt.wind+Math.sin(hunt.T*2.1)*1.2;
+  // New animals walk in from the edges, at most four at a time.
+  hunt.spawn-=dt;if(hunt.spawn<=0&&hunt.an.filter(a=>!a.dead).length<4){const z=RI(0,2),b=BAND[z],k=pick(b.k),d=ch(.5)?1:-1,s=AN[k];hunt.an.push({k,z,sc:b.sc,d,x:d>0?-s.w*b.sc-2:W+2,y:RI(b.y[0],b.y[1])-s.h*b.sc,dead:false,ph:0,graze:0,walk:R(1,3),flee:false,wounded:false});hunt.spawn=R(1.2,2.6)}
+  // Shots in the air land when their time is up.
+  for(const sh of hunt.shots)sh.t-=dt;
+  for(const sh of hunt.shots.filter(s=>s.t<=0))landShot(sh);
+  hunt.shots=hunt.shots.filter(s=>s.t>0);
   sky('clear');far('plains');rect(0,100,W,50,'#b9b45a');for(let i=0;i<14;i++)rect((i*41)%W,104+(i*13)%40,3,4,'#8a8a44');
-  hunt.an=hunt.an.filter(a=>a.x>-50&&a.x<W+50);
-  for(const a of hunt.an){const s=AN[a.k];if(!a.dead){a.x+=a.d*s.sp*dt;a.ph+=dt*12}
-    if(a.dead){rect(a.x,a.y+s.h-5,s.w,5,s.c);rect(a.x+s.w/2,a.y+s.h-7,2,2,'#c03020');continue}
-    const l=Math.sin(a.ph)>0?2:0,hx=a.d>0?a.x+s.w-2:a.x-s.h*.35+2;
-    rect(a.x,a.y+s.h*.25,s.w,s.h*.5,s.c);rect(hx,a.y,s.h*.4,s.h*.4,s.c);rect(a.x+2,a.y+s.h*.75,2,s.h*.25-l,s.c);rect(a.x+s.w-4,a.y+s.h*.75,2,s.h*.25-(2-l),s.c);
-    if(a.k==='deer')rect(hx+1,a.y-4,1,4,'#6a4a2a');if(a.k==='elk'){rect(hx,a.y-6,1,6,'#d8c8a0');rect(hx+6,a.y-6,1,6,'#d8c8a0');rect(hx-2,a.y-5,3,1,'#d8c8a0');rect(hx+6,a.y-5,3,1,'#d8c8a0')}}
-  if(hunt.flash>0){hunt.flash-=dt;rect(hunt.sx-3,hunt.sy,7,1,'#fff');rect(hunt.sx,hunt.sy-3,1,7,'#fff')}
-  g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,W,14);g.fillStyle='#f3e6cf';g.textAlign='left';g.font='13px VT323, monospace';g.fillText(`Bullets ${S.bullets}   Meat ${hunt.meat} lbs   Time ${Math.ceil(hunt.t)}`,6,11);
+  rect(0,108,W,1,'#a8a450');rect(0,120,W,1,'#a8a450');
+  for(const a of hunt.an.filter(x=>x.x<-60||x.x>W+60))if(a.wounded&&!a.dead)hunt.lost++;
+  hunt.an=hunt.an.filter(a=>a.x>=-60&&a.x<=W+60);
+  // Farthest first, so nearer animals are drawn in front.
+  for(const a of hunt.an.slice().sort((p,q)=>q.z-p.z)){const s=AN[a.k],w=s.w*a.sc,h=s.h*a.sc;
+    if(!a.dead){
+      if(!a.flee){a.walk-=dt;if(a.walk<=0){if(a.graze>0){a.graze=0;a.walk=R(1.5,3.5)}else{a.graze=R(1.2,3);a.walk=a.graze}}}
+      const v=a.graze>0&&!a.flee?0:s.sp*a.sc*(a.flee?(a.wounded?2.4:2):.7);a.x+=a.d*v*dt;if(v)a.ph+=dt*12*(a.flee?1.6:1);
+    }
+    if(a.dead){rect(a.x,a.y+h-Math.max(2,5*a.sc),w,Math.max(2,5*a.sc),s.c);rect(a.x+w/2,a.y+h-Math.max(3,7*a.sc),Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');continue}
+    const l=Math.sin(a.ph)>0?2*a.sc:0,hx=a.d>0?a.x+w-2*a.sc:a.x-h*.35+2*a.sc,hy=a.graze>0&&!a.flee?a.y+h*.35:a.y;
+    rect(a.x,a.y+h*.25,w,h*.5,s.c);rect(hx,hy,Math.max(1,h*.4),Math.max(1,h*.4),s.c);
+    rect(a.x+2*a.sc,a.y+h*.75,Math.max(1,2*a.sc),h*.25-l,s.c);rect(a.x+w-4*a.sc,a.y+h*.75,Math.max(1,2*a.sc),h*.25-(2*a.sc-l),s.c);
+    if(a.k==='deer')rect(hx+a.sc,hy-4*a.sc,1,4*a.sc,'#6a4a2a');
+    if(a.k==='elk'){rect(hx,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx+6*a.sc,hy-6*a.sc,1,6*a.sc,'#d8c8a0');rect(hx-2*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0');rect(hx+6*a.sc,hy-5*a.sc,3*a.sc,1,'#d8c8a0')}
+    if(a.wounded)rect(a.x+w*.5,a.y+h*.35,Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');
+  }
+  for(const p of hunt.puffs){p.t-=dt;const r=2+(.6-p.t)*6;g.fillStyle=`rgba(210,190,150,${Math.max(0,p.t/.6)})`;g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}
+  hunt.puffs=hunt.puffs.filter(p=>p.t>0);
+  if(hunt.flash>0){hunt.flash-=dt;rect(hunt.fx-4,hunt.fy,9,1,'#fff6c0');rect(hunt.fx,hunt.fy-4,1,9,'#fff6c0')}
+  // The crosshair, swaying, with drop marks below the center for far shots.
+  const [sx,sy]=sway(hunt.T),cx=Math.round(hunt.ax+sx),cy=Math.round(hunt.ay+sy);
+  const cross=(x,y,r,k)=>{g.strokeStyle='rgba(20,12,8,.9)';g.lineWidth=1;g.beginPath();g.arc(x+.5,y+.5,r,0,7);g.stroke();
+    rect(x-r-3*k,y,r+3*k-2*k,1,'rgba(20,12,8,.9)');rect(x+2*k+1,y,r+3*k-2*k,1,'rgba(20,12,8,.9)');rect(x,y-r-3*k,1,r+3*k-2*k,'rgba(20,12,8,.9)');rect(x,y+2*k+1,1,r+3*k-2*k,'rgba(20,12,8,.9)');
+    for(let i=1;i<=3;i++)rect(x-k,y+i*3*k,2*k+1,1,'rgba(200,40,30,.9)');rect(x,y,1,1,'#c83a2a')};
+  // The scope: the crosshair's surroundings, three times bigger, in the corner (copied before the crosshair is drawn).
+  const zw=36,zh=26,zx=clamp(cx-zw/2,0,W-zw),zy=clamp(cy-zh/2,0,HH-zh),ix=W-112,iy=16,iw=108,ih=78;
+  g.imageSmoothingEnabled=false;g.drawImage(cv,zx,zy,zw,zh,ix,iy,iw,ih);
+  g.strokeStyle='#1a120c';g.lineWidth=3;g.strokeRect(ix-1,iy-1,iw+2,ih+2);
+  const k=iw/zw,icx=ix+(cx-zx)*k,icy=iy+(cy-zy)*k;
+  g.strokeStyle='rgba(20,12,8,.85)';g.lineWidth=1;g.beginPath();g.moveTo(ix,icy);g.lineTo(ix+iw,icy);g.moveTo(icx,iy);g.lineTo(icx,iy+ih);g.stroke();
+  for(let i=1;i<=3;i++){g.fillStyle='rgba(200,40,30,.9)';g.fillRect(icx-4,icy+i*3*k,9,1)}
+  cross(cx,cy,7,1);
+  // The top line: bullets, meat, time, and the wind.
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,W,14);g.fillStyle='#f3e6cf';g.textAlign='left';g.font='13px VT323, monospace';
+  const mph=Math.round(Math.abs(wind));
+  g.fillText(`Bullets ${S.bullets}${hunt.reload>0?' (loading)':''}  Meat ${hunt.meat} lbs  Time ${Math.ceil(hunt.t)}`,6,11);
+  g.textAlign='right';g.fillStyle=mph>=9?'#f0a030':'#f3e6cf';g.fillText(`Wind ${mph?(wind<0?'← ':'')+mph+' mph'+(wind>0?' →':''):'calm'}`,W-6,11);
+  if(hunt.msgT>0){hunt.msgT-=dt;g.textAlign='left';g.font='13px VT323, monospace';const t=hunt.msg,w=g.measureText(t).width+10;g.fillStyle='rgba(26,18,12,.75)';g.fillRect(4,HH-18,w,14);g.fillStyle='#f0a030';g.fillText(t,9,HH-7)}
+  const fb=P.querySelector('#fire');if(fb)fb.disabled=hunt.reload>0||S.bullets<1;
 }
 // The side-trip sights, drawn while the detour's story is on screen.
 function drawSight(k){

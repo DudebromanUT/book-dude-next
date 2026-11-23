@@ -100,6 +100,55 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await press('cont');
     await p.waitForSelector('#panel #go');
 
+    // Hunting, big-game style: drag to aim, Fire, wind, drop, heart shots and wounded animals.
+    await p.evaluate(() => { S.bullets = 40; });
+    await press('hunt');
+    await p.waitForSelector('#panel #fire');
+    assert.match(await panel(), /^Drag on the picture to aim\. Tap Fire to shoot\. The wind pushes your bullet sideways/);
+    assert.equal(await p.evaluate(() => mode + ':' + getComputedStyle(document.getElementById('scene')).touchAction), 'hunt:none', 'dragging aims, it doesn\'t scroll the page');
+    // Dragging moves the crosshair by the finger's movement, not to where the finger is.
+    const box = await p.locator('#scene').boundingBox();
+    const aim0 = await p.evaluate(() => [hunt.ax, hunt.ay]);
+    await p.mouse.move(box.x + 40, box.y + 40); await p.mouse.down(); await p.mouse.move(box.x + 140, box.y + 60, { steps: 5 }); await p.mouse.up();
+    const aim1 = await p.evaluate(() => [hunt.ax, hunt.ay]);
+    if (process.env.SHOTS) { await p.waitForTimeout(3500); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-live.png') }); }
+    assert.ok(aim1[0] > aim0[0] + 20 && aim1[1] > aim0[1], 'the crosshair moved right and down: ' + aim0 + ' -> ' + aim1);
+    // A shot: one bullet, then a reload before the next; the wind pushes it and distance drops it.
+    const shot = await p.evaluate(() => { hunt.wind = 10; hunt.windTo = 10; hunt.windT = 99; hunt.ax = 160; hunt.ay = 104; const b = S.bullets; fire(); fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { used: b - S.bullets, n: hunt.shots.length, drift: s.x - (160 + dx), drop: s.y - (104 + dy), t: s.t }; });
+    assert.equal(shot.used, 1, 'the second tap is still reloading');
+    assert.ok(shot.drift > 10 && shot.drop > 8 && shot.t > .5, 'a far shot drifts with the wind, drops and takes time: ' + JSON.stringify(shot));
+    const near = await p.evaluate(() => { hunt.reload = 0; hunt.shots = []; hunt.ay = 140; fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { drift: s.x - (160 + dx), drop: s.y - (140 + dy), t: s.t }; });
+    assert.ok(near.drift < 4 && near.drop < 2 && near.t < .2, 'a near shot barely moves: ' + JSON.stringify(near));
+    // Shots landing on a standing deer: the body wounds it and it runs; a second hit brings it down; a heart shot is clean.
+    const hits = await p.evaluate(() => {
+      hunt.shots = []; hunt.an = []; hunt.spawn = 99; hunt.meat = 0; hunt.kills = [];
+      const deer = { k: 'deer', z: 0, sc: 1, d: 1, x: 100, y: 120, dead: false, ph: 0, graze: 99, walk: 99, flee: false, wounded: false };
+      const buck = { k: 'deer', z: 0, sc: 1, d: 1, x: 200, y: 120, dead: false, ph: 0, graze: 99, walk: 99, flee: false, wounded: false };
+      const rabbit = { k: 'rabbit', z: 0, sc: 1, d: -1, x: 60, y: 130, dead: false, ph: 0, graze: 99, walk: 99, flee: false, wounded: false };
+      hunt.an.push(deer, buck, rabbit);
+      const out = [];
+      const b = huntBoxes(deer).body; landShot({ x: b[0] + 2, y: b[1] + b[3] / 2 }); out.push([deer.wounded, deer.flee, deer.dead, hunt.msg]);
+      landShot({ x: b[0] + 2, y: b[1] + b[3] / 2 }); out.push([deer.dead, hunt.meat, hunt.msg]);
+      const h = huntBoxes(buck).heart; landShot({ x: h[0] + h[2] / 2, y: h[1] + h[3] / 2 }); out.push([buck.dead, hunt.meat, hunt.msg]);
+      landShot({ x: 20, y: 70 }); out.push([rabbit.flee, hunt.msg.startsWith('Missed'), hunt.puffs.length]);
+      return out;
+    });
+    assert.deepEqual(hits[0].slice(0, 3), [true, true, false]); assert.match(hits[0][3], /wounded and running/);
+    assert.deepEqual(hits[1].slice(0, 2), [true, 60]); assert.match(hits[1][2], /^Got it!/);
+    assert.deepEqual(hits[2].slice(0, 2), [true, 120]); assert.match(hits[2][2], /^Heart shot!/);
+    assert.deepEqual(hits[3], [true, true, 1], 'a miss scares the rabbit and kicks up dust');
+    await p.waitForTimeout(400);
+    if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt.png') });
+    // Stopping brings back what she can carry, and says what got away.
+    await p.evaluate(() => { hunt.lost = 1; });
+    await press('hs');
+    assert.match(await panel(), /You brought down a deer, a deer: 120 lbs of meat, but you could only carry 100 lbs back to the wagon\./);
+    for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) { const t = await panel(); if (/A wounded animal got away/.test(t)) break; await press('ok'); }
+    assert.match(await panel(), /A wounded animal got away\./);
+    for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) await press('ok');
+    await p.waitForSelector('#panel #go');
+    assert.equal(await p.evaluate(() => mode + ':' + document.getElementById('scene').style.touchAction), 'menu:');
+
     // Side trips: offered once from a nearby stop; taking one costs days and shows its own scene.
     const reach = name => p.evaluate(n => { S.li = LM.findIndex(l => l.n === n) - 1; S.miles = LM[S.li + 1].m; arrive(); }, name);
     const sights = [['Beaver', 'bryce', /^Bryce Canyon\? A shepherd in Beaver says .* about 4 days\./, /hoodoos/],
