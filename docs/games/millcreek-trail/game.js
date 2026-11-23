@@ -308,7 +308,7 @@ function fire(){
   S.bullets--;hunt.reload=RELOAD;
   const [dx,dy]=sway(hunt.T),x=hunt.ax+dx,y=hunt.ay+dy,d=huntDist(y);
   hunt.shots.push({x:x+hunt.wind*(.25+d),y:y+1+9*d,t:.1+.5*d});
-  hunt.flash=.1;hunt.fx=x;hunt.fy=y;
+  hunt.flash=.1;hunt.fx=x;hunt.fy=y;hunt.recoil=1;
 }
 // Where an animal is now, and its heart: [x, y, w, h] boxes in scene pixels.
 function huntBoxes(a){
@@ -387,8 +387,30 @@ function weatherFx(w){if(w==='rain'){g.fillStyle='rgba(200,220,240,.6)';for(let 
 // The start screens, and San Francisco before the wagon rolls, show the family's photo of the city.
 function drawTrail(){const sf=PIC[LM[0].n];if((!S||(S.li===0&&S.miles<1&&!S.going))&&sf&&sf.complete&&sf.naturalWidth)return drawPhoto(LM[0].n);const ter=S?terrain():'plains',w=S?S.weather:'clear';sky(w);far(ter);ground(ter);landmark();party();weatherFx(w)}
 function drawTomb(){sky('cloudy');far(S?terrain():'plains');ground(S?terrain():'plains');rect(132,58,56,62,'#8a8a90');g.fillStyle='#8a8a90';g.beginPath();g.arc(160,60,28,Math.PI,0);g.fill();rect(132,58,56,2,'#a8a8ae');g.fillStyle='#2a2a30';g.textAlign='center';g.font='16px VT323, monospace';g.fillText('R.I.P.',160,62);g.font='14px VT323, monospace';g.fillText(tombInfo?tombInfo.n.slice(0,10):'',160,80);g.font='11px VT323, monospace';g.fillText(tombInfo?tombInfo.d:'',160,96);rect(124,118,72,4,'#6a5a40')}
+// The rifle, first person from the bottom-right corner: a Henry repeater (new in 1862), with its brass receiver, the long
+// barrel and the magazine tube under it, pointing at the crosshair. It kicks back when it fires and works the lever
+// while it reloads.
+function drawRifle(cx,cy){
+  const px=W-22,py=HH+16,ang=Math.atan2(cy-py,cx-px),reach=Math.hypot(cx-px,cy-py);
+  const kick=hunt.recoil*10,len=Math.max(96,Math.min(150,reach-20))-kick,lever=hunt.reload>0?Math.sin(Math.PI*(1-hunt.reload/RELOAD)):0;
+  g.save();g.translate(px,py);g.rotate(ang);g.scale(1,-1);g.translate(-kick,0);
+  const box=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+  // walnut forearm and stock
+  box(-10,-9,52,18,'#6a3e20');box(-10,-9,52,3,'#8a5a32');box(-10,6,52,3,'#4a2a14');
+  // the lever, swinging down during the reload
+  g.save();g.translate(48,8);g.rotate(lever*.9);box(-2,0,18,3,'#b08a3a');box(12,0,4,9,'#b08a3a');box(-2,7,18,2,'#b08a3a');g.restore();
+  // brass receiver
+  box(40,-8,28,15,'#c9a040');box(40,-8,28,3,'#efd27a');box(40,5,28,2,'#8a6a20');box(50,-3,8,2,'#8a6a20');
+  // barrel (dark, octagonal: a light flat along the top) and the magazine tube under it
+  box(66,-6,len-66,7,'#2a2a30');box(66,-6,len-66,1,'#6a6a76');box(66,-2,len-66,1,'#3a3a44');
+  box(66,1,len-74,4,'#33333a');box(66,1,len-74,1,'#55555e');
+  // front sight at the muzzle
+  box(len-6,-9,3,3,'#d8b860');
+  if(hunt.flash>0){g.fillStyle='rgba(255,220,120,.95)';g.beginPath();g.moveTo(len+2,-2);g.lineTo(len+14,-7);g.lineTo(len+9,-1);g.lineTo(len+16,3);g.lineTo(len+6,2);g.lineTo(len+4,8);g.closePath();g.fill()}
+  g.restore();
+}
 function drawHunt(dt){
-  hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);
+  hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);hunt.recoil=Math.max(0,(hunt.recoil||0)-dt*5);
   if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
   // The wind drifts toward a new speed every few seconds, with gusts.
   hunt.windT-=dt;if(hunt.windT<=0){hunt.windTo=RI(-14,14);hunt.windT=R(2.5,5)}
@@ -419,7 +441,7 @@ function drawHunt(dt){
   }
   for(const p of hunt.puffs){p.t-=dt;const r=2+(.6-p.t)*6;g.fillStyle=`rgba(210,190,150,${Math.max(0,p.t/.6)})`;g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}
   hunt.puffs=hunt.puffs.filter(p=>p.t>0);
-  if(hunt.flash>0){hunt.flash-=dt;rect(hunt.fx-4,hunt.fy,9,1,'#fff6c0');rect(hunt.fx,hunt.fy-4,1,9,'#fff6c0')}
+  if(hunt.flash>0)hunt.flash-=dt;
   // The crosshair, swaying, with drop marks below the center for far shots.
   const [sx,sy]=sway(hunt.T),cx=Math.round(hunt.ax+sx),cy=Math.round(hunt.ay+sy);
   const cross=(x,y,r,k)=>{g.strokeStyle='rgba(20,12,8,.9)';g.lineWidth=1;g.beginPath();g.arc(x+.5,y+.5,r,0,7);g.stroke();
@@ -432,6 +454,7 @@ function drawHunt(dt){
   const k=iw/zw,icx=ix+(cx-zx)*k,icy=iy+(cy-zy)*k;
   g.strokeStyle='rgba(20,12,8,.85)';g.lineWidth=1;g.beginPath();g.moveTo(ix,icy);g.lineTo(ix+iw,icy);g.moveTo(icx,iy);g.lineTo(icx,iy+ih);g.stroke();
   for(let i=1;i<=3;i++){g.fillStyle='rgba(200,40,30,.9)';g.fillRect(icx-4,icy+i*3*k,9,1)}
+  drawRifle(cx,cy);
   cross(cx,cy,7,1);
   // The top line: bullets, meat, time, and the wind.
   g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,W,14);g.fillStyle='#f3e6cf';g.textAlign='left';g.font='13px VT323, monospace';

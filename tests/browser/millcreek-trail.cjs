@@ -116,6 +116,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // A shot: one bullet, then a reload before the next; the wind pushes it and distance drops it.
     const shot = await p.evaluate(() => { hunt.wind = 10; hunt.windTo = 10; hunt.windT = 99; hunt.ax = 160; hunt.ay = 104; const b = S.bullets; fire(); fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { used: b - S.bullets, n: hunt.shots.length, drift: s.x - (160 + dx), drop: s.y - (104 + dy), t: s.t }; });
     assert.equal(shot.used, 1, 'the second tap is still reloading');
+    assert.equal(await p.evaluate(() => hunt.recoil > 0), true, 'the rifle kicks');
+    if (process.env.SHOTS) { await p.waitForTimeout(250); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-lever.png') }); }
     assert.ok(shot.drift > 10 && shot.drop > 8 && shot.t > .5, 'a far shot drifts with the wind, drops and takes time: ' + JSON.stringify(shot));
     const near = await p.evaluate(() => { hunt.reload = 0; hunt.shots = []; hunt.ay = 140; fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { drift: s.x - (160 + dx), drop: s.y - (140 + dy), t: s.t }; });
     assert.ok(near.drift < 4 && near.drop < 2 && near.t < .2, 'a near shot barely moves: ' + JSON.stringify(near));
