@@ -25,7 +25,7 @@ changes or deletes email.
 6. Back in the editor, choose **setup** in the function menu next to Run, and click **Run**. It sets up the daily 3 p.m.
    run and collects any quiz emails already there. The log at the bottom prints the Book Dude link, or the code to add to
    the end of the Web app URL (`?key=…`).
-7. On Maddy's iPad, open Book Dude → **Farty Pants Central** → **Book money and screen time**. Unlock it if you've set a passcode. Paste
+7. On Maddy's iPad, open Book Dude → **Settings** → **Book money and screen time**. Unlock it if you've set a passcode. Paste
    the whole link into **School quiz link**. It checks right away.
 
 ## Turning on the talking Dude (Claude)
@@ -59,7 +59,7 @@ With a Claude API key, the same script also adds:
      **you get an email right away**.
    - Every message and answer goes in a Google Sheet called **Book Dude chats** in this account, and the Sunday email
      has the week's summary, everything flagged, and the whole log.
-   - You can switch it off in Book Dude (Farty Pants Central, behind the passcode) or here (`CHAT` = `off`).
+   - You can switch it off in Book Dude (Settings, behind the passcode) or here (`CHAT` = `off`).
 
 The Library's articles and tests don't need Claude. Passing a test earns its points once (2 for a short article, 4 for
 a long one), counted like AR points. Each test ends with a think-about-it question: her answer earns 1 bonus point

@@ -159,7 +159,7 @@ main {
 }
 /* Six tabs on a narrow phone: slightly smaller names, so "My Shelves" and "Progress" stay on one line. */
 @media (max-width: 430px) { .tab { font-size: .62rem; letter-spacing: 0; } .tab svg { width: 24px; height: 24px; } }
-/* A long tab name (Farty Pants Central) wraps onto two lines on a narrow phone instead of running off the edge. */
+/* A long tab name wraps onto two lines on a narrow phone instead of running off the edge. */
 .tab { min-width: 0; text-align: center; }
 .tab span { max-width: 100%; line-height: 1.15; overflow-wrap: anywhere; }
 .tab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }

@@ -128,7 +128,7 @@ export function renderGames() {
         '<p class="hint">' + (who.name ? 'Playing as ' + esc(who.name) + '. ' : '') + (got ? plural(got, 'star') + ' of ' + of + ' so far.' : 'No stars yet. ' + plural(g.levels.length, 'level') + ' to play.') + '</p></div>' +
         '<div class="row-actions"><a class="btn primary" href="' + esc(g.href) + '">Play</a></div></section>';
     }).join('') + '</div>' + boardHtml(who) +
-    '<p class="hint game-note">' + (who.kind === 'device' ? 'Scores are kept on this device. Sign in under Farty Pants Central to keep scores in the family account and play against your family.'
+    '<p class="hint game-note">' + (who.kind === 'device' ? 'Scores are kept on this device. Sign in under Settings to keep scores in the family account and play against your family.'
       : esc(who.name) + '’s scores are saved to the family account, so they are on every device ' + esc(who.name) + ' plays on.') + '</p>';
   if (who.kind !== 'device' && boardFor !== who.key) loadBoard(who).then(() => { if (state.tab === 'games') renderGames(); });
 }

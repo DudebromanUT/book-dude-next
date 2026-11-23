@@ -97,7 +97,7 @@ const txt = (pg, sel) => pg.$eval(sel, e => e.innerText.replace(/\s+/g, ' ').tri
     await tab('cobol');
     assert.match(await txt(p, '#main .t-opt[data-option="1"]'), /NOT SET UP ON THIS DEVICE$/);
     await p.click('#main .t-opt[data-option="1"]'); await sleep(200);
-    assert.match(await txt(p, '#main .cobol-view'), /COBOL IS NOT SET UP ON THIS DEVICE YET\. A GROWN-UP ADDS THE SCHOOL QUIZ LINK IN FARTY PANTS CENTRAL\./);
+    assert.match(await txt(p, '#main .cobol-view'), /COBOL IS NOT SET UP ON THIS DEVICE YET\. A GROWN-UP ADDS THE SCHOOL QUIZ LINK IN SETTINGS\./);
     await p.click('#main [data-act="cobol-pf3"]'); await sleep(200);
     assert.equal(script.gets, 0, 'no link, no asking');
 

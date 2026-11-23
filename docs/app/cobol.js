@@ -125,7 +125,7 @@ function recheck() {
 function chatClosed() {
   const c = chatInfo();
   const r = reach();
-  if (r === 'setup') return 'COBOL IS NOT SET UP ON THIS DEVICE YET. A GROWN-UP ADDS THE SCHOOL QUIZ LINK IN FARTY PANTS CENTRAL.';
+  if (r === 'setup') return 'COBOL IS NOT SET UP ON THIS DEVICE YET. A GROWN-UP ADDS THE SCHOOL QUIZ LINK IN SETTINGS.';
   if (r === 'checking') return 'CONNECTING TO THE MAINFRAME...';
   if (r === 'net') return CHAT_TROUBLE.net;
   if (!chatOn()) return CHAT_TROUBLE.off;

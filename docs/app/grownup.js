@@ -91,7 +91,7 @@ export const actions = {
       pending = null;
       await saveReward({ code: '', codeReset: today() });
       if (state.tab === 'more') renderMore();
-      toast('Passcode reset. Set a new one in Farty Pants Central.');
+      toast('Passcode reset. Set a new one in Settings.');
     })
 };
 

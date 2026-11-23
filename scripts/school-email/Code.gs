@@ -58,7 +58,7 @@ function setup() {
     : 'No Claude key yet: add ANTHROPIC_API_KEY in Project Settings, Script Properties, to turn on the jokes, the weekly email, book picks and COBOL.');
 }
 
-// Prints the link to type into Book Dude (Farty Pants Central, then the grown-up settings). Run it again any time you need it.
+// Prints the link to type into Book Dude (Settings, then the grown-up settings). Run it again any time you need it.
 function showLink() {
   var key = PropertiesService.getScriptProperties().getProperty('key');
   var url = ScriptApp.getService().getUrl() || '';

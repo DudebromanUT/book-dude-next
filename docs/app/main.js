@@ -42,7 +42,7 @@ async function start() {
     const got = await firstPull();
     if (got !== 'ok') {
       main.innerHTML = emptyState(got === 'out' ? 'This device isn’t signed in any more' : 'Could not reach the family account',
-        got === 'out' ? 'A grown-up may have signed it out. Sign in again from Farty Pants Central.' : 'Check the internet connection. ' + esc(name || 'The reader') + '’s books will load as soon as the account answers.',
+        got === 'out' ? 'A grown-up may have signed it out. Sign in again from Settings.' : 'Check the internet connection. ' + esc(name || 'The reader') + '’s books will load as soon as the account answers.',
         '<div class="row-actions">' + (got === 'out' ? '' : '<button type="button" class="btn primary" data-act="acct-retry">Try again</button>') +
         '<button type="button" class="btn" data-act="acct-giveup">' + (got === 'out' ? 'OK' : 'Sign out instead') + '</button></div>');
       return;

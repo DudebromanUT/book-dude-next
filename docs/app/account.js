@@ -113,7 +113,7 @@ export const actions = {
     field('acct-name', 'First name', 'text', 'off', 'maxlength="40"') +
     field('acct-username', 'Username (3 to 24 small letters or numbers)', 'text', 'off', PLAIN + ' maxlength="24"') +
     field('acct-password', 'Password (6 or more characters)', 'text', 'off', PLAIN + ' maxlength="72"') + buttons('Add') +
-    '<p class="hint">The reader types this username and password on their own device, under Farty Pants Central, Reader sign-in. Only the first name is shown to anyone.</p>', 'acct-name'),
+    '<p class="hint">The reader types this username and password on their own device, under Settings, Reader sign-in. Only the first name is shown to anyone.</p>', 'acct-name'),
   'acct-kid-password': el => {
     const k = kidOf(el.dataset.kid);
     if (!k) return;
@@ -135,7 +135,7 @@ export const actions = {
       '<option value="mine">Another grown-up in my family</option><option value="admin">Another grown-up in my family, who can invite people too</option>' +
       '<option value="new">A new family</option></select></label>' +
     field('acct-family', 'The new family’s name (only for a new family)', 'text', 'off', 'maxlength="60"') + buttons('Make a code') +
-    '<p class="hint">A code works once, for 14 days. Whoever gets it opens Book Dude, goes to Farty Pants Central, Grown-up sign-in, and taps “I have an invite code”.</p>', 'acct-who'),
+    '<p class="hint">A code works once, for 14 days. Whoever gets it opens Book Dude, goes to Settings, Grown-up sign-in, and taps “I have an invite code”.</p>', 'acct-who'),
   'acct-open': async el => {
     await syncNow();
     if (openKid(el.dataset.kid)) location.reload();
@@ -249,7 +249,7 @@ export const submits = {
     if (!r.ok) { fail(form, r.why === 'many' ? 'There are a lot of unused invite codes already. Use those, or wait for them to run out.' : WHY[r.why] || WHY.setup); return; }
     showBox('Invite code', '<p class="invite-code" id="invite-code">' + esc(r.code) + '</p>' +
       '<p>' + (who === 'new' ? 'For a grown-up starting the family “' + esc(family) + '”.' : 'For another grown-up in your family' + (who === 'admin' ? ', who will be able to invite people too.' : '.')) + '</p>' +
-      '<p class="hint">It works once, for 14 days, and it won’t be shown again: write it down or send it now. They open Book Dude, go to Farty Pants Central, Grown-up sign-in, and tap “I have an invite code”.</p>' +
+      '<p class="hint">It works once, for 14 days, and it won’t be shown again: write it down or send it now. They open Book Dude, go to Settings, Grown-up sign-in, and tap “I have an invite code”.</p>' +
       '<div class="row-actions"><button type="button" class="btn primary" data-act="close-confirm">Done</button></div>');
   }
 };
