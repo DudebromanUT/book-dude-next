@@ -62,13 +62,13 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#panel #go');
     assert.ok(p.url().endsWith('/book-dude-next/games/millcreek-trail/'));
     assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('22px VT323'))), true, 'its font ships with the app');
-    assert.match(await panel(), /^The year is 1862\. Haddam and Katrina/);
-    assert.deepEqual(await p.$$eval('#panel input', els => els.map(e => e.value)), ['Haddam', 'Katrina', 'Mabel', 'Twig', 'Gigi']);
+    assert.match(await panel(), /^The year is 1862\. Dadam and Katrina, .* with their daughter Addie, Mabel the terrier/);
+    assert.deepEqual(await p.$$eval('#panel input', els => els.map(e => e.value)), ['Dadam', 'Katrina', 'Addie', 'Mabel', 'Twig', 'Gigi']);
 
     // Start, shop, and hit the trail.
     await p.selectOption('#mode', 'gentle');
     await press('go');
-    assert.match(await panel(), /stock up at a San Francisco outfitter.* It won't be built for another 75 years\. Don't tell Haddam\./);
+    assert.match(await panel(), /stock up at a San Francisco outfitter.* It won't be built for another 75 years\. Don't tell Dadam\./);
     await p.waitForTimeout(300);
     const tower = await p.evaluate(() => Array.from(document.getElementById('scene').getContext('2d').getImageData(141, 70, 1, 1).data));
     assert.ok(tower[0] > 120 && tower[0] > tower[2] * 1.4, 'the red bridge tower from the family\'s photo: ' + tower);
@@ -82,7 +82,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await press('lv');
     await p.waitForSelector('#panel #go');
     // The health bars get their width without inline styles (the page's rules forbid them).
-    assert.deepEqual(await p.$$eval('#panel .bar i', els => els.map(e => e.style.width)), ['100%', '100%', '100%', '100%', '100%']);
+    assert.deepEqual(await p.$$eval('#panel .bar i', els => els.map(e => e.style.width)), ['100%', '100%', '100%', '100%', '100%', '100%']);
     await press('go');
     await p.waitForSelector('#panel #stop');
     await p.waitForTimeout(2500);
@@ -104,10 +104,11 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.evaluate(() => { S.bullets = 40; });
     await press('hunt');
     await p.waitForSelector('#panel #fire');
-    assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap Fire to shoot\. The wind pushes your bullet sideways/);
+    assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap Fire to shoot\. The Henry holds 16 rounds; .* The wind pushes your bullet sideways/);
     assert.equal(await p.evaluate(() => mode + ':' + getComputedStyle(document.getElementById('scene')).touchAction), 'hunt:none', 'dragging aims, it doesn\'t scroll the page');
     assert.deepEqual(await p.evaluate(() => [scene.width, scene.height]), [640, 300], 'the hunt is drawn at double resolution');
     // Dragging moves the crosshair by the finger's movement, not to where the finger is.
+    await p.$eval('#scene', e => e.scrollIntoView({ block: 'start' }));
     const box = await p.locator('#scene').boundingBox();
     const aim0 = await p.evaluate(() => [hunt.ax, hunt.ay]);
     await p.mouse.move(box.x + 40, box.y + 40); await p.mouse.down(); await p.mouse.move(box.x + 140, box.y + 60, { steps: 5 }); await p.mouse.up();
@@ -117,6 +118,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // A shot: one bullet, then a reload before the next; the wind pushes it and distance drops it.
     const shot = await p.evaluate(() => { hunt.wind = 10; hunt.windTo = 10; hunt.windT = 99; hunt.ax = 160; hunt.ay = 104; const b = S.bullets; fire(); fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { used: b - S.bullets, n: hunt.shots.length, drift: s.x - (160 + dx), drop: s.y - (104 + dy), t: s.t }; });
     assert.equal(shot.used, 1, 'the second tap is still reloading');
+    assert.equal(await p.evaluate(() => hunt.mag), 15, 'one round out of the magazine');
     assert.equal(await p.evaluate(() => hunt.recoil > 0), true, 'the rifle kicks');
     if (process.env.SHOTS) { await p.waitForTimeout(250); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-lever.png') }); }
     assert.ok(shot.drift > 10 && shot.drop > 8 && shot.t > .5, 'a far shot drifts with the wind, drops and takes time: ' + JSON.stringify(shot));
@@ -146,6 +148,20 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     if (process.env.SHOTS) { await p.waitForTimeout(700); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-fetch.png') }); }
     await p.waitForFunction(() => hunt.fetch.fetched === 2 && hunt.fetch.state === 'home', null, { timeout: 20000 });
     assert.equal(await p.evaluate(() => hunt.an.filter(a => a.dead).length), 0, 'both deer were dragged off the field');
+    // The magazine: 16 rounds, then it has to be loaded again, a quarter second a round; Reload tops it up early.
+    const mag = await p.evaluate(async () => {
+      hunt.shots = []; const out = [];
+      hunt.mag = 1; hunt.reload = 0; const b = S.bullets; fire(); out.push([hunt.mag, hunt.magLoad > 0, S.bullets === b - 1]);
+      hunt.reload = 0; fire(); out.push(S.bullets === b - 1);
+      await new Promise(r => setTimeout(r, 4400)); out.push([hunt.mag, hunt.magLoad]);
+      hunt.reload = 0; fire(); hunt.reload = 0; fire(); loadMag(); out.push([hunt.mag, +hunt.magLoad.toFixed(2)]);
+      hunt.shots = []; return out;
+    });
+    assert.deepEqual(mag[0], [0, true, true], 'the last round fired starts loading the magazine');
+    assert.equal(mag[1], true, 'no shot while it loads');
+    assert.deepEqual(mag[2], [16, 0], 'full again');
+    assert.deepEqual(mag[3], [14, .5], 'two rounds back in, half a second');
+    await p.waitForFunction(() => hunt.mag === 16);
     await p.waitForTimeout(400);
     if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt.png') });
     // Stopping brings back what she can carry, and says what got away.
@@ -237,7 +253,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 
     // The finish: the whole party makes it, 3 stars, on the scoreboard records and in the hall of fame.
     await p.evaluate(() => { finish(); });
-    assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Haddam, Katrina, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Side trips seen: 3 \+300 Party and supplies and sights \d+ .* Final score \d+/);
+    assert.match(await panel(), /^Congratulations! You made it to Millcreek .* Dadam, Katrina, Addie, Mabel, Twig, Gigi made it to the Salt Lake Valley\. .* Addie grew up running along the creek and never once stopped talking about the trip\. .* Side trips seen: 3 \+300 Party and supplies and sights \d+ .* Final score \d+/);
     // The ending shows the Salt Lake Valley: green fields at the bottom of the scene, not the trail's road.
     await p.waitForTimeout(300);
     assert.equal(await p.evaluate(() => mode), 'end');
@@ -245,9 +261,9 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.ok(field[1] > field[0] && field[1] > field[2], 'a green valley floor: ' + field);
     if (process.env.SHOTS) await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'valley.png') });
     const saved = await p.evaluate(() => { const a = window.BookDudeArcade.open('millcreek-trail'); return [a.get('records'), a.get('hof')]; });
-    assert.equal(saved[0].Haddam.trip.stars, 3, 'on a device not signed in, the wagon leader is the player');
-    assert.ok(saved[0].Haddam.trip.score > 0);
-    assert.equal(saved[1][0].n, 'Haddam');
+    assert.equal(saved[0].Dadam.trip.stars, 3, 'on a device not signed in, the wagon leader is the player');
+    assert.ok(saved[0].Dadam.trip.score > 0);
+    assert.equal(saved[1][0].n, 'Dadam');
     if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'trail-finish.png') });
     await Promise.all([p.waitForNavigation(), p.click('a.home')]);
     await p.waitForSelector('.game-card');

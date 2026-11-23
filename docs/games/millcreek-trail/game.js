@@ -16,7 +16,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const LM=[{n:'San Francisco, California',m:0,t:'town'},{n:'San Joaquin River crossing',m:95,t:'river',ferry:5,dp:[2.5,6]},{n:'Fort Tejon',m:330,t:'fort'},{n:'Cajon Pass',m:450,t:'mark'},{n:'Mojave River crossing',m:500,t:'river',dp:[.5,2.2]},{n:'Las Vegas Springs',m:720,t:'mark'},{n:'Virgin River crossing',m:850,t:'river',dp:[1.5,4]},{n:'St. George',m:880,t:'fort'},{n:'Zion Canyon',m:925,t:'mark'},{n:'Beaver River crossing',m:1030,t:'river',dp:[1,3]},{n:'Beaver',m:1040,t:'fort'},{n:'Mineral Mountains',m:1075,t:'mark'},{n:'Sevier River crossing',m:1130,t:'river',dp:[2,5]},{n:'Fillmore',m:1175,t:'fort'},{n:'Mount Nebo',m:1240,t:'mark'},{n:'Provo and Utah Lake',m:1290,t:'fort'},{n:'Jordan River crossing',m:1320,t:'river',ferry:3,dp:[2,5]},{n:'Millcreek, Utah Territory',m:1345,t:'end'}];
-const DEF=[{n:'Haddam',now:'Adam',k:'human',l:'wagon leader'},{n:'Katrina',now:'Kristina',k:'human',l:'his wife'},{n:'Mabel',now:'Maple',k:'dog',l:'Welsh terrier'},{n:'Twig',now:'Fig',k:'cat',l:'cat'},{n:'Gigi',now:'BB',k:'blanket',l:'sentient blanket'}];
+const DEF=[{n:'Dadam',now:'Adam',k:'human',l:'wagon leader'},{n:'Katrina',now:'Kristina',k:'human',l:'his wife'},{n:'Addie',now:'Maddy',k:'human',l:'their daughter'},{n:'Mabel',now:'Maple',k:'dog',l:'Welsh terrier'},{n:'Twig',now:'Fig',k:'cat',l:'cat'},{n:'Gigi',now:'BB',k:'blanket',l:'sentient blanket'}];
 const DIS={human:['dysentery','cholera','measles','typhoid','a fever','exhaustion','a broken arm'],dog:['porcupine quills','something questionable they ate','a thorn in the paw'],cat:['a hairball','a grudge against the oxen','a bad attitude'],blanket:['frayed edges','a bad case of burrs','soggy corners','an existential crisis']};
 const PROF={banker:{n:'Banker from Boston',cash:1600,mult:1},carpenter:{n:'Carpenter from Ohio',cash:800,mult:2},farmer:{n:'Farmer from Illinois',cash:400,mult:3}};
 const PACE=[['Steady',1,'8 hours a day, easy on everyone'],['Strenuous',1.4,'12 hours a day, tiring'],['Grueling',1.8,'16 hours a day, hard on health']];
@@ -50,7 +50,7 @@ const partyHTML=()=>`<div class="party">${S.party.map(m=>`<div class="mem ${m.al
 
 function setup(){
   stopGo();mode='idle';S=null;const sv=load();
-  screen(`<div class="msg">The year is 1862. Haddam and Katrina, your great great great great grandparents, sailed from Liverpool, rounded Cape Horn, and have just stepped off a clipper ship in San Francisco with Mabel the terrier, Twig the cat, and Gigi, a blanket that seems to be alive. They are bound for Millcreek in the Salt Lake Valley, 1,345 miles away by the southern route through Utah Territory.
+  screen(`<div class="msg">The year is 1862. Dadam and Katrina, your great great great great grandparents, sailed from Liverpool, rounded Cape Horn, and have just stepped off a clipper ship in San Francisco with their daughter Addie, Mabel the terrier, Twig the cat, and Gigi, a blanket that seems to be alive. They are bound for Millcreek in the Salt Lake Valley, 1,345 miles away by the southern route through Utah Territory.
 If they don't make it, neither do you.</div>
   <div class="grid mt10">${DEF.map((d,i)=>`<label><span class="small">${d.l}, ancestor of ${d.now}</span><input id="n${i}" value="${esc(d.n)}" maxlength="14"></label>`).join('')}</div>
   <div class="grid mt8"><label><span class="small">Occupation</span><select id="prof">${Object.entries(PROF).map(([k,v])=>`<option value="${k}">${v.n}, $${v.cash}</option>`).join('')}</select></label>
@@ -188,6 +188,7 @@ function drawPhoto(n){
    food and health those days take), has a payoff and a risk, and adds SIDE_PTS to the score at the end. */
 const SIDE_PTS=100;
 const lead=()=>S.party[0].alive?S.party[0].n:'Someone',wife=()=>S.party[1].alive?S.party[1].n:'Someone';
+const daughter=()=>S.party.find((m,i)=>i>1&&m.kind==='human');
 const SIDE={
   'St. George':{k:'hole',n:'Hole in the Rock',days:8,
     ask:()=>`A cattleman in ${LM[S.li].n} tells of a crack in the canyon rim far to the east, where the land drops a thousand feet to the Colorado River. It is a hard, dry detour of about 8 days there and back.`,
@@ -251,14 +252,18 @@ function finish(){
 }
 // The best finish for the family scoreboard: more stars first, then the higher score.
 function record(score,liv){
-  const stars=liv.length===S.party.length?3:liv.filter(m=>m.kind==='human').length===2?2:1;
+  const stars=liv.length===S.party.length?3:S.party[0].alive&&S.party[1].alive?2:1;
   const name=ARCADE.player||S.party[0].n,all=ARCADE.get('records')||{},mine=all[name]||{},was=mine.trip;
   if(!was||stars>was.stars||(stars===was.stars&&score>was.score))mine.trip={stars,score};
   all[name]=mine;ARCADE.set('records',all);
 }
 function epilogue(){
-  const hs=S.party.filter(m=>m.kind==='human'),liv=hs.filter(m=>m.alive),gone=S.party.filter(m=>!m.alive);
-  let t=liv.length===2?`${liv[0].n} and ${liv[1].n} built a little farm along Mill Creek at the foot of the Wasatch and raised a big family.`:`${liv[0].n} built a little farm along Mill Creek and raised a family, telling the children about Cape Horn and the trail every winter.`;
+  const hs=S.party.filter(m=>m.kind==='human'),gone=S.party.filter(m=>!m.alive);
+  const pa=S.party[0],ma=S.party[1],kid=daughter();
+  let t=pa.alive&&ma.alive?`${pa.n} and ${ma.n} built a little farm along Mill Creek at the foot of the Wasatch and raised a big family.`
+    :pa.alive||ma.alive?`${(pa.alive?pa:ma).n} built a little farm along Mill Creek and raised a family, telling the children about Cape Horn and the trail every winter.`
+    :`${kid.n} was taken in by a family in Millcreek, grew up along Mill Creek, and told her own children about Cape Horn and the trail every winter.`;
+  if(kid&&kid.alive&&(pa.alive||ma.alive))t+=` ${kid.n} grew up running along the creek and never once stopped talking about the trip.`;
   if(gone.length)t+=` ${gone.map(m=>m.n).join(' and ')} never saw the Salt Lake Valley, but the family never forgot ${gone.length>1?'them':gone[0].kind==='human'?(gone[0]===hs[0]?'him':'her'):'them'}.`;
   return t+`\n\nSix generations later, their descendants Adam, Kristina and Maddy still live in Millcreek, with a Welsh terrier named Maple, a gray cat named Fig, and a blanket called BB that has never fully explained itself. Some things run in families.`;
 }
@@ -289,7 +294,7 @@ function tomb(m,next){
 const AN={rabbit:{w:10,h:7,lb:3,sp:70,c:'#a08a70'},squirrel:{w:7,h:6,lb:1,sp:85,c:'#8a6a4a'},deer:{w:22,h:16,lb:60,sp:55,c:'#9a6a3a'},elk:{w:30,h:22,lb:250,sp:34,c:'#8a5a32'},bear:{w:26,h:18,lb:120,sp:38,c:'#2a1e16'}};
 // The three distances: how big an animal looks, where its feet are, what lives there, and its name for the messages.
 const BAND=[{sc:1,y:[128,142],k:['rabbit','rabbit','squirrel','deer']},{sc:.62,y:[112,119],k:['deer','deer','bear','rabbit']},{sc:.4,y:[102,106],k:['elk','elk','deer','bear']}];
-const HUNT_TIME=40,RELOAD=.8;
+const HUNT_TIME=40,RELOAD=.8,MAG=16,PER_ROUND=.25;
 const huntDist=y=>clamp((142-y)/40,0,1);
 // The crosshair's sway, in scene pixels, at hunt time t.
 const sway=t=>[Math.sin(t*1.7)*1.4+Math.sin(t*3.1+1)*.8,Math.cos(t*1.3)*1.1+Math.sin(t*2.3)*.6];
@@ -325,9 +330,9 @@ function drawDog(){
 function startHunt(){
   if(S.bullets<1)return say('You do not have any bullets.',menu);
   const q=[];day(false,q);
-  hunt={an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
+  hunt={mag:Math.min(MAG,S.bullets),magLoad:0,an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
   mode='hunt';cv.style.touchAction='none';setRes(2);
-  screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap Fire to shoot.</div><p class="small">The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="hs">Stop hunting</button></div>`,{fire:fire,hs:endHunt});
+  screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap Fire to shoot.</div><p class="small">The Henry holds 16 rounds; when it's empty, it takes a few seconds to load again (or tap Reload to top it up). The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="rl">Reload</button><button id="hs">Stop hunting</button></div>`,{fire:fire,rl:loadMag,hs:endHunt});
 }
 function endHunt(){
   if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';setRes(1);
@@ -338,11 +343,18 @@ function endHunt(){
   runQ(q,menu);
 }
 function fire(){
-  if(mode!=='hunt'||hunt.reload>0||S.bullets<1)return;
-  S.bullets--;hunt.reload=RELOAD;
+  if(mode!=='hunt'||hunt.reload>0||hunt.magLoad>0||hunt.mag<1)return;
+  S.bullets--;hunt.mag--;hunt.reload=RELOAD;
+  if(hunt.mag<1&&S.bullets>0){loadMag();hunt.msg='Click. Empty. Loading the magazine...';hunt.msgT=2}
   const [dx,dy]=sway(hunt.T),x=hunt.ax+dx,y=hunt.ay+dy,d=huntDist(y);
   hunt.shots.push({x:x+hunt.wind*(.25+d),y:y+1+9*d,t:.1+.5*d});
   hunt.flash=.1;hunt.fx=x;hunt.fy=y;hunt.recoil=1;
+}
+// Refill the magazine from her bullets: a quarter second for each round, up to 16 (or what she has left).
+function loadMag(){
+  if(mode!=='hunt'||hunt.magLoad>0)return;
+  const n=Math.min(MAG,S.bullets)-hunt.mag;if(n<1)return;
+  hunt.magLoad=n*PER_ROUND;hunt.magTo=hunt.mag+n;
 }
 // Where an animal is now, and its heart: [x, y, w, h] boxes in scene pixels.
 function huntBoxes(a){
@@ -403,7 +415,7 @@ function landmark(){
 }
 function wheel(x,y,r,a){g.strokeStyle='#3a2414';g.lineWidth=2;g.beginPath();g.arc(x,y,r,0,7);g.stroke();g.lineWidth=1;for(let i=0;i<4;i++){const t=a+i*Math.PI/4;g.beginPath();g.moveTo(x-Math.cos(t)*r,y-Math.sin(t)*r);g.lineTo(x+Math.cos(t)*r,y+Math.sin(t)*r);g.stroke()}}
 function party(){
-  const mv=S&&S.going,b=mv?Math.abs(Math.sin(off*.25)):0,st=mv?Math.sin(off*.4):0,P0=S?S.party:DEF.map(()=>({alive:true}));
+  const mv=S&&S.going,b=mv?Math.abs(Math.sin(off*.25)):0,st=mv?Math.sin(off*.4):0,P0=S?S.party:DEF.map(d=>({kind:d.k,alive:true})),has=k=>P0.some(m=>m.kind===k&&m.alive),girl=S?(daughter()||{alive:false}):{alive:true};
   // oxen
   for(let i=0;i<2;i++){const x=214+i*24;rect(x,100,20,10,'#6b4226');rect(x+18,97,7,7,'#5a361e');rect(x+19,95,2,2,'#e8dcc0');rect(x+2,110,2,6+st*2,'#4a2c18');rect(x+15,110,2,6-st*2,'#4a2c18')}
   rect(196,108,20,1,'#4a2c18');
@@ -413,11 +425,13 @@ function party(){
   rect(158,79,1,25,'#d8ccb4');rect(172,79,1,25,'#d8ccb4');
   wheel(152,119,9,off/9);wheel(186,120,7,off/7);
   // BB peeking out the back
-  if(P0[4].alive){const bl=(Math.floor(last/2400)%8===0);rect(136,88,10,14,'#6a72c8');rect(136,88,10,2,'#8a92e0');rect(138,92,2,bl?1:2,'#fff');rect(142,92,2,bl?1:2,'#fff');rect(139,98,5,1,'#4a50a0')}
+  if(has('blanket')){const bl=(Math.floor(last/2400)%8===0);rect(136,88,10,14,'#6a72c8');rect(136,88,10,2,'#8a92e0');rect(138,92,2,bl?1:2,'#fff');rect(142,92,2,bl?1:2,'#fff');rect(139,98,5,1,'#4a50a0')}
   // Fig on the roof: long haired silver tabby, green eyes, big fluffy tail
-  if(P0[3].alive){const sw=Math.round(Math.sin(last/500));rect(166,72,14,6,'#b8b8c0');rect(167,72,12,2,'#8c8c96');rect(170,74,1,3,'#8c8c96');rect(174,74,1,3,'#8c8c96');rect(177,66,8,7,'#c6c6ce');rect(177,64,2,3,'#b8b8c0');rect(183,64,2,3,'#b8b8c0');rect(178,65,1,1,'#e8a8b0');rect(183,65,1,1,'#e8a8b0');rect(180,66,1,2,'#8c8c96');rect(178,68,2,1,'#8ab060');rect(182,68,2,1,'#8ab060');rect(181,70,1,1,'#d89098');rect(162+sw,75,10,4,'#c6c6ce');rect(161+sw,76,3,3,'#dcdce2')}
+  if(has('cat')){const sw=Math.round(Math.sin(last/500));rect(166,72,14,6,'#b8b8c0');rect(167,72,12,2,'#8c8c96');rect(170,74,1,3,'#8c8c96');rect(174,74,1,3,'#8c8c96');rect(177,66,8,7,'#c6c6ce');rect(177,64,2,3,'#b8b8c0');rect(183,64,2,3,'#b8b8c0');rect(178,65,1,1,'#e8a8b0');rect(183,65,1,1,'#e8a8b0');rect(180,66,1,2,'#8c8c96');rect(178,68,2,1,'#8ab060');rect(182,68,2,1,'#8ab060');rect(181,70,1,1,'#d89098');rect(162+sw,75,10,4,'#c6c6ce');rect(161+sw,76,3,3,'#dcdce2')}
   // Maple trotting behind
-  if(P0[2].alive){const x=110,y=Math.round(109-b*2);rect(x,y,14,7,'#c07a3a');rect(x+1,y,11,4,'#1e1812');rect(x-1,y-4,2,5,'#1e1812');rect(x+12,y-5,7,7,'#c88a48');rect(x+13,y-7,2,2,'#c88a48');rect(x+12,y-5,3,2,'#8a5a2a');rect(x+17,y-5,2,2,'#8a5a2a');rect(x+15,y-3,1,1,'#111');rect(x+16,y,4,4,'#dba86a');rect(x+19,y-1,1,2,'#111');rect(x+11,y+7,2,4+st,'#c07a3a');rect(x+1,y+7,2,4-st,'#c07a3a')}
+  // Addie, walking behind the wagon in a calico dress and bonnet
+  if(girl.alive&&!girl.ride){const x=90,y=Math.round(101-b*1.5);rect(x+2,y+12,2,5+st,'#5a3a22');rect(x+5,y+12,2,5-st,'#5a3a22');rect(x+1,y+5,7,8,'#c8607a');rect(x+1,y+8,7,1,'#e8a0b0');rect(x+2,y+1,5,5,'#f0c8a0');rect(x+1,y,7,3,'#f4ecdc');rect(x+7,y+2,1,4,'#6a3a1a');rect(x+5,y+3,1,1,'#2a1a10');rect(x+8,y+6,2,4,'#f0c8a0')}
+  if(has('dog')){const x=110,y=Math.round(109-b*2);rect(x,y,14,7,'#c07a3a');rect(x+1,y,11,4,'#1e1812');rect(x-1,y-4,2,5,'#1e1812');rect(x+12,y-5,7,7,'#c88a48');rect(x+13,y-7,2,2,'#c88a48');rect(x+12,y-5,3,2,'#8a5a2a');rect(x+17,y-5,2,2,'#8a5a2a');rect(x+15,y-3,1,1,'#111');rect(x+16,y,4,4,'#dba86a');rect(x+19,y-1,1,2,'#111');rect(x+11,y+7,2,4+st,'#c07a3a');rect(x+1,y+7,2,4-st,'#c07a3a')}
 }
 function weatherFx(w){if(w==='rain'){g.fillStyle='rgba(200,220,240,.6)';for(let i=0;i<40;i++){const x=(i*37+last/6)%W,y=(i*53+last/3)%HH;g.fillRect(x,y,1,4)}}if(w==='snow'){g.fillStyle='#fff';for(let i=0;i<50;i++){const x=(i*41+Math.sin(last/900+i)*8+W)%W,y=(i*29+last/25)%HH;g.fillRect(x,y,2,2)}}}
 // The start screens, and San Francisco before the wagon rolls, show the family's photo of the city.
@@ -427,7 +441,7 @@ function drawTomb(){sky('cloudy');far(S?terrain():'plains');ground(S?terrain():'
 // top of the post is where the shot goes. The receiver's brass top and the walnut stock fill the bottom of the view.
 // The sight picture kicks up when it fires and dips while the lever works.
 function drawSights(cx,cy){
-  const low=hunt.reload>0?Math.sin(Math.PI*(1-hunt.reload/RELOAD))*16:0,ty=cy-hunt.recoil*8+low;
+  const low=hunt.magLoad>0?46:hunt.reload>0?Math.sin(Math.PI*(1-hunt.reload/RELOAD))*16:0,ty=cy-hunt.recoil*8+low;
   const poly=(pts,c)=>{g.fillStyle=c;g.beginPath();g.moveTo(pts[0],pts[1]);for(let i=2;i<pts.length;i+=2)g.lineTo(pts[i],pts[i+1]);g.closePath();g.fill()};
   // walnut stock at the very bottom, then the brass receiver's top, narrowing toward the rear sight
   poly([cx-46,HH+2,cx-30,ty+40,cx+30,ty+40,cx+46,HH+2],'#5a3418');poly([cx-38,HH+2,cx-26,ty+40,cx-18,ty+40,cx-26,HH+2],'#7a4a26');
@@ -475,7 +489,8 @@ function drawAnimal(a){
   if(a.wounded)r(w*.45,h*.36,Math.max(1,2*u),Math.max(1,2*u),'#c03020');
 }
 function drawHunt(dt){
-  hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);hunt.recoil=Math.max(0,(hunt.recoil||0)-dt*5);
+  hunt.t-=dt;hunt.T+=dt;hunt.reload=Math.max(0,hunt.reload-dt);
+  if(hunt.magLoad>0){hunt.magLoad-=dt;if(hunt.magLoad<=0){hunt.magLoad=0;hunt.mag=hunt.magTo;hunt.msg='Loaded: '+hunt.mag+' rounds.';hunt.msgT=1.4}}hunt.recoil=Math.max(0,(hunt.recoil||0)-dt*5);
   moveDog(dt);
   if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0&&hunt.fetch.state==='home'&&!hunt.fetch.queue.length)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
   // The wind drifts toward a new speed every few seconds, with gusts.
@@ -510,10 +525,11 @@ function drawHunt(dt){
   // The top line: bullets, meat, time, and the wind.
   g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,W,14);g.fillStyle='#f3e6cf';g.textAlign='left';g.font='13px VT323, monospace';
   const mph=Math.round(Math.abs(wind));
-  g.fillText(`Bullets ${S.bullets}${hunt.reload>0?' (loading)':''}  Meat ${hunt.meat} lbs  Time ${Math.ceil(hunt.t)}`,6,11);
+  g.fillText(`Rounds ${hunt.mag}/${MAG}${hunt.magLoad>0?' (loading)':''}  Bullets ${S.bullets}  Meat ${hunt.meat} lbs  Time ${Math.ceil(hunt.t)}`,6,11);
   g.textAlign='right';g.fillStyle=mph>=9?'#f0a030':'#f3e6cf';g.fillText(`Wind ${mph?(wind<0?'← ':'')+mph+' mph'+(wind>0?' →':''):'calm'}`,W-6,11);
   if(hunt.msgT>0){hunt.msgT-=dt;g.textAlign='left';g.font='13px VT323, monospace';const t=hunt.msg,w=g.measureText(t).width+10;g.fillStyle='rgba(26,18,12,.75)';g.fillRect(4,HH-18,w,14);g.fillStyle='#f0a030';g.fillText(t,9,HH-7)}
-  const fb=P.querySelector('#fire');if(fb)fb.disabled=hunt.reload>0||S.bullets<1;
+  const fb=P.querySelector('#fire');if(fb)fb.disabled=hunt.reload>0||hunt.magLoad>0||hunt.mag<1;
+  const rb=P.querySelector('#rl');if(rb)rb.disabled=hunt.magLoad>0||hunt.mag>=Math.min(MAG,S.bullets);
 }
 // The side-trip sights, drawn while the detour's story is on screen.
 function drawSight(k){
@@ -553,6 +569,7 @@ function drawValley(){
   // whoever made it: Maple, Fig on the roof, BB in the doorway
   if(S){if(who('dog')){rect(150,122,12,6,'#c07a3a');rect(151,122,9,3,'#1e1812');rect(160,118,6,6,'#c88a48');rect(163,120,1,1,'#111');rect(151,128,2,4,'#c07a3a');rect(159,128,2,4,'#c07a3a')}
     if(who('cat')){rect(106,94,10,5,'#b8b8c0');rect(114,90,6,5,'#c6c6ce');rect(114,89,2,2,'#b8b8c0');rect(118,89,2,2,'#b8b8c0');rect(103,95,4,3,'#c6c6ce')}
+    const kid=daughter();if(kid&&kid.alive){rect(140,112,6,8,'#c8607a');rect(141,108,4,4,'#f0c8a0');rect(140,107,6,2,'#f4ecdc');rect(141,120,1,4,'#5a3a22');rect(144,120,1,4,'#5a3a22')}
     if(who('blanket')){rect(112,116,8,10,'#6a72c8');rect(113,118,2,2,'#fff');rect(117,118,2,2,'#fff')}}
   g.font='13px VT323, monospace';g.textAlign='left';const t='SALT LAKE VALLEY';const w=g.measureText(t).width+12;g.fillStyle='rgba(26,18,12,.7)';g.fillRect(6,HH-20,w,15);g.fillStyle='#f0a030';g.fillText(t,12,HH-9);
 }
