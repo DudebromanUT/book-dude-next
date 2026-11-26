@@ -85,7 +85,10 @@ function originLine(w){const l=langOf(w.ori);return/^origin|^uncertain/i.test(l)
 
 /* ---------- listening ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
-let srBroken=false,autoOK=true,L=null;
+/* iPad and iPhone only let a page start listening right after a tap. So there, listening never starts by itself (not
+   after BB reads the word, and not again after a pause), and a "no" from iOS never turns the microphone off for good. */
+const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let srBroken=false,autoOK=!IOS,L=null,tapFails=0;
 const LETTER=new Map();
 Object.entries({a:['a','ay'],b:['b','be','bee','bea','bi'],c:['c','see','sea','cee','si'],d:['d','dee','de'],e:['e','ee'],f:['f','ef','eff'],g:['g','gee','ji','jee','gi'],h:['h','aitch','age','ach','haitch'],i:['i','eye','aye','ai'],j:['j','jay','jae'],k:['k','kay','cay','kaye'],l:['l','el','ell','elle'],m:['m','em'],n:['n','en','and','in'],o:['o','oh','owe','0'],p:['p','pee','pea','pe'],q:['q','queue','cue','cu','kyu','que'],r:['r','are','ar','arr'],s:['s','es','ess'],t:['t','tee','tea','ti','te'],u:['u','you','yu','ewe','yoo'],v:['v','vee','vi','ve'],w:['w','dubya','dub'],x:['x','ex','ecks','eks'],y:['y','why','wye','wie'],z:['z','zee','zed']}).forEach(([k,v])=>v.forEach(s=>LETTER.set(s,k)));
 const FILL=new Set(['um','uh','umm','uhh','hmm','hm','er','erm','okay','like','so','the','please','done','finished','spelled','spell','spelling','word','that','thats','its','it','is','um-hmm','uh-huh']);
@@ -152,12 +155,12 @@ function listen(fromTap,keep){
   try{sess.rec=new SR()}catch(e){srBroken=true;keyboardFallback();return}
   L=sess;const r=sess.rec;
   r.lang='en-US';r.continuous=true;r.interimResults=true;try{r.maxAlternatives=5}catch(e){}
-  r.onstart=r.onaudiostart=()=>{sess.alive=true};
+  r.onstart=r.onaudiostart=()=>{sess.alive=true;tapFails=0};
   r.onresult=e=>{if(L!==sess||sess.finished)return;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
   r.onerror=e=>{if(L!==sess||sess.finished)return;onSRError(sess,e.error||'error')};
   r.onend=()=>{if(L!==sess||sess.finished)return;
     sess.acc=(sess.acc+' '+sess.cur).trim();sess.cur='';sess.prev='';
-    if(sess.restarts<3&&Date.now()-sess.started<40000){sess.restarts++;try{r.start();return}catch(e){}}
+    if(!IOS&&sess.restarts<3&&Date.now()-sess.started<40000){sess.restarts++;try{r.start();return}catch(e){}}
     finishListen(sess)};
   try{r.start()}catch(e){onSRError(sess,'start-failed');return}
   sess.max=setTimeout(()=>finishListen(sess),45000);
@@ -226,10 +229,14 @@ function readWithClaude(base,full,w,local){
 function onSRError(sess,err){
   if(err==='aborted')return;
   if(err==='no-speech'){finishListen(sess);return}
+  /* a restart after a pause that the browser refused: keep what she said; she taps Keep going for the rest */
+  if((err==='not-allowed'||err==='service-not-allowed')&&sess.restarts>0){finishListen(sess);return}
   stopRec(sess);showTalk('idle');
   if(err==='never-started'){srBroken=true;keyboardFallback('Listening isn\u2019t starting here, so let\u2019s use the keyboard microphone instead.');renderMicNote();return}
   if(err==='not-allowed'||err==='service-not-allowed'||err==='start-failed'){
-    if(!sess.fromTap&&autoOK){autoOK=false;bubble('Your turn! Tap the microphone and spell the word.');return}
+    if(!sess.fromTap){autoOK=false;bubble('Your turn! Tap the microphone and spell the word.');return}
+    /* a tap that didn't get to listen: try again once (iOS sometimes says no to the first tap after a while) */
+    if(++tapFails<2){bubble('The iPad didn’t let me listen that time. Tap the microphone again, and tap Allow if it asks.');return}
     srBroken=true;keyboardFallback('I can’t use the microphone here, so let’s use the keyboard microphone instead.');renderMicNote();return}
   if(err==='audio-capture'){srBroken=true;keyboardFallback('I can’t find a microphone. Let’s type it.');renderMicNote();return}
   if(err==='network'){keyboardFallback('I need the internet to listen. Let’s type it for now.');return}
@@ -302,7 +309,7 @@ function renderMicNote(){
   if(SET.answer==='talk'){
     if(!SR)t='This browser can’t listen, so BB will ask you to use the microphone on the keyboard instead.';
     else if(srBroken)t='Listening isn’t working here. Make sure Dictation is on (Settings, General, Keyboard), or use the microphone on the keyboard.';
-    else t='The first time, tap Allow so BB can hear you.';
+    else t=IOS?'Tap the microphone for each word, then spell it. The first time, tap Allow so BB can hear you.':'The first time, tap Allow so BB can hear you.';
   }else if(SET.answer==='grownup')t='BB reads the word, you spell it out loud, and a grown-up checks.';
   $('micNote').textContent=t;$('micNote').hidden=!t;
 }
@@ -350,7 +357,7 @@ function start(kind){
   S0=pointsNow().total;
   if(kind==='bee')q=shuf(pool.slice());else if(kind==='tricky')q=shuf(pool.filter(isTricky)).slice(0,10);else q=pickSet(pool);
   if(!q.length)return;
-  if(SR){srBroken=false;autoOK=true}
+  if(SR){srBroken=false;autoOK=!IOS;tapFails=0}
   S={kind,q,i:0,res:[],seen:new Set(),retry:new Set(),streak:0,gems:[],over:false,checked:false,heard:'',heardTokens:[]};
   $('lvChip').textContent=LV_NAME[SET.level];$('lvChip').style.setProperty('--c',LV_COL[SET.level]);
   show('play');nextWord();

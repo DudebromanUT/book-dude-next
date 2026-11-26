@@ -183,6 +183,59 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#pet-meters .bobby');
     assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 0);
 
+    // On an iPad, listening may only start right after a tap. A fake microphone that refuses anything else, like iPadOS:
+    // the page never tries on its own, a pause doesn't break it, and it keeps working word after word.
+    const ipad = await browser.newContext({ ...devices['iPad (gen 7)'], timezoneId: 'America/Denver', serviceWorkers: 'block' });
+    await ipad.addInitScript(() => {
+      try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ }
+      window.__srLog = []; window.__gesture = false;
+      addEventListener('click', () => { window.__gesture = true; setTimeout(() => { window.__gesture = false; }, 0); }, true);
+      class FakeSR {
+        start() {
+          if (!window.__gesture) { window.__srLog.push('refused'); setTimeout(() => this.onerror && this.onerror({ error: 'not-allowed' }), 10); return; }
+          window.__srLog.push('start');
+          setTimeout(() => { if (this.onstart) this.onstart(); const r = [{ transcript: window.__say || '' }]; r.isFinal = true; if (this.onresult) this.onresult({ results: [r] }); setTimeout(() => this.onend && this.onend(), 30); }, 20);
+        }
+        stop() {} abort() {}
+      }
+      window.SpeechRecognition = FakeSR; window.webkitSpeechRecognition = FakeSR;
+    });
+    const q = await ipad.newPage();
+    q.on('pageerror', e => errors.push(e.message));
+    await q.goto(BASE + 'games/spelling-bee/');
+    await q.waitForSelector('#home:not([hidden]) #levels .lv');
+    await q.click('#answerSeg [data-a="talk"]');
+    assert.match(clean(await q.textContent('#micNote')), /^Tap the microphone for each word/);
+    await q.click('#mPractice');
+    await q.waitForSelector('#play:not([hidden])');
+    const letters = w => [...w].map(c => (c === ' ' ? 'space' : c === '-' ? 'hyphen' : c.toUpperCase())).join(' ');
+    for (let n = 0; n < 3; n++) {
+      await q.waitForFunction(() => /Tap the microphone/.test(document.getElementById('bubble').textContent));
+      const w = await q.evaluate(() => window.__bee.cur().w);
+      if (n === 0) {
+        // She pauses halfway; iOS stops listening. What she said stays, and Keep going (a tap) gets the rest.
+        const half = Math.ceil(w.length / 2);
+        await q.evaluate(t => { window.__say = t; }, letters(w.slice(0, half)));
+        await q.click('#mic');
+        await q.waitForSelector('#heardBtns:not([hidden])');
+        await q.evaluate(t => { window.__say = t; }, letters(w.slice(half)));
+        await q.click('#more');
+      } else {
+        await q.evaluate(t => { window.__say = t; }, letters(w));
+        await q.click('#mic');
+      }
+      await q.waitForSelector('#heardBtns:not([hidden])');
+      assert.equal(clean(await q.textContent('#tiles')).replace(/\s|–/g, '').toLowerCase(), w.replace(/[\s-]/g, '').toLowerCase());
+      await q.click('#checkHeard');
+      await q.waitForSelector('#nextRow:not([hidden])');
+      assert.match(clean(await q.textContent('#fb')), /^(Right|Correct|Yes|You got it|Nice|Great|Perfect|Spot on|Nailed it)/i);
+      await q.click('#next');
+    }
+    const log = await q.evaluate(() => window.__srLog);
+    assert.ok(log.length >= 4 && log.every(x => x === 'start'), 'every start came from a tap: ' + log);
+    assert.equal(await q.isVisible('#mic'), true, 'the microphone is still on after three words');
+    await ipad.close();
+
     assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
     assert.deepStrictEqual(errors, []);
     console.log('Spelling BB is on the Games tab: gems turn into points that reach the app, BB’s Claude help goes through the school script with its key, and the Spell-o-Meter counts down to the bee.');
