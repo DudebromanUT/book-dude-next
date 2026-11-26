@@ -64,7 +64,9 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.ok(p.url().endsWith('/book-dude-next/games/millcreek-trail/'));
     assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('22px VT323'))), true, 'its font ships with the app');
     assert.match(await panel(), /^The year is 1862\. Dadam and Katrina, .* with their daughter Addie, Mabel the terrier/);
-    assert.deepEqual(await p.$$eval('#panel input', els => els.map(e => e.value)), ['Dadam', 'Katrina', 'Addie', 'Mabel', 'Twig', 'Gigi']);
+    // Just occupation, month and mode up front; the family's names are fixed.
+    assert.deepEqual(await p.$$eval('#panel input', els => els.length), 0);
+    assert.deepEqual(await p.$$eval('#panel select', els => els.map(e => e.id)), ['prof', 'mon', 'mode']);
 
     // Start, shop, and hit the trail.
     await p.selectOption('#mode', 'gentle');
@@ -104,8 +106,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // Hunting, big-game style: drag to aim, Fire, wind, drop, heart shots and wounded animals.
     await p.evaluate(() => { S.bullets = 40; });
     await press('hunt');
-    await p.waitForSelector('#panel #fire');
-    assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap Fire to shoot\. The Henry holds 16 rounds; .* The wind pushes your bullet sideways/);
+    await p.waitForSelector('#huntBtns:not([hidden]) #fireBtn');
+    assert.match(await panel(), /^Drag on the picture to aim down the sights\. The top of the front sight is where the bullet goes\. Tap the big Fire button on the picture to shoot\. The Henry holds 16 rounds; .* The wind pushes your bullet sideways/);
     assert.equal(await p.evaluate(() => mode + ':' + getComputedStyle(document.getElementById('scene')).touchAction), 'hunt:none', 'dragging aims, it doesn\'t scroll the page');
     assert.deepEqual(await p.evaluate(() => [scene.width, scene.height]), [640, 300], 'the hunt is drawn at double resolution');
     // Dragging moves the crosshair by the finger's movement, not to where the finger is.
@@ -122,7 +124,15 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.equal(await p.evaluate(() => hunt.mag), 15, 'one round out of the magazine');
     assert.equal(await p.evaluate(() => hunt.recoil > 0), true, 'the rifle kicks');
     if (process.env.SHOTS) { await p.waitForTimeout(250); await p.locator('#scene').screenshot({ path: path.join(process.env.SHOTS, 'hunt-lever.png') }); }
-    assert.ok(shot.drift > 10 && shot.drop > 8 && shot.t > .5, 'a far shot drifts with the wind, drops and takes time: ' + JSON.stringify(shot));
+    // The Fire button on the picture shoots, with a thumb's reach of the corner.
+    await p.evaluate(() => { hunt.reload = 0; hunt.shots = []; });
+    const before = await p.evaluate(() => S.bullets);
+    await p.click('#fireBtn');
+    assert.equal(await p.evaluate(() => S.bullets), before - 1, 'Fire on the picture fires');
+    const [fb, sc] = await Promise.all([p.locator('#fireBtn').boundingBox(), p.locator('#scene').boundingBox()]);
+    assert.ok(fb.x > sc.x + sc.width / 2 && fb.y > sc.y + sc.height / 2, 'Fire sits in the bottom-right of the picture');
+    if (process.env.SHOTS) { await p.$eval('#scene', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(process.env.SHOTS, 'hunt-fire.png') }); }
+    assert.ok(shot.drift > 5 && shot.drop > 8 && shot.t > .5, 'a far shot drifts with the wind, drops and takes time: ' + JSON.stringify(shot));
     const near = await p.evaluate(() => { hunt.reload = 0; hunt.shots = []; hunt.ay = 140; fire(); const s = hunt.shots[0]; const [dx, dy] = sway(hunt.T); return { drift: s.x - (160 + dx), drop: s.y - (140 + dy), t: s.t }; });
     assert.ok(near.drift < 4 && near.drop < 2 && near.t < .2, 'a near shot barely moves: ' + JSON.stringify(near));
     // Shots landing on a standing deer: the body wounds it and it runs; a second hit brings it down; a heart shot is clean.
@@ -178,6 +188,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     for (let i = 0; i < 10 && await p.$('#panel #ok'); i++) await press('ok');
     await p.waitForSelector('#panel #go');
     assert.equal(await p.evaluate(() => mode + ':' + document.getElementById('scene').style.touchAction), 'menu:');
+    assert.equal(await p.isVisible('#fireBtn'), false, 'Fire and Reload leave with the hunt');
     assert.deepEqual(await p.evaluate(() => [scene.width, scene.height]), [320, 150], 'the rest of the game keeps its original pixels');
 
     // Side trips: offered once from a nearby stop; taking one costs days and shows its own scene.

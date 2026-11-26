@@ -38,3 +38,11 @@ b{color:var(--acc);font-weight:400}
 .hp-good{background:var(--grass)}.hp-mid{background:var(--acc)}.hp-bad{background:var(--bad)}
 .home{display:inline-block;color:var(--dim);text-decoration:none;font-size:20px;min-height:44px;line-height:44px}
 .home:hover,.home:focus-visible{color:var(--acc)}
+.scene-wrap{position:relative}
+#huntBtns{position:absolute;inset:auto 10px 10px 10px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+#huntBtns[hidden]{display:none}
+.hunt-btn{pointer-events:auto;border-radius:50%;font-size:20px;line-height:1;padding:0;opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.hunt-btn.fire{width:84px;height:84px;background:var(--bad);border-color:#ffb09c;color:#fff;font-size:26px}
+.hunt-btn.small{width:62px;height:62px;font-size:17px}
+.hunt-btn:disabled{opacity:.45}
+@media (max-width:520px){.hunt-btn.fire{width:72px;height:72px;font-size:22px}.hunt-btn.small{width:54px;height:54px;font-size:15px}}

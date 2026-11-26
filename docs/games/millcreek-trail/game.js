@@ -52,13 +52,12 @@ function setup(){
   stopGo();mode='idle';S=null;const sv=load();
   screen(`<div class="msg">The year is 1862. Dadam and Katrina, your great great great great grandparents, sailed from Liverpool, rounded Cape Horn, and have just stepped off a clipper ship in San Francisco with their daughter Addie, Mabel the terrier, Twig the cat, and Gigi, a blanket that seems to be alive. They are bound for Millcreek in the Salt Lake Valley, 1,345 miles away by the southern route through Utah Territory.
 If they don't make it, neither do you.</div>
-  <div class="grid mt10">${DEF.map((d,i)=>`<label><span class="small">${d.l}, ancestor of ${d.now}</span><input id="n${i}" value="${esc(d.n)}" maxlength="14"></label>`).join('')}</div>
   <div class="grid mt8"><label><span class="small">Occupation</span><select id="prof">${Object.entries(PROF).map(([k,v])=>`<option value="${k}">${v.n}, $${v.cash}</option>`).join('')}</select></label>
   <label><span class="small">Leave in</span><select id="mon">${[2,3,4,5,6].map(i=>`<option value="${i}"${i===3?' selected':''}>${MON[i]}</option>`).join('')}</select></label>
   <label><span class="small">Mode</span><select id="mode"><option value="classic">Classic: travelers can die</option><option value="gentle">Gentle: worn out travelers ride in the wagon</option></select></label></div>
   <p class="small">Bankers start rich. Farmers start poor but score triple. Leave too late and the Mojave will bake you. Leave too early and the Utah passes are still full of snow.</p>
   <div class="btns"><button class="pri" id="go">Start the journey</button>${sv&&!sv.over?'<button id="cont">Continue saved trip</button>':''}<button id="hof">Hall of fame</button></div>`,
-  {go:()=>{const pr=$('#prof').value;S={party:DEF.map((d,i)=>({n:$('#n'+i).value.trim()||d.n,kind:d.k,l:d.l,hp:100,sick:null,alive:true,ride:false})),prof:pr,cash:PROF[pr].cash,mode:$('#mode').value,t:Date.UTC(1862,+$('#mon').value,1),miles:0,li:0,forts:0,oxen:0,food:0,clothes:0,bullets:0,wheel:0,axle:0,tongue:0,pace:0,rat:0,log:[],weather:'clear',over:false,pend:null};
+  {go:()=>{const pr=$('#prof').value;S={party:DEF.map(d=>({n:d.n,kind:d.k,l:d.l,hp:100,sick:null,alive:true,ride:false})),prof:pr,cash:PROF[pr].cash,mode:$('#mode').value,t:Date.UTC(1862,+$('#mon').value,1),miles:0,li:0,forts:0,oxen:0,food:0,clothes:0,bullets:0,wheel:0,axle:0,tongue:0,pace:0,rat:0,log:[],weather:'clear',over:false,pend:null};
     say(`Before leaving, ${S.party[0].n} should stock up at a San Francisco outfitter before heading inland. You have $${S.cash.toFixed(2)}.\n\n(That big red bridge in the picture? It won't be built for another 75 years. Don't tell ${S.party[0].n}.)`,()=>store(true))},
    cont:()=>{S=sv;resume()},hof:showHof});
 }
@@ -297,7 +296,7 @@ const BAND=[{sc:1,y:[128,142],k:['rabbit','rabbit','squirrel','deer']},{sc:.62,y
 const HUNT_TIME=40,RELOAD=.8,MAG=16,PER_ROUND=.25;
 const huntDist=y=>clamp((142-y)/40,0,1);
 // The crosshair's sway, in scene pixels, at hunt time t.
-const sway=t=>[Math.sin(t*1.7)*1.4+Math.sin(t*3.1+1)*.8,Math.cos(t*1.3)*1.1+Math.sin(t*2.3)*.6];
+const sway=t=>[Math.sin(t*1.7)*.8+Math.sin(t*3.1+1)*.45,Math.cos(t*1.3)*.65+Math.sin(t*2.3)*.35];
 // Mabel fetches: when an animal goes down she runs out from the bottom of the view, grabs it and drags it back, slower
 // the heavier it is. One at a time; the rest wait their turn. She stays home if she isn't with the party, or is riding
 // in the wagon. The meat counts when the animal goes down either way.
@@ -330,12 +329,12 @@ function drawDog(){
 function startHunt(){
   if(S.bullets<1)return say('You do not have any bullets.',menu);
   const q=[];day(false,q);
-  hunt={mag:Math.min(MAG,S.bullets),magLoad:0,an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-14,14),windT:R(2.5,5)};
-  mode='hunt';cv.style.touchAction='none';setRes(2);
-  screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap Fire to shoot.</div><p class="small">The Henry holds 16 rounds; when it's empty, it takes a few seconds to load again (or tap Reload to top it up). The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button class="pri" id="fire">Fire</button><button id="rl">Reload</button><button id="hs">Stop hunting</button></div>`,{fire:fire,rl:loadMag,hs:endHunt});
+  hunt={mag:Math.min(MAG,S.bullets),magLoad:0,an:[],fetch:{state:'home',queue:[],x:home()[0],y:home()[1],dir:1,ph:0,fetched:0,target:null},t:HUNT_TIME,T:0,meat:0,kills:[],lost:0,spawn:.2,q,ax:160,ay:110,shots:[],puffs:[],reload:0,msg:'',msgT:0,wind:RI(-8,8),windTo:RI(-10,10),windT:R(2.5,5)};
+  mode='hunt';cv.style.touchAction='none';setRes(2);$('#huntBtns').hidden=false;
+  screen(`<div class="msg">Drag on the picture to aim down the sights. The top of the front sight is where the bullet goes. Tap the big Fire button on the picture to shoot.</div><p class="small">The Henry holds 16 rounds; when it's empty, it takes a few seconds to load again (or tap Reload on the picture to top it up). The wind pushes your bullet sideways, so aim into it. Far shots drop and take longer to land: aim a little high, and ahead of a running animal. Hit the heart, just behind the front leg, for a clean shot. A body shot only wounds it. You can carry 100 lbs back to the wagon.</p><div class="btns"><button id="hs">Stop hunting</button></div>`,{rl:loadMag,hs:endHunt});
 }
 function endHunt(){
-  if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';setRes(1);
+  if(mode!=='hunt')return;mode='menu';cv.style.touchAction='';setRes(1);$('#huntBtns').hidden=true;
   const m=hunt.meat,c=Math.min(100,m);S.food+=c;const q=hunt.q;
   q.push(m?`You brought down ${hunt.kills.join(', ')}: ${m} lbs of meat${m>100?', but you could only carry 100 lbs back to the wagon':''}.`:'You came back empty handed.');
   if(hunt.fetch.fetched){const d=S.party.find(p=>p.kind==='dog');q.push(`${d.n} fetched ${hunt.fetch.fetched===1?'it':'all '+hunt.fetch.fetched} and wants to know when we're going again.`)}
@@ -347,7 +346,7 @@ function fire(){
   S.bullets--;hunt.mag--;hunt.reload=RELOAD;
   if(hunt.mag<1&&S.bullets>0){loadMag();hunt.msg='Click. Empty. Loading the magazine...';hunt.msgT=2}
   const [dx,dy]=sway(hunt.T),x=hunt.ax+dx,y=hunt.ay+dy,d=huntDist(y);
-  hunt.shots.push({x:x+hunt.wind*(.25+d),y:y+1+9*d,t:.1+.5*d});
+  hunt.shots.push({x:x+hunt.wind*(.15+.55*d),y:y+1+9*d,t:.1+.5*d});
   hunt.flash=.1;hunt.fx=x;hunt.fy=y;hunt.recoil=1;
 }
 // Refill the magazine from her bullets: a quarter second for each round, up to 16 (or what she has left).
@@ -360,7 +359,7 @@ function loadMag(){
 function huntBoxes(a){
   const s=AN[a.k],w=s.w*a.sc,h=s.h*a.sc,x=a.x,y=a.y;
   const body=[x,y+h*.2,w,h*.6];
-  const vw=Math.max(2.5,w*.2),vh=Math.max(2.5,h*.3),vx=a.d>0?x+w*.62:x+w*.38-vw;
+  const vw=Math.max(4,w*.28),vh=Math.max(3.5,h*.4),vx=a.d>0?x+w*.62:x+w*.38-vw;
   return {body,heart:[vx,y+h*.4,vw,vh]};
 }
 const inBox=(x,y,b)=>x>=b[0]&&x<=b[0]+b[2]&&y>=b[1]&&y<=b[1]+b[3];
@@ -376,6 +375,7 @@ function landShot(sh){
 // The bang (and a miss landing nearby) sends the animals near it running away from it.
 function spook(x,skip){for(const a of hunt.an)if(a!==skip&&!a.dead&&Math.abs(a.x-x)<80){a.flee=true;a.graze=0;a.d=a.x>x?1:-1}}
 let drag=null;
+$('#fireBtn').addEventListener('click',fire);$('#reloadBtn').addEventListener('click',loadMag);
 cv.addEventListener('pointerdown',e=>{if(mode!=='hunt')return;e.preventDefault();drag={x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(err){/* not supported */}});
 cv.addEventListener('pointermove',e=>{
   if(mode!=='hunt'||!drag)return;e.preventDefault();
@@ -494,7 +494,7 @@ function drawHunt(dt){
   moveDog(dt);
   if(hunt.t<=0||(S.bullets<1&&!hunt.shots.length&&hunt.reload<=0&&hunt.fetch.state==='home'&&!hunt.fetch.queue.length)){hunt.t=Math.max(0,hunt.t);endHunt();return drawTrail()}
   // The wind drifts toward a new speed every few seconds, with gusts.
-  hunt.windT-=dt;if(hunt.windT<=0){hunt.windTo=RI(-14,14);hunt.windT=R(2.5,5)}
+  hunt.windT-=dt;if(hunt.windT<=0){hunt.windTo=RI(-10,10);hunt.windT=R(2.5,5)}
   hunt.wind+=clamp(hunt.windTo-hunt.wind,-4*dt,4*dt);const wind=hunt.wind+Math.sin(hunt.T*2.1)*1.2;
   // New animals walk in from the edges, at most four at a time.
   hunt.spawn-=dt;if(hunt.spawn<=0&&hunt.an.filter(a=>!a.dead).length<4){const z=RI(0,2),b=BAND[z],k=pick(b.k),d=ch(.5)?1:-1,s=AN[k];hunt.an.push({k,z,sc:b.sc,d,x:d>0?-s.w*b.sc-2:W+2,y:RI(b.y[0],b.y[1])-s.h*b.sc,dead:false,ph:0,graze:0,walk:R(1,3),flee:false,wounded:false});hunt.spawn=R(1.2,2.6)}
@@ -509,7 +509,7 @@ function drawHunt(dt){
   // Farthest first, so nearer animals are drawn in front.
   for(const a of hunt.an.slice().sort((p,q)=>q.z-p.z)){const s=AN[a.k],w=s.w*a.sc,h=s.h*a.sc;
     if(!a.dead){
-      if(!a.flee){a.walk-=dt;if(a.walk<=0){if(a.graze>0){a.graze=0;a.walk=R(1.5,3.5)}else{a.graze=R(1.2,3);a.walk=a.graze}}}
+      if(!a.flee){a.walk-=dt;if(a.walk<=0){if(a.graze>0){a.graze=0;a.walk=R(1,2.5)}else{a.graze=R(2,4.5);a.walk=a.graze}}}
       const v=a.graze>0&&!a.flee?0:s.sp*a.sc*(a.flee?(a.wounded?2.4:2):.7);a.x+=a.d*v*dt;if(v)a.ph+=dt*12*(a.flee?1.6:1);
     }
     if(a.dead){rect(a.x,a.y+h-Math.max(2,5*a.sc),w,Math.max(2,5*a.sc),s.c);rect(a.x+w/2,a.y+h-Math.max(3,7*a.sc),Math.max(1,2*a.sc),Math.max(1,2*a.sc),'#c03020');continue}
@@ -528,8 +528,8 @@ function drawHunt(dt){
   g.fillText(`Rounds ${hunt.mag}/${MAG}${hunt.magLoad>0?' (loading)':''}  Bullets ${S.bullets}  Meat ${hunt.meat} lbs  Time ${Math.ceil(hunt.t)}`,6,11);
   g.textAlign='right';g.fillStyle=mph>=9?'#f0a030':'#f3e6cf';g.fillText(`Wind ${mph?(wind<0?'← ':'')+mph+' mph'+(wind>0?' →':''):'calm'}`,W-6,11);
   if(hunt.msgT>0){hunt.msgT-=dt;g.textAlign='left';g.font='13px VT323, monospace';const t=hunt.msg,w=g.measureText(t).width+10;g.fillStyle='rgba(26,18,12,.75)';g.fillRect(4,HH-18,w,14);g.fillStyle='#f0a030';g.fillText(t,9,HH-7)}
-  const fb=P.querySelector('#fire');if(fb)fb.disabled=hunt.reload>0||hunt.magLoad>0||hunt.mag<1;
-  const rb=P.querySelector('#rl');if(rb)rb.disabled=hunt.magLoad>0||hunt.mag>=Math.min(MAG,S.bullets);
+  const fb=$('#fireBtn');if(fb)fb.disabled=hunt.reload>0||hunt.magLoad>0||hunt.mag<1;
+  const rb=$('#reloadBtn');if(rb)rb.disabled=hunt.magLoad>0||hunt.mag>=Math.min(MAG,S.bullets);
 }
 // The side-trip sights, drawn while the detour's story is on screen.
 function drawSight(k){
