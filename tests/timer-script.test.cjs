@@ -97,7 +97,7 @@ test('time\'s up: the alarm texts every phone once, and an early wake-up waits f
   assert.equal(s.triggers.length, 1, 'set again for the real end');
   s.store.TIMER_UP = JSON.stringify(Object.assign(JSON.parse(s.store.TIMER_UP), { ends: Date.now() - 1000 }));
   s.ctx.timerUp();
-  assert.deepEqual(s.sent.texts.map(t => first(t.body)), Array(2).fill('Book Dude: Maddy\'s screen time is up (4:35 PM). Time to hand over the remote. Bank: 20 min.'));
+  assert.deepEqual(s.sent.texts.map(t => first(t.body)), Array(2).fill('Book Dude: Maddy\'s screen time is up (4:35 PM). Time to hand over the remote. Bank: 20 min. Reply STOP to opt out.'));
   assert.match(link(s.sent.texts[0].body), /#s=r&m=10&e=\d+&b=20&t=0123abcd456789ef&u=AKfyTESTID123$/);
   assert.equal(s.triggers.length, 0);
   s.ctx.timerUp();
