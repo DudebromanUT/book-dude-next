@@ -8,7 +8,7 @@ import { state, saveSetting } from './state.js';
 import { confirmBox, toast, showConfirm } from './page.js';
 import { asGrownup } from './grownup.js';
 import { post } from './dude-ai.js';
-import { saveReward } from './money.js';
+import { saveReward, screenStatus, rewardPoints } from './money.js';
 import { renderProgress } from './progress.js';
 
 const UP_SEEN = 'book-dude:timer-up-seen';
@@ -132,10 +132,14 @@ async function change(what, minutes) {
   return r;
 }
 
+// The Fig-o-Clock page the texts link to: Fig gets sleepier as the clock runs down (docs/timer).
+const figPage = () => new URL('timer/', document.baseURI).href;
+
 function textGrownups(event, t, added, back) {
-  const ends = C.timerEnds(t);
+  const ends = C.timerEnds(t), leftMs = C.timerLeft(t, Date.now());
   post({ action: 'timer', event, id: t.id, name: herName(), minutes: t.minutes, added, back,
-    left: event === 'stop' ? 0 : Math.ceil(C.timerLeft(t, Date.now()) / 60000), ends, endsText: ends ? timeText(ends) : '' }).then(r => {
+    left: event === 'stop' ? 0 : Math.ceil(leftMs / 60000), leftMs: Math.round(leftMs), ends, endsText: ends ? timeText(ends) : '',
+    bank: screenStatus(rewardPoints()).owed, page: figPage() }).then(r => {
     if (r && r.error && state.settings.schoolLink) toast('The clock is set, but the texts didn’t go out. (Is the internet on?)');
   });
 }

@@ -815,6 +815,8 @@ function keyOk(given) {
 
 // Asking for the quiz list (and whether the Claude features are on).
 function doGet(e) {
+  // The Fig-o-Clock page asking for the screen-time clock, with its view-only code (Timer.gs). It shows nothing else.
+  if (e && e.parameter && e.parameter.clock !== undefined) return json(typeof timerView === 'function' ? timerView(String(e.parameter.clock)) : { error: 'off' });
   if (!keyOk(e && e.parameter && e.parameter.key)) return json({ error: 'That link is not right.' });
   var all = PropertiesService.getScriptProperties().getProperties();
   var quizzes = Object.keys(all).filter(function (n) { return n.indexOf('q_') === 0; }).map(function (n) { return JSON.parse(all[n]); });

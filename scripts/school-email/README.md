@@ -143,12 +143,17 @@ into a "Spelling log" spreadsheet you can read.
 
 Book Dude's screen-time clock works without this: cashing in starts it, and every phone signed in to the family
 account shows the same countdown. With this, the script also texts both grown-ups when the clock starts, gets more
-minutes, is paused, resumed or stopped, and when it runs out (even if nobody has Book Dude open). Texts go through
-Twilio, which charges a little: a phone number for about $2 a month and about a cent a text.
+minutes, is paused, resumed or stopped, and when it runs out (even if nobody has Book Dude open). Each text says how
+many minutes are still in her bank and ends with a **Fig-o-Clock** link: a live countdown where Fig the cat gets
+sleepier as time runs out (it asks this script for the clock with a view-only code that shows nothing else). Texts go
+through Twilio, which charges a little: a phone number for about $2 a month and a few cents a text (the link makes
+each one two or three text segments).
 
 1. Make a Twilio account at twilio.com, buy a **toll-free** number that can send SMS, and complete **Toll-Free
    Verification** for it (Console → Phone Numbers → Regulatory Compliance; it is free and takes a few days). Use case:
-   personal notifications to your own family's phones. Until it is verified, texts may not go out.
+   personal notifications to your own family's phones; the messages include a link to your own countdown page. A
+   sample: "Book Dude: Maddy's screen time started: 30 min, ends 4:35 PM. Bank: 45 min." Until it is verified, texts
+   may not go out.
 2. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
    `Timer.gs` from this folder. Paste in the updated `Code.gs` too (its `doPost` hands timer requests to `Timer.gs`).
 3. **Project Settings → Script Properties**, add:
@@ -161,3 +166,16 @@ Twilio, which charges a little: a phone number for about $2 a month and about a 
 5. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
 
 At most 40 texts a day are sent (each goes to every phone in `TEXT_TO`).
+
+### Getting the texts to Maddy's iPad too (as iMessages, from one iPhone)
+
+A Wi-Fi iPad can't get regular texts, so one grown-up's iPhone forwards them to her as iMessages. Set this up on
+**one** iPhone only, or she gets every message twice.
+
+1. Save your Twilio number as a contact named **Book Dude**.
+2. **Shortcuts** app → **Automation** → **+** → **Message**.
+3. **Sender**: Book Dude. **Message Contains**: `Book Dude`. Pick **Run Immediately**. **Next**.
+4. **New Blank Automation** → **Add Action** → **Send Message**.
+5. Tap **Message** and pick **Shortcut Input** (if it offers a choice, pick **Content**). Tap **Recipients** and pick
+   Maddy (the email or number her iPad uses for iMessage). Tap the arrow on the action and turn off **Show When Run**.
+6. **Done**. Run `timerTextTest` again: her iPad should get it as a blue iMessage, and tapping the link shows Fig.

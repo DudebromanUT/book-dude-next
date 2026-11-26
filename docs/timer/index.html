@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFE6A3">
+<title>Fig-o-Clock</title>
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="fig.css">
+<script src="fig.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="kicker">Book Dude screen time</p>
+  <h1>Fig-o-Clock</h1>
+  <div class="stage">
+    <svg id="fig" viewBox="0 0 200 200" role="img" aria-label="Fig the cat"></svg>
+  </div>
+  <p class="left"><span id="left">--:--</span></p>
+  <p class="ends" id="ends"></p>
+  <p class="caption" id="caption" role="status">Waking Fig up…</p>
+  <div class="meter" aria-hidden="true"><span>asleep</span><div class="bar"><i id="bar"></i></div><span>awake</span></div>
+  <p class="bank" id="bank"></p>
+  <p class="foot"><a href="../#progress">Open Book Dude</a></p>
+</main>
+</body>
+</html>

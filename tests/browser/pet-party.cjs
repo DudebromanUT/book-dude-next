@@ -192,6 +192,23 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       ['timer', 'stop', 15, 0, '', 8, 0],
       ['timer', 'start', 15, 15, '12:46 PM', 0, 15]
     ]);
+    assert.deepEqual(texts.map(t => t.bank), [45, 45, 45, 53, 38], 'each text says what is still in her bank');
+    assert.ok(texts.every(t => t.page === BASE + 'timer/'), 'and links to the Fig-o-Clock');
+    // The Fig-o-Clock: the link's own time right away, then the clock as it is now from the family script.
+    const figPage = await ctx.newPage();
+    figPage.on('pageerror', e => errors.push(e.message));
+    let looks = 0;
+    await figPage.route('https://script.google.com/**', r => { looks++; assert.match(r.request().url(), /\/macros\/s\/AKfyTESTID123\/exec\?clock=0123abcd456789ef$/);
+      r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'x', state: 'paused', minutes: 30, ends: 0, left: 600000, bank: 38 }) }); });
+    const endsAt = Math.round(Date.parse('2026-11-22T12:30:00-07:00') / 1000);
+    await figPage.goto(BASE + 'timer/#s=r&m=30&e=' + endsAt + '&b=45');
+    await figPage.waitForFunction(() => /min still in Maddy’s bank/.test(document.getElementById('bank').textContent));
+    assert.match(clean(await figPage.innerText('.wrap')), /Fig-o-Clock .* ended 12:30 PM Fig is asleep\. So is screen time\. .* 45 min still in Maddy’s bank/);
+    await figPage.goto(BASE + 'timer/#s=r&m=30&e=' + endsAt + '&b=45&t=0123abcd456789ef&u=AKfyTESTID123');
+    await figPage.waitForFunction(() => /^Paused\./.test(document.getElementById('caption').textContent));
+    assert.match(clean(await figPage.innerText('.wrap')), /10:00 paused Paused\. Fig is holding perfectly still.* 38 min still in Maddy’s bank/);
+    assert.ok(looks >= 1);
+    await figPage.close();
     await p.unroute('https://script.google.com/**');
     await p.evaluate(async () => { (await import('/book-dude-next/app/state.js')).state.settings.schoolLink = ''; });
     await grown('.screen-card [data-act="minutes-given"]');
