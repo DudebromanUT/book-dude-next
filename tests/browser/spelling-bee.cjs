@@ -190,6 +190,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ }
       window.__srLog = []; window.__gesture = false;
       addEventListener('click', () => { window.__gesture = true; setTimeout(() => { window.__gesture = false; }, 0); }, true);
+      window.__srMade = 0; window.__micAsk = 0; window.__micStop = 0;
+      Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: async () => { window.__micAsk++; return { active: true, getTracks: () => [{ stop: () => { window.__micStop++; } }] }; } } });
       window.__srMade = 0;
       class FakeSR {
         constructor() { window.__srMade++; }
@@ -245,6 +247,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       assert.match(clean(await q.textContent('#fb')), /^(Correct!|That’s right!|Nailed it!|You got it!|Perfect spelling!)/);
       await q.click('#next');
     }
+    // The microphone was opened once for the round, and is still held.
+    assert.deepEqual(await q.evaluate(() => [window.__micAsk, window.__micStop]), [1, 0], 'one open microphone for the whole round');
     const log = await q.evaluate(() => window.__srLog);
     assert.ok(log.length >= 4 && log.every(x => x === 'start'), 'every start came from a tap: ' + log);
     assert.equal(await q.isVisible('#mic'), true, 'the microphone is still on after three words');
@@ -254,7 +258,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await q.waitForFunction(() => /Tap the microphone/.test(document.getElementById('bubble').textContent));
     await q.evaluate(() => { window.__mute = true; });
     await q.click('#mic');
-    await q.waitForFunction(() => /BB check: mic ✓ sound ✓ voice ✗ words 0/.test(document.getElementById('bubble').textContent));
+    await q.waitForFunction(() => /BB check: hold ✓ mic ✓ sound ✓ voice ✗ words 0/.test(document.getElementById('bubble').textContent));
     await q.click('#mic');
     await q.waitForFunction(() => /This iPad isn’t sending me your letters\. Let’s use the keyboard/.test(document.getElementById('bubble').textContent));
     assert.equal(await q.isVisible('#ans'), true, 'the typing box (with the keyboard microphone) is ready');
@@ -263,6 +267,10 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.equal(await q.evaluate(() => window.__bee.typedLetters('m i s t')), 'mist');
     assert.equal(await q.evaluate(() => window.__bee.typedLetters('mist')), 'mist');
     await q.evaluate(() => { window.__mute = false; });
+    // Leaving the round lets the microphone go.
+    await q.click('#quit');
+    await q.waitForSelector('#home:not([hidden])');
+    assert.equal(await q.evaluate(() => window.__micStop), 1, 'the microphone is let go when the round ends');
     await ipad.close();
 
     assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
