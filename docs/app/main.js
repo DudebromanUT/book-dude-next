@@ -23,7 +23,7 @@ import { syncSchool } from './school.js';
 import { APP_VERSION } from './version.js';
 import { account, activeKid, activeKidName, takeNotice } from './cloud.js';
 import { firstPull, startSync, checkAccount } from './sync.js';
-import { mirrorArcade } from './games.js';
+import { mirrorArcade, mirrorSpelling } from './games.js';
 
 async function start() {
   $('#app-version').textContent = 'App version ' + APP_VERSION;
@@ -59,6 +59,8 @@ async function start() {
   if (kid && !state.settings.readerName) state.settings.readerName = activeKidName();
   // The signed-in player's game scores, from this device and from the account, become one set before anything shows them.
   if (account()) await mirrorArcade();
+  // Spelling gems from the Spelling Bee page on this device (it keeps them where the games keep things).
+  await mirrorSpelling(true);
   // The first start with screen time on this device: extra minutes count for books finished from today on, and the
   // points she already earned stay in the jar, where every point went before she could choose screen time.
   const first = {};

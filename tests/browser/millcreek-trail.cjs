@@ -54,11 +54,12 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.$eval('.tab[data-tab="games"]', e => e.click());
     await p.waitForSelector('.game-card');
     const cards = await p.$$eval('.game-card', els => els.map(e => e.textContent.replace(/\s+/g, ' ').trim()));
-    assert.equal(cards.length, 2);
-    assert.match(cards[1], /The Millcreek Trail\s*It’s 1862\. .*No stars yet\. 1 level to play\./);
+    const trail = cards.findIndex(c => /Millcreek Trail/.test(c));
+    assert.ok(trail > 0);
+    assert.match(cards[trail], /The Millcreek Trail\s*It’s 1862\. .*No stars yet\. 1 level to play\./);
 
     // The game's own page, with its own font and nothing from another site.
-    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card a.btn', els => els[1].click())]);
+    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card', els => els.find(e => /Millcreek Trail/.test(e.textContent)).querySelector('a.btn').click())]);
     await p.waitForSelector('#panel #go');
     assert.ok(p.url().endsWith('/book-dude-next/games/millcreek-trail/'));
     assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('22px VT323'))), true, 'its font ships with the app');
@@ -269,7 +270,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     if (process.env.SHOTS) await p.screenshot({ path: path.join(process.env.SHOTS, 'trail-finish.png') });
     await Promise.all([p.waitForNavigation(), p.click('a.home')]);
     await p.waitForSelector('.game-card');
-    assert.match(await p.$$eval('.game-card', els => els[1].textContent.replace(/\s+/g, ' ')), /3 stars of 3/);
+    assert.match(await p.$$eval('.game-card', els => els.find(e => /Millcreek Trail/.test(e.textContent)).textContent.replace(/\s+/g, ' ')), /3 stars of 3/);
 
     // Offline: the game opens with no internet.
     await p.evaluate(() => navigator.serviceWorker.ready); await sleep(1500);

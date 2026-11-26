@@ -958,6 +958,17 @@ input[type="range"] { flex: 1; accent-color: var(--accent); height: 32px; }
 .meter .d4 { animation-delay: 1.6s; } .meter .d5 { animation-delay: 2s; } .meter .d6 { animation-delay: .2s; } .meter .d7 { animation-delay: 1s; }
 @keyframes meter-float { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-4px); opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .meter-cloud, .meter-duck, .robot-fly, .robot, .robot.full .robot-drawer, .robot-sparkle path { animation: none; } }
+/* Bobby Joe's Spell-o-Meter */
+.bobby-art { width: 96px; height: 96px; margin: 4px auto 0; }
+.bobby-art svg { width: 100%; height: 100%; display: block; }
+.bobby-art.stomp svg { animation: bobby-stomp .5s ease-in-out 4; transform-origin: 50% 100%; }
+@keyframes bobby-stomp { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-8px) rotate(-6deg); } 75% { transform: translateY(-4px) rotate(6deg); } }
+.spell-bars { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; text-align: left; }
+.spell-bars li { display: grid; grid-template-columns: 6.5em 1fr auto; gap: 8px; align-items: center; font-size: .9rem; }
+.spell-bars .bar { margin: 0; }
+.spell-one .bar i { background: #17a36a; } .spell-two .bar i { background: #2f6fdb; } .spell-three .bar i { background: #8b4fd8; }
+.bee-day { margin: 6px 0 0; font-size: .9rem; }
+
 /* Piano practice */
 .piano-week { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .piano-day { display: grid; grid-template-columns: 6.5em 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: var(--surface-2); }

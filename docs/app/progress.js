@@ -18,16 +18,16 @@ import { metersHtml } from './meters.js';
 // Where her points came from: every AR quiz, Book Dude test and home-points book, by school year (August to July), and
 // how the total that counts for book money and screen time is made. Every entry is shown, so anyone can check it.
 
-const KINDS = { ar: 'AR quizzes', test: 'Book Dude tests', home: 'Home points' };
+const KINDS = { ar: 'AR quizzes', test: 'Book Dude tests', home: 'Home points', spell: 'Spelling Bee' };
 let ledgerYear = '';
 
 function ledgerHtml(total) {
-  const all = C.ledger(state.records);
+  const all = C.ledger(state.records, state.settings.spelling);
   const years = Array.from(new Set(all.map(e => e.year).filter(Boolean).concat(C.schoolYear(today())))).sort().reverse();
   if (ledgerYear !== 'all' && !years.includes(ledgerYear)) ledgerYear = C.schoolYear(today());
   const shown = ledgerYear === 'all' ? all : all.filter(e => e.year === ledgerYear);
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const title = e => (e.kind === 'test' ? cap(examTitle(e.id)) : BY_ID.has(e.id) ? BY_ID.get(e.id).title : e.id);
+  const title = e => (e.kind === 'test' ? cap(examTitle(e.id)) : e.kind === 'spell' ? e.id : BY_ID.has(e.id) ? BY_ID.get(e.id).title : e.id);
   const sum = list => list.reduce((s, e) => s + e.points, 0);
   const groups = Object.keys(KINDS).map(kind => {
     const list = shown.filter(e => e.kind === kind);
@@ -38,8 +38,8 @@ function ledgerHtml(total) {
   }).join('');
   // How the total is made (all time: book money and screen time count every point since the start).
   const cfg = C.reward(state.settings.reward);
-  const tests = C.examPoints(state.records), home = C.homePoints(state.records);
-  const ar = Math.round((total - tests - home) * 100) / 100;
+  const tests = C.examPoints(state.records), home = C.homePoints(state.records), spell = C.spellPoints(state.settings.spelling).total;
+  const ar = Math.round((total - tests - home - spell) * 100) / 100;
   const how = cfg.school !== null
     ? 'AR points from the school’s report (' + fmtNum(cfg.school) + (cfg.schoolNew && Object.keys(cfg.schoolNew).length ? ' plus quizzes from school emails since' : '') + ', above the starting line of ' + fmtNum(cfg.schoolStart) + '): <b>' + fmtNum(ar) + '</b>'
     : 'AR quizzes entered in Book Dude: <b>' + fmtNum(ar) + '</b>';
@@ -49,7 +49,7 @@ function ledgerHtml(total) {
       '<button type="button" class="chip" data-act="ledger-year" data-year="all" aria-pressed="' + (ledgerYear === 'all') + '">All time</button></div>' +
     '<p class="ledger-total">' + (ledgerYear === 'all' ? 'All time' : 'School year ' + ledgerYear) + ': <b>' + plural(Math.round(sum(shown) * 100) / 100, 'point') + '</b> from ' + plural(shown.length, 'entry', 'entries') + '.</p>' +
     groups +
-    '<div class="ledger-how"><h3>How your points are counted</h3><p>' + how + ' + Book Dude tests: <b>' + fmtNum(tests) + '</b> + home points: <b>' + fmtNum(home) + '</b> = <b>' + plural(total, 'point') + '</b>.</p>' +
+    '<div class="ledger-how"><h3>How your points are counted</h3><p>' + how + ' + Book Dude tests: <b>' + fmtNum(tests) + '</b> + home points: <b>' + fmtNum(home) + '</b> + spelling: <b>' + fmtNum(spell) + '</b> = <b>' + plural(total, 'point') + '</b>.</p>' +
       (cfg.school !== null ? '<p class="hint">The AR part is the school’s own total, so it counts every AR quiz, including any Book Dude never heard about. The AR quizzes listed above are the ones that reached Book Dude from the school’s emails or were typed in.</p>' : '') +
     '</div></section>';
 }

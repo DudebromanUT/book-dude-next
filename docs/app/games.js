@@ -16,10 +16,14 @@ import { state, saveSetting } from './state.js';
 import { main } from './page.js';
 import { greeting } from './cards.js';
 import { account, activeKidName, saveScores, scoreboard } from './cloud.js';
+import { toast, celebrate } from './page.js';
+import { rewardPoints, pointsNews } from './money.js';
 
 export const GAMES = [
   { id: 'maple-madness', title: 'Maple’s Big Day', blurb: 'Poop Patrol, Catch Fig, Garden Duty and Tug of War, starring Maple and Fig. In English and Spanish.', href: 'games/maple-madness/',
     levels: [['poop', 'Poop Patrol'], ['chase', 'Catch Fig'], ['water', 'Garden Duty'], ['tug', 'Tug of War']] },
+  { id: 'spelling-bee', title: 'Bobby Joe’s Spelling Bee', blurb: 'Practice for the school spelling bee with Bobby Joe. Spell a word right twice in a row to make it a gem; every 10 gems earns points.', href: 'games/spelling-bee/',
+    levels: [['one', 'One Bee'], ['two', 'Two Bee'], ['three', 'Three Bee']] },
   { id: 'millcreek-trail', title: 'The Millcreek Trail', blurb: 'It’s 1862. Get the family’s ancestors, a terrier, a cat and a blanket that seems to be alive from San Francisco to Millcreek. Hunt, ford rivers, and try not to die of dysentery.', href: 'games/millcreek-trail/',
     levels: [['trip', 'The trip to Millcreek']] }
 ];
@@ -49,6 +53,30 @@ function give(who, best) {
   for (const g of GAMES) {
     try { localStorage.setItem(store(who, g.id), JSON.stringify({ [who.name]: best[g.id] || {} })); } catch (e) { /* the game will show what it has */ }
   }
+}
+
+/*
+ * Bobby Joe's Spelling Bee keeps her progress on the device where the games keep things (games/arcade.js), under
+ * 'progress'. The app puts that together with her spelling setting (core.js spellMerge: a word that paid never stops
+ * paying) and hands the result back, so her gems are the same on every device and count as points. A grown-up playing
+ * as themselves practices for fun: their gems stay theirs and pay nothing. The game also gets the school script's link,
+ * for Bobby Joe's Claude help.
+ */
+const spellKey = (who, name) => 'book-dude:arcade:' + BASE + who.key + ':spelling-bee:' + name;
+export async function mirrorSpelling(starting) {
+  const who = player();
+  try {
+    if (state.settings.schoolLink) localStorage.setItem(spellKey(who, 'link'), JSON.stringify(state.settings.schoolLink));
+    else localStorage.removeItem(spellKey(who, 'link'));
+  } catch (e) { /* Bobby Joe answers without Claude */ }
+  if (who.kind === 'grownup') return;
+  const here = read(spellKey(who, 'progress'));
+  const before = rewardPoints();
+  const both = C.spellMerge(state.settings.spelling, here);
+  if (!same(both, C.spelling(state.settings.spelling))) await saveSetting('spelling', both);
+  if (!same(both, C.spelling(here))) { try { localStorage.setItem(spellKey(who, 'progress'), JSON.stringify(both)); } catch (e) { /* the page keeps its own */ } }
+  const news = pointsNews(before, rewardPoints());
+  if (news) { const show = () => { toast('Spelling Bee: ' + news); celebrate(); }; if (starting) setTimeout(show, 1500); else show(); }
 }
 
 let board = {};        // game id -> the family's rows, or null when it couldn't be fetched

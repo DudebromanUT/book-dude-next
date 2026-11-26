@@ -28,7 +28,7 @@ export const state = {
   limit: PAGE,
   records: {},
   custom: {},
-  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {} },
+  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {}, spelling: C.spelling({}) },
   dudeLine: null,
   dudePs: '',
   offline: 'checking',
@@ -244,7 +244,9 @@ const TAKE = {
   // How many book-money payouts her parents have been emailed about (they only ever go up).
   payoutTold: v => { if (Number.isInteger(v) && v >= 0) state.settings.payoutTold = Math.max(state.settings.payoutTold || 0, v); },
   arTrack: v => { if (v && typeof v === 'object') state.settings.arTrack = C.arTrack(v); },
-  piano: v => { if (v && typeof v === 'object') state.settings.piano = C.piano(v); }
+  piano: v => { if (v && typeof v === 'object') state.settings.piano = C.piano(v); },
+  // Spelling never loses a paid word: a copy from the account is put together with this one (core.js spellMerge).
+  spelling: v => { if (v && typeof v === 'object') state.settings.spelling = C.spellMerge(state.settings.spelling, v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);

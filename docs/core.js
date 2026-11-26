@@ -193,6 +193,80 @@
     return round(sum);
   }
 
+
+  /* ---- Bobby Joe's Spelling Bee ---- */
+
+  // The three lists and their words, harder as they go, and what they pay: points per 10 gems, and a bonus for every word.
+  const SPELL_LEVELS = { one: { name: 'One Bee', size: 150, rate: 1, bonus: 5 }, two: { name: 'Two Bee', size: 150, rate: 2, bonus: 10 },
+    three: { name: 'Three Bee', size: 150, rate: 3, bonus: 15 } };
+  const SPELL_STREAKS = [10, 25, 50];
+
+  /**
+   * Her spelling, checked: the game's own state (p: { word: [right in a row, has gem, misses] }, best: { level: streak },
+   * set: settings, t: when it was saved), plus what pays: earned: { word: { lv, d, cb } }, the first time each word
+   * became a gem (cb: it was a comeback, a word she had missed before), and streaks: { 10|25|50: day }, the first day
+   * she spelled that many in a row in Bee mode.
+   */
+  function spelling(o) {
+    o = isPlain(o) ? o : {};
+    const word = k => typeof k === 'string' && k.length > 0 && k.length <= 60;
+    const p = {}, earned = {}, streaks = {}, best = {};
+    if (isPlain(o.p)) for (const k of Object.keys(o.p).slice(0, 3000)) {
+      const v = o.p[k];
+      if (word(k) && Array.isArray(v) && v.length === 3 && v.every(n => Number.isInteger(n) && n >= 0 && n < 100000)) p[k] = [v[0], v[1] ? 1 : 0, v[2]];
+    }
+    if (isPlain(o.earned)) for (const k of Object.keys(o.earned).slice(0, 3000)) {
+      const v = o.earned[k];
+      if (word(k) && isPlain(v) && has(SPELL_LEVELS, v.lv) && day(v.d) === v.d) earned[k] = { lv: v.lv, d: v.d, cb: v.cb ? 1 : 0 };
+    }
+    if (isPlain(o.streaks)) for (const n of SPELL_STREAKS) if (day(o.streaks[n]) === o.streaks[n]) streaks[n] = o.streaks[n];
+    if (isPlain(o.best)) for (const k of Object.keys(SPELL_LEVELS).concat('all')) if (Number.isInteger(o.best[k]) && o.best[k] >= 0) best[k] = o.best[k];
+    const set = isPlain(o.set) ? JSON.parse(JSON.stringify(o.set)) : {};
+    const t = Number.isFinite(o.t) && o.t > 0 ? o.t : 0;
+    return { p, best, set, t, earned, streaks };
+  }
+
+  /**
+   * Two copies of her spelling put together (this device's and the account's): what pays is never lost (every word's
+   * first gem, the earliest copy of it; every streak, its first day), and the game's own state comes from whichever
+   * copy was saved last.
+   */
+  function spellMerge(a, b) {
+    a = spelling(a); b = spelling(b);
+    const newer = b.t > a.t ? b : a, out = { p: newer.p, best: newer.best, set: newer.set, t: newer.t, earned: {}, streaks: {} };
+    for (const side of [a, b]) {
+      for (const k of Object.keys(side.earned)) { const v = side.earned[k], w = out.earned[k]; if (!w || v.d < w.d) out.earned[k] = v; }
+      for (const n of Object.keys(side.streaks)) if (!out.streaks[n] || side.streaks[n] < out.streaks[n]) out.streaks[n] = side.streaks[n];
+    }
+    out.best = Object.assign({}, newer.best);
+    for (const k of Object.keys(SPELL_LEVELS)) { const m = Math.max(a.best[k] || 0, b.best[k] || 0); if (m) out.best[k] = m; }
+    return out;
+  }
+
+  /**
+   * The points her spelling earned, each on the day it was earned: for each list, `rate` points for every 10 gems (a
+   * comeback gem counts twice), the list's bonus the day she has every word in it, and 1 point for each streak.
+   * Each word pays once, the first time it becomes a gem; missing it later never takes points back.
+   */
+  function spellPoints(o) {
+    const sp = spelling(o), entries = [], gems = {}, credits = {};
+    for (const k of Object.keys(SPELL_LEVELS)) { gems[k] = 0; credits[k] = 0; }
+    const list = Object.keys(sp.earned).map(w => Object.assign({ w }, sp.earned[w])).sort((x, y) => x.d.localeCompare(y.d) || (x.w < y.w ? -1 : 1));
+    for (const g of list) {
+      const L = SPELL_LEVELS[g.lv], before = Math.floor(credits[g.lv] / 10);
+      gems[g.lv]++; credits[g.lv] += g.cb ? 2 : 1;
+      const tens = Math.floor(credits[g.lv] / 10) - before;
+      // One line a day for each list's gems, however many points they made that day.
+      const same = entries.find(e => e.id === L.name + ' gems' && e.date === g.d);
+      if (tens > 0) { if (same) same.points += tens * L.rate; else entries.push({ kind: 'spell', id: L.name + ' gems', date: g.d, points: tens * L.rate }); }
+      if (gems[g.lv] === L.size) entries.push({ kind: 'spell', id: 'Finished ' + L.name, date: g.d, points: L.bonus });
+    }
+    for (const n of SPELL_STREAKS) if (sp.streaks[n]) entries.push({ kind: 'spell', id: n + ' in a row', date: sp.streaks[n], points: 1 });
+    const next = {};
+    for (const k of Object.keys(SPELL_LEVELS)) next[k] = 10 - (credits[k] % 10);
+    return { total: round(entries.reduce((s, e) => s + e.points, 0)), entries, gems, next, levels: SPELL_LEVELS, streaks: SPELL_STREAKS };
+  }
+
   /** The school year a day falls in, starting August 1: '2026-11-15' is '2026-27', '2026-07-31' is '2025-26'. '' for no day. */
   function schoolYear(d) {
     const m = DAY_RE.exec(String(d || ''));
@@ -207,8 +281,8 @@
    * Dude's own tests or its think-about-it bonus, 'home' home points for a book with no AR quiz. A book can have both
    * an AR result and home points: they are two entries. `year` is the school year ('' when the entry has no date).
    */
-  function ledger(records) {
-    const out = [];
+  function ledger(records, spell) {
+    const out = spell ? spellPoints(spell).entries.map(e => Object.assign({}, e, { year: schoolYear(e.date) })) : [];
     for (const id of Object.keys(records || {})) {
       const r = records[id];
       if (!r) continue;
@@ -272,12 +346,12 @@
    * ('2026-27'): each quarter's AR points (quizzes Book Dude has, plus `missed` from the school's report), the year,
    * all time (earlier years from `before`), and the same quarters and year for the other points.
    */
-  function arReport(records, track, year) {
+  function arReport(records, track, year, spell) {
     const t = arTrack(track);
     const q = () => ({ 1: 0, 2: 0, 3: 0, 4: 0 });
     const ar = q(), other = q();
     let arAll = 0;
-    for (const e of ledger(records)) {
+    for (const e of ledger(records, spell)) {
       if (e.kind === 'ar') arAll += e.points;
       if (e.year !== year) continue;
       (e.kind === 'ar' ? ar : other)[quarterOf(e.date, t)] += e.points;
@@ -763,7 +837,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano', 'spelling'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -837,7 +911,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, PIANO_STEP, PIANO_GOAL,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, PIANO_STEP, PIANO_GOAL, spelling, spellMerge, spellPoints, SPELL_LEVELS,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

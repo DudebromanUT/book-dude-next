@@ -124,3 +124,17 @@ fallback); if it is still declined, COBOL gives a gentle answer that points her 
 - **COBOL is a helper, not a guarantee.** The rules and alerts catch a lot, but read the chats now and then.
 - **If you change the script later:** go to Deploy → Manage deployments → edit (pencil) → Version: New version →
   Deploy. The link stays the same.
+
+## Bobby Joe's Spelling Bee (optional)
+
+The Spelling Bee is a game in Book Dude (Games tab). It works without this script; with it, Bobby Joe uses Claude to
+answer her questions about a word, give memory tricks, and understand messy spelling out loud, and every answer goes
+into a "Spelling log" spreadsheet you can read.
+
+1. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Spelling**, and paste in all of
+   `Spelling.gs` from this folder. (No HTML file, and no change to `doGet`: the page lives in Book Dude.)
+2. Paste in the updated `Code.gs` too (its `doPost` hands spelling requests to `Spelling.gs`, behind the same key).
+3. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
+4. Optional Script Properties: `SPELL_MODEL` (default `claude-haiku-5-5`) and `SPELL_DAILY_LIMIT` (most Claude calls a
+   day, default 300). Run `spellLogUrl` in the editor for the Spelling log's link.
+

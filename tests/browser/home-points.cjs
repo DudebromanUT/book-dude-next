@@ -173,7 +173,7 @@ const COVER = fs.readFileSync(path.join(DOCS, 'img', 'dude.jpg'));
     assert.match(text, /AR quizzes7 points\s*Oct 1, 2026\s*Hatchet\s*\+7/);
     assert.match(text, /Book Dude tests5 points\s*Nov 14, 2026\s*Test on Topaz Mountain: Rocks, People, and Memory\s*\+4\s*Nov 14, 2026\s*Think-about-it question on Topaz Mountain: Rocks, People, and Memory\s*\+1/);
     assert.match(text, /Home points5 points\s*[A-Z][a-z]{2} \d{1,2}, 2026\s*The Extremely Embarrassing Life of Lottie Brooks\s*\+5/);
-    assert.match(text, /How your points are counted\s*AR points from the school’s report \(52\.5, above the starting line of 40\): 12\.5 \+ Book Dude tests: 5 \+ home points: 5 = 22\.5 points\./);
+    assert.match(text, /How your points are counted\s*AR points from the school’s report \(52\.5, above the starting line of 40\): 12\.5 \+ Book Dude tests: 5 \+ home points: 5 \+ spelling: 0 = 22\.5 points\./);
     await p.click('[data-act="ledger-year"][data-year="2025-26"]');
     text = await ledger();
     assert.match(text, /School year 2025-26: 3 points from 1 entry\./);

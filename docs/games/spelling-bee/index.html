@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#f6efe2">
+<title>Bobby Joe's Spelling Bee</title>
+<link rel="icon" href="../../icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="game.css">
+<script src="../../core.js" defer></script>
+<script src="../arcade.js" defer></script>
+<script src="words.js" defer></script>
+<script src="game.js" defer></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="gem" viewBox="0 0 40 40"><path d="M10 7h20l8 10-18 20L2 17z" fill="currentColor"/><path d="M10 7h20l-4 10H14z" fill="#fff" opacity=".3"/><path d="M14 17l6 20 6-20" fill="#000" opacity=".12"/><path d="M10 7l4 10h12l4-10M2 17h36M14 17l6 20 6-20" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.2"/></symbol>
+<symbol id="rock" viewBox="0 0 40 40"><path d="M5 27l5-12 11-7 12 5 3 14-8 7H12z" fill="currentColor"/><path d="M10 15l9 4 14-6M19 19l-2 15" fill="none" stroke="#000" stroke-opacity=".15" stroke-width="1.5"/></symbol>
+<symbol id="i-mic" viewBox="0 0 24 24"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M6.5 12.5l3.5 3.5 7.5-8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-miss" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></symbol>
+</svg>
+
+<div class="wrap">
+<div class="topbar"><a id="back" class="pill" href="../../#games">&larr; Back to Book Dude</a></div>
+
+<section id="home">
+  <h1>Bobby Joe's Spelling Bee</h1>
+  <p class="lede">Bobby Joe reads the word. You spell it out loud. Spell a word right two times in a row and it turns into a gem.</p>
+  <p class="note" id="pts"></p>
+  <p class="note" id="beeDay"></p>
+  <div class="stage"><div class="bjbox" id="bjHome"></div><div class="bubble" id="hello"></div></div>
+
+  <div class="card">
+    <h2>Pick a list</h2>
+    <div class="levels" id="levels"></div>
+    <h2 class="mt">How will you answer?</h2>
+    <div class="seg" id="answerSeg">
+      <button class="pill" data-a="talk">Say it</button>
+      <button class="pill" data-a="type">Type it</button>
+      <button class="pill" data-a="grownup">A grown-up checks</button>
+    </div>
+    <p class="note mt" id="micNote"></p>
+    <div class="modes">
+      <button class="mode first" id="mPractice"><b>Practice</b><span>10 words. Missed words come back for another try.</span></button>
+      <button class="mode" id="mBee"><b>Bee round</b><span>Keep going until one miss. <em id="bestN"></em></span></button>
+      <button class="mode" id="mTricky"><b>Tricky words</b><span id="trickyN"></span></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row between"><h2 style="margin:0">Word collection</h2><input id="search" type="search" placeholder="Find a word" aria-label="Find a word" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+    <div class="row left mt" id="filters">
+      <button class="pill on" data-f="all">All</button>
+      <button class="pill" data-f="got">Gems</button>
+      <button class="pill" data-f="tr">Tricky</button>
+      <button class="pill" data-f="new">Not yet</button>
+    </div>
+    <p class="note mt">Tap any word to study it: hear it, see what it means, and where it comes from.</p>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>Settings</h2>
+    <div class="set"><span>Read the meaning with each word</span><button class="sw" role="switch" data-s="autoDef" aria-label="Read the meaning with each word"></button></div>
+    <div class="set"><span>Read a sentence too</span><button class="sw" role="switch" data-s="autoSen" aria-label="Read a sentence too"></button></div>
+    <div class="set"><span>Start listening by itself after the word</span><button class="sw" role="switch" data-s="autoListen" aria-label="Start listening by itself"></button></div>
+    <div class="set"><span>Check my spelling as soon as I stop talking</span><button class="sw" role="switch" data-s="autoCheck" aria-label="Check as soon as I stop talking"></button></div>
+    <div class="set" id="claudeSet" hidden><span>Let Bobby Joe use Claude for questions, hints and memory tricks</span><button class="sw" role="switch" data-s="claude" aria-label="Let Bobby Joe use Claude"></button></div>
+    <div class="set"><span>Voice speed</span><span class="seg" id="rateSeg"><button class="pill" data-r="0.8">Slow</button><button class="pill" data-r="1">Normal</button></span></div>
+    <div class="set"><span class="note" id="saveNote"></span><button class="pill" id="reset">Reset progress</button></div>
+  </div>
+  <p class="note center" id="aiNote" hidden>Bobby Joe’s answers, hints and memory tricks come from Claude, an AI made by Anthropic. Grown-ups can read every question in the spelling log.</p>
+  <p class="note center">Words from the Scripps 2026 to 2027 School Spelling Bee Study List. For official pronunciations, try the Word Club app.</p>
+</section>
+
+<section id="play" hidden>
+  <div class="playbar">
+    <span class="count" id="count"></span>
+    <span class="row"><span class="chip" id="lvChip"></span><button class="pill" id="quit">Stop</button></span>
+  </div>
+  <div class="stage"><div class="bjbox" id="bjPlay"></div><div class="bubble" id="bubble" aria-live="polite"></div></div>
+  <div class="card">
+    <div class="asks" id="asks">
+      <button class="ask" data-ask="rep">Say it again</button>
+      <button class="ask" data-ask="def">Definition</button>
+      <button class="ask" data-ask="sen">Sentence</button>
+      <button class="ask" data-ask="pos">Part of speech</button>
+      <button class="ask" data-ask="ori">Origin</button>
+      <button class="ask bjask" data-ask="bj" id="askBJ" hidden>Ask Bobby Joe</button>
+    </div>
+    <div class="info" id="info" hidden></div>
+    <div class="askrow" id="askRow" hidden>
+      <input id="askIn" maxlength="200" placeholder="Ask Bobby Joe about your word" autocomplete="off" aria-label="Ask Bobby Joe a question">
+      <button class="go" id="askGo">Ask</button>
+      <p class="note">Bobby Joe is an AI helper. You can also just ask out loud when the microphone is on.</p>
+    </div>
+
+    <div id="talkArea">
+      <div class="tiles" id="tiles"></div>
+      <div id="micWrap">
+        <button class="mic" id="mic" aria-label="Tap and spell"><svg id="micIcon"><use href="#i-mic"/></svg></button>
+        <p class="micLabel" id="micLabel">Tap and spell</p>
+      </div>
+      <div class="row mt" id="heardBtns" hidden>
+        <button class="go" id="checkHeard">Check it</button>
+        <button class="go alt" id="more">Keep going</button>
+        <button class="go alt" id="redo">Start over</button>
+        <button class="go alt" id="fix">Fix a letter</button>
+      </div>
+    </div>
+
+    <div id="typeArea" hidden>
+      <p class="note center mt" id="typeHint"></p>
+      <input id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="Spell the word">
+      <div class="row mt"><button class="go" id="checkTyped">Check it</button></div>
+    </div>
+
+    <div id="grownArea" hidden>
+      <p class="note center mt">Spell it out loud. Then a grown-up taps Show the word.</p>
+      <div class="reveal" id="reveal" hidden></div>
+      <div class="row mt">
+        <button class="go" id="showW">Show the word</button>
+        <button class="go" id="gotIt" hidden>Got it</button>
+        <button class="go alt" id="missIt" hidden>Missed it</button>
+      </div>
+    </div>
+
+    <div class="fb" id="fb" hidden></div>
+    <div class="row mt" id="nextRow" hidden><button class="go" id="next">Next word</button></div>
+    <div class="row mt" id="skipRow"><button class="pill" id="skip">Skip this word</button></div>
+  </div>
+</section>
+
+<section id="done" hidden>
+  <div class="stage"><div class="bjbox" id="bjDone"></div><div class="bubble" id="doneBubble"></div></div>
+  <div class="card">
+    <h1 id="dTitle"></h1>
+    <p class="note mt" id="dSub" style="font-size:17px"></p>
+    <p class="note mt" id="dPts"></p>
+    <div id="dGems"></div>
+    <div class="res" id="dList"></div>
+    <div class="row">
+      <button class="go" id="again">Play again</button>
+      <button class="go alt" id="home2">Back to the lists</button>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="ov" id="ov" hidden><div class="ovCard" id="ovCard" role="dialog" aria-modal="true" aria-label="Study a word"></div></div>
+
+</body>
+</html>

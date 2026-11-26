@@ -25,7 +25,7 @@ export const rewardLabel = cfg => (cfg.perPoint > 0 ? money(cfg.every * cfg.perP
 // The points that count for book money and screen time: her school total above the starting
 // line once a grown-up has typed it in, otherwise the quiz results entered in this app; plus Book Dude's own tests.
 export function rewardPoints() {
-  return C.rewardPoints(C.metrics(BOOKS, state.records, '').earned, state.settings.reward, C.examPoints(state.records) + C.homePoints(state.records));
+  return C.rewardPoints(C.metrics(BOOKS, state.records, '').earned, state.settings.reward, C.examPoints(state.records) + C.homePoints(state.records) + C.spellPoints(state.settings.spelling).total);
 }
 
 // Screen time: what she has earned, and the extra a book earns when she finishes it (0 for books she added).

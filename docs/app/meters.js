@@ -118,6 +118,34 @@ function mapleCard(lvl, gaugeSvg, points, goal, squeaks) {
     '<p class="meter-bonus">' + esc(SQUEAKS[Math.min(squeaks, SQUEAKS.length - 1)] + (squeaks > 5 ? ' (' + squeaks + ' squeaks!)' : '')) + '</p></div>';
 }
 
+// Bobby Joe's Spell-o-Meter: her Spelling Bee gems on each list, her rank, her spelling points and the next one, and
+// the days to the school spelling bee. When she has earned a point since she last looked, Bobby Joe does his stomp.
+const BEE_DAY = '2027-01-10';
+const RANKS = [[0, 'Egg', 'Bobby Joe is still in his shell. Spell a word twice to crack it.'], [10, 'Hatchling', 'Peep! Bobby Joe has hatched and is already stomping typos.'],
+  [50, 'Fledgling', 'Bobby Joe is flapping. Not flying yet. Lots of flapping.'], [125, 'Typo Stomper', 'No typo is safe. Bobby Joe has stomped them all flat.'],
+  [225, 'Word Wrangler', 'Bobby Joe lassos long words and makes them behave.'], [350, 'Spelling Hawk', 'Bobby Joe can spot a missing letter from a mile up.'],
+  [450, 'Spelling Bee Champion', 'Every word on the list. Bobby Joe is doing his victory stomp, and he may never stop.']];
+const SEEN_KEY = 'book-dude:spell-points-seen';
+function bobbyCard() {
+  const r = C.spellPoints(state.settings.spelling), L = r.levels, lvs = Object.keys(L);
+  const gems = lvs.reduce((s, k) => s + r.gems[k], 0), rank = RANKS.reduce((got, x) => (gems >= x[0] ? x : got), RANKS[0]);
+  const lv = lvs.find(k => r.gems[k] < L[k].size);
+  let seen = 0;
+  try { seen = Number(localStorage.getItem(SEEN_KEY)) || 0; localStorage.setItem(SEEN_KEY, String(r.total)); } catch (e) { /* no stomp, then */ }
+  const stomp = r.total > seen && !reducedMotion();
+  const art = window.BookPets && window.BookPets.art && window.BookPets.art.bobby;
+  const days = Math.round((Date.parse(BEE_DAY + 'T12:00:00Z') - Date.parse(today() + 'T12:00:00Z')) / 864e5);
+  const bar = k => '<li class="spell-' + k + '"><span>' + esc(L[k].name) + '</span><span class="bar"><i data-w="' + (r.gems[k] / L[k].size * 100).toFixed(1) + '"></i></span><b>' + r.gems[k] + '/' + L[k].size + '</b></li>';
+  return '<div class="meter bobby"><h3>Bobby Joe’s Spell-o-Meter</h3>' +
+    '<div class="bobby-art' + (stomp ? ' stomp' : '') + '">' + (art || '') + '</div>' +
+    '<p class="meter-level">' + esc(rank[1]) + '</p><p class="meter-line">' + esc(rank[2]) + '</p>' +
+    '<ul class="spell-bars">' + lvs.map(bar).join('') + '</ul>' +
+    '<p class="meter-num"><b>' + fmtNum(r.total) + '</b> spelling ' + (r.total === 1 ? 'point' : 'points') + '</p>' +
+    '<p class="meter-bonus">' + (lv ? esc(r.next[lv] + ' more ' + (r.next[lv] === 1 ? 'gem' : 'gems') + ' on ' + L[lv].name + ' for ' + L[lv].rate + ' more ' + (L[lv].rate === 1 ? 'point' : 'points') + '. Finishing it is worth ' + L[lv].bonus + ' more.') : 'Every list is done!') + '</p>' +
+    (days >= 0 ? '<p class="bee-day">' + (days > 1 ? 'School spelling bee: January 10. <b>' + days + ' days</b> to go.' : days === 1 ? 'The spelling bee is <b>tomorrow</b>!' : '<b>Spelling bee day!</b>') + '</p>' : '') +
+    '<div class="row-actions"><a class="btn small primary" href="games/spelling-bee/">Practice with Bobby Joe</a></div></div>';
+}
+
 export function metersHtml(total) {
   const day = today(), year = C.schoolYear(day), t = C.arTrack(state.settings.arTrack);
   const q = C.quarterOf(day, t), r = C.arReport(state.records, state.settings.arTrack, year), now = r.quarters[q - 1];
@@ -136,7 +164,8 @@ export function metersHtml(total) {
     mapleCard(ml, gauge('maple', pa, ['#9FD3F0', '#9DD08A', '#F2D26A', '#F2A048', '#E2603C'], 'img/dog.jpg', 'Maple’s Zoomies-o-Meter: ' + ml[1],
       ducks(Math.min(8, MAPLE.indexOf(ml) + squeaks))), ar, goal, squeaks) +
     figCard(total) +
-    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass is a squeak of Duck Duck. Every point scoops Fig’s drawer: AR, Library tests and home points.</p></section>';
+    bobbyCard() +
+    '</div><p class="hint">Maple’s meter is AR points this quarter, and every Library test you pass is a squeak of Duck Duck. Every point scoops Fig’s drawer: AR, Library tests, home points and spelling. Every 10 spelling gems earn points: 1 on One Bee, 2 on Two Bee, 3 on Three Bee.</p></section>';
 }
 
 /* The party when she spends 10 points (no sound, tap to skip, about 4 seconds):

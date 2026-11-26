@@ -18,7 +18,7 @@ const pct = (x, of) => (of > 0 ? Math.min(100, x / of * 100) : 0).toFixed(1);
 const NAMES = ['', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'];
 
 export function arHtml() {
-  const day = today(), year = C.schoolYear(day), r = C.arReport(state.records, state.settings.arTrack, year);
+  const day = today(), year = C.schoolYear(day), r = C.arReport(state.records, state.settings.arTrack, year, state.settings.spelling);
   const q = C.quarterOf(day, track()), now = r.quarters[q - 1];
   const left = Math.max(0, r.goal.quarter - now.ar);
   const bar = (x, of, cls) => '<span class="bar' + (cls ? ' ' + cls : '') + '"><i data-w="' + pct(x, of) + '"></i></span>';
@@ -34,7 +34,7 @@ export function arHtml() {
       '<tr' + (x.q === q ? ' class="now"' : '') + '><th>' + NAMES[x.q] + '<span class="hint">' + esc(fmtDay(r.starts[i])) + '</span></th><td>' + n(x.ar) +
       (x.missed ? '<span class="hint">' + n(x.counted) + ' from quizzes here + ' + n(x.missed) + ' from the school’s report</span>' : '') + '</td><td>' + n(x.other) + '</td></tr>').join('') +
     '<tr class="total"><th>Year</th><td>' + n(r.yearAr) + '</td><td>' + n(r.yearOther) + '</td></tr></tbody></table>' +
-    '<p class="hint">AR is points from AR quizzes. Other is Book Dude’s own tests and home points. Both count for book money and screen time.</p>' +
+    '<p class="hint">AR is points from AR quizzes. Other is Book Dude’s own tests, home points and spelling. Both count for book money and screen time.</p>' +
     '<div class="row-actions"><button type="button" class="btn small" data-act="ar-match">Grown-up: match the school’s AR report</button></div></section>';
 }
 

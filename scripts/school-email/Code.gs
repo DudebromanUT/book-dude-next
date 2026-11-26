@@ -825,6 +825,8 @@ function doPost(e) {
   if (!keyOk(e && e.parameter && e.parameter.key)) return json({ error: 'That link is not right.' });
   var r;
   try { r = JSON.parse((e.postData && e.postData.contents) || '{}'); } catch (err) { return json({ error: 'bad' }); }
+  // Bobby Joe's Spelling Bee (Spelling.gs, a second file in this project).
+  if (String(r.action).indexOf('spell-') === 0) return json(typeof spellAction === 'function' ? spellAction(r) : { error: 'no spelling' });
   if (r.action === 'chat') return json(chat(r));
   if (r.action === 'picks') return json(pickBooks(r));
   if (r.action === 'report') return json(saveReport(r));

@@ -3,6 +3,7 @@
  *     const ARCADE = window.BookDudeArcade.open('maple-madness');
  *     ARCADE.player          the first name of whoever is signed in (a reader, or a grown-up playing as themselves),
  *                            or '' on a device that isn't signed in
+ *     ARCADE.kind            'reader', 'grownup' or 'device' (not signed in)
  *     ARCADE.get('records')  something this game saved earlier (null if nothing)
  *     ARCADE.set('records', value)
  * What a game saves is kept on the device, apart for each player and for the device itself. When someone is signed
@@ -58,6 +59,8 @@
       moveIn(game);
       return {
         player: player,
+        // who is playing: 'reader', 'grownup' (playing as themselves), or 'device' (not signed in)
+        kind: who === 'device' ? 'device' : who.indexOf('grownup:') === 0 ? 'grownup' : 'reader',
         get: function (name) { return read(prefix + game + ':' + name); },
         set: function (name, value) { write(prefix + game + ':' + name, value); }
       };

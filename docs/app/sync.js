@@ -18,7 +18,7 @@ import { activeKid, call, refreshMe, account } from './cloud.js';
 import { render } from './tabs.js';
 import { applyAccent } from './more.js';
 import { syncSchool } from './school.js';
-import { mirrorArcade } from './games.js';
+import { mirrorArcade, mirrorSpelling } from './games.js';
 
 const KID = activeKid();
 const PAGE = 500;
@@ -113,7 +113,7 @@ async function push() {
 async function take(rows, last, markFull) {
   const waiting = new Map((await db.outbox()).map(e => [e.key, e.at]));
   const put = { records: [], dropRecords: [], books: [], dropBooks: [], settings: {}, dropOutbox: [], rev: last, fullAt: markFull };
-  let books = false, settings = false, any = false, better = null;
+  let books = false, settings = false, any = false, better = null, betterSpell = null;
   const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   for (const row of rows) {
     const v = C.cloudValue(row);
@@ -125,6 +125,13 @@ async function take(rows, last, markFull) {
       const best = C.arcadeBest(state.settings.arcade, v.value);
       if (!same(best, state.settings.arcade)) { put.settings.arcade = best; settings = any = true; }
       if (!same(best, v.value)) better = best;
+      continue;
+    }
+    // Spelling too: what pays is never lost, so the two copies are put together, and the result goes back up if it has more.
+    if (key === 'setting:spelling') {
+      const both = C.spellMerge(state.settings.spelling, v.value);
+      if (!same(both, C.spelling(state.settings.spelling))) { put.settings.spelling = both; settings = any = true; }
+      if (!same(both, C.spelling(v.value))) betterSpell = both;
       continue;
     }
     if (!C.cloudWins(row.client_at, waiting.get(key))) continue;
@@ -149,9 +156,11 @@ async function take(rows, last, markFull) {
     if (put.settings.schoolLink && !quiet) syncSchool(true);
     // Game scores from her other devices: put together with this device's, and handed to the games here.
     if (put.settings.arcade && !quiet) mirrorArcade();
+    if (put.settings.spelling && !quiet) mirrorSpelling();
   }
   if (books) rebuildBooks(state.custom);
   if (better) await saveSetting('arcade', better);
+  if (betterSpell) await saveSetting('spelling', betterSpell);
   return any;
 }
 

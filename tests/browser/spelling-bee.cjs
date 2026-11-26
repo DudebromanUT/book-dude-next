@@ -1,0 +1,171 @@
+/* Bobby Joe's Spelling Bee: the Games tab opens it, she spells (typing here), words become gems, and gems become
+ * points in Book Dude, counted by list (core.js spellPoints) and shown on the Progress tab's Spell-o-Meter and in
+ * "Where your points came from". Bobby Joe's Claude help goes through the school script, played by the test.
+ * The clock is fixed at November 26, 2026.
+ *
+ *   Run:  node tests/browser/spelling-bee.cjs
+ *
+ * Needs Playwright 1.56.1 and its Chromium, like clickthrough.cjs. */
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+const assert = require('assert');
+const { chromium, devices } = require('playwright');
+
+const DOCS = path.join(__dirname, '..', '..', 'docs');
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
+  '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2' };
+function serve() {
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const rel = decodeURIComponent(url.pathname).replace(/^\/book-dude-next\//, '');
+    const file = path.join(DOCS, rel === '' || rel.endsWith('/') ? rel + 'index.html' : rel);
+    if (!url.pathname.startsWith('/book-dude-next/') || !file.startsWith(DOCS + path.sep)) { res.writeHead(404); res.end(); return; }
+    if (rel === 'history.json') { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"app":"reading-room","version":1,"records":[]}'); return; }
+    fs.readFile(file, (err, data) => {
+      if (err) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': (TYPES[path.extname(file)] || 'application/octet-stream'), 'Cache-Control': 'no-cache' });
+      res.end(data);
+    });
+  });
+  return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server)));
+}
+const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+
+(async () => {
+  const server = await serve();
+  const ORIGIN = 'http://127.0.0.1:' + server.address().port;
+  const BASE = ORIGIN + '/book-dude-next/';
+  const LINK = 'https://script.google.com/macros/s/TEST-script/exec?key=abc123';
+  const browser = await chromium.launch();
+  const errors = [], outside = [], calls = [];
+  const SHOTS = process.env.SHOTS;
+  try {
+    const ctx = await browser.newContext({ ...devices['iPhone 13'], timezoneId: 'America/Denver', serviceWorkers: 'block' });
+    // No device voice in the test: Bobby Joe's lines are shown without being spoken.
+    await ctx.addInitScript(() => { try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ } });
+    // Book Dude's school script, played by the test.
+    await ctx.route('https://script.google.com/**', async route => {
+      const req = JSON.parse(route.request().postData() || '{}');
+      calls.push(req);
+      const result = req.action === 'spell-ask' ? 'Your word is ' + req.arg.word + ', and it is a fun one.' : req.action === 'spell-trick' ? 'Remember: ' + req.arg.word.toUpperCase() + ' has a hidden word.' : true;
+      await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ result }) });
+    });
+    const p = await ctx.newPage();
+    await p.clock.setFixedTime(new Date('2026-11-26T12:00:00-07:00'));
+    p.on('pageerror', e => errors.push(e.message));
+    p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+    p.on('request', r => { if (!r.url().startsWith(ORIGIN) && !r.url().startsWith(LINK.split('?')[0]) && !r.url().startsWith('data:')) outside.push(r.url()); });
+
+    await p.goto(BASE);
+    await p.waitForSelector('#sheet[open] .story');
+    await p.click('.story .btn[data-act="close-sheet"]');
+    // The school link is set (a grown-up pasted it), and she already has 140 of the 150 One Bee words as gems.
+    const ONE = (() => { const w = {}; new Function('window', fs.readFileSync(path.join(DOCS, 'games/spelling-bee/words.js'), 'utf8'))(w); return w.SPELL_DATA.one.map(e => e[0].split('|')[0]); })();
+    assert.equal(ONE.length, 150);
+    await p.evaluate(async ([link, words]) => {
+      const st = await import('/book-dude-next/app/state.js');
+      await st.saveSetting('schoolLink', link);
+      const earned = {}, prog = {};
+      words.slice(0, 140).forEach(w => { earned[w] = { lv: 'one', d: '2026-11-20', cb: 0 }; prog[w] = [2, 1, 0]; });
+      prog[words[140]] = [0, 0, 1];   // missed once before: its gem will be a comeback
+      await st.saveSetting('spelling', window.ReadingCore.spelling({ p: prog, earned, t: 1, set: { answer: 'type' } }));
+      await (await import('/book-dude-next/app/games.js')).mirrorSpelling();
+    }, [LINK, ONE]);
+    const pointsBefore = await p.evaluate(async () => (await import('/book-dude-next/app/money.js')).rewardPoints());
+    assert.equal(pointsBefore, 14, '140 One Bee gems are 14 points');
+
+    // The Games tab has the Spelling Bee.
+    await p.$eval('.tab[data-tab="games"]', e => e.click());
+    await p.waitForSelector('.game-card');
+    assert.match(clean(await p.textContent('#main')), /Bobby Joe’s Spelling Bee\s*Practice for the school spelling bee with Bobby Joe\./);
+    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card', els => els.find(e => /Spelling Bee/.test(e.textContent)).querySelector('a.btn').click())]);
+    await p.waitForSelector('#home:not([hidden]) #levels .lv');
+    assert.ok(p.url().endsWith('/book-dude-next/games/spelling-bee/'));
+    assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('600 20px Fredoka'))), true, 'its fonts ship with the app');
+    const home = clean(await p.innerText('#home'));
+    assert.match(home, /Spelling points so far: 14\. 10 more gems on One Bee for 1 more point\./);
+    assert.match(home, /School spelling bee: January 10\. 45 days to go!/);
+    assert.match(home, /One Bee\s*140 of 150 gems/);
+    assert.equal(await p.getAttribute('#back', 'href'), '../../#games');
+    assert.equal(await p.isVisible('#askBJ'), false);
+
+    // A practice round, typing: the ten words without gems come up.
+    const round = async (onWord) => {
+      await p.click('#mPractice');
+      await p.waitForSelector('#play:not([hidden])');
+      for (let i = 0; i < 40 && await p.isVisible('#play'); i++) {
+        const w = await p.evaluate(() => window.__bee.cur().w);
+        if (onWord) await onWord(w, i);
+        if (!(await p.isVisible('#nextRow'))) { await p.fill('#ans', w); await p.click('#checkTyped'); }
+        await p.waitForSelector('#nextRow:not([hidden])');
+        await p.click('#next');
+        await p.waitForTimeout(50);
+      }
+      await p.waitForSelector('#done:not([hidden])');
+    };
+    let asked = false, missed = '';
+    await round(async (w, i) => {
+      if (i === 0) {
+        // Ask Bobby Joe: the answer comes through the school script, and never shows the word before she spells it.
+        assert.ok(ONE.slice(140).includes(w), 'only words without gems: ' + w);
+        await p.click('#askBJ');
+        await p.fill('#askIn', 'What does it mean?');
+        await p.click('#askGo');
+        await p.waitForFunction(() => /Bobby Joe:/.test(document.getElementById('info').textContent));
+        const said = clean(await p.textContent('#info'));
+        assert.match(said, /Bobby Joe: Your word is your word, and it is a fun one\./, 'masked: ' + said);
+        asked = true;
+        // A miss: Bobby Joe's memory trick, and the word comes back later in the round.
+        missed = w;
+        await p.fill('#ans', 'zzz'); await p.click('#checkTyped');
+        await p.waitForFunction(() => /Bobby Joe.s trick:/.test(document.body.textContent), null, { timeout: 5000 });
+      }
+    });
+    assert.ok(asked);
+    assert.deepEqual(calls.filter(c => c.action !== 'spell-log').map(c => c.action), ['spell-ask', 'spell-trick']);
+    assert.equal(calls.find(c => c.action === 'spell-ask').arg.answered, false);
+    assert.match(clean(await p.innerText('#done')), /more gems to the next point|spelling point/);
+    // A second round: every one becomes a gem, which finishes One Bee.
+    await p.click('#home2');
+    await round();
+    const done = clean(await p.innerText('#done'));
+    assert.match(done, /\+6 spelling points! They’re waiting on the Progress tab\./, done);
+    const snap = await p.evaluate(() => window.__bee.EARNED());
+    assert.equal(Object.keys(snap).length, 150);
+    assert.equal(snap[ONE[140]].cb, 1, 'a word she had missed before is a comeback gem');
+    assert.equal(snap[missed].cb, 1, 'and so is the one she missed today');
+    assert.ok(calls.some(c => c.action === 'spell-log' && Array.isArray(c.arg) && c.arg.length), 'her answers go to the Spelling log');
+    if (SHOTS) { await p.click('#home2'); await p.waitForSelector('#home:not([hidden])'); await p.screenshot({ path: path.join(SHOTS, 'spell-home.png') }); }
+    else await p.click('#home2');
+
+    // Back in Book Dude: the gems are hers, and the points count.
+    await Promise.all([p.waitForNavigation(), p.click('#back')]);
+    await p.waitForSelector('.game-card');
+    await p.waitForFunction(() => /Spelling Bee: /.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+    const after = await p.evaluate(async () => (await import('/book-dude-next/app/money.js')).rewardPoints());
+    assert.equal(after, 20, '150 gems (one a comeback) = 15, plus 5 for finishing One Bee');
+    const sp = await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.spelling);
+    assert.equal(Object.keys(sp.earned).length, 150);
+    await p.$eval('.tab[data-tab="progress"]', e => e.click());
+    await p.waitForSelector('#pet-meters .bobby');
+    const meter = clean(await p.innerText('#pet-meters .bobby'));
+    assert.match(meter, /^Bobby Joe’s Spell-o-Meter Typo Stomper .* One Bee 150\/150 Two Bee 0\/150 Three Bee 0\/150 20 spelling points 10 more gems on Two Bee for 2 more points\. Finishing it is worth 10 more\. School spelling bee: January 10\. 45 days to go\. Practice with Bobby Joe$/);
+    assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 1, 'Bobby Joe stomps for new points');
+    const ledger = clean(await p.innerText('#ledger'));
+    assert.match(ledger, /Spelling Bee 20 points Nov 26, 2026 Finished One Bee \+5 Nov 26, 2026 One Bee gems \+1 Nov 20, 2026 One Bee gems \+14 How your points/);
+    assert.match(ledger, /\+ spelling: 20 = 20 points/);
+    if (SHOTS) { await p.$eval('#pet-meters .bobby', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(SHOTS, 'spell-meter.png') }); }
+    // Looking again: no stomp until there's a new point.
+    await p.$eval('.tab[data-tab="explore"]', e => e.click()); await p.$eval('.tab[data-tab="progress"]', e => e.click());
+    await p.waitForSelector('#pet-meters .bobby');
+    assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 0);
+
+    assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
+    assert.deepStrictEqual(errors, []);
+    console.log('Bobby Joe’s Spelling Bee is on the Games tab: gems turn into points that reach the app, Bobby Joe’s Claude help goes through the school script with its key, and the Spell-o-Meter counts down to the bee.');
+  } finally {
+    await browser.close();
+    server.close();
+  }
+})().catch(e => { console.error('FAILED', e.message.split('\n').slice(0, 6).join(' '), (e.stack.match(/spelling-bee.cjs:\d+/) || [''])[0]); process.exit(1); });

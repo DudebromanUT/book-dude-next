@@ -291,3 +291,33 @@ test('piano practice: 90 minutes a week (Monday to Sunday) unlock cashing in; it
   assert.deepEqual([[5, 14], [5, 15], [6, 9], [0, 22], [1, 10], [4, 20]].map(([d, h]) => C.cashWindow(d, h)), [false, true, true, true, false, false]);
   assert.ok(C.SYNCED_SETTINGS.includes('piano'), 'it travels with her account');
 });
+
+test('spelling: gems pay by list, each word once; comebacks count twice; list and streak bonuses', () => {
+  const earned = {};
+  for (let i = 0; i < 10; i++) earned['one' + i] = { lv: 'one', d: '2026-11-2' + (i < 5 ? 0 : 1), cb: 0 };
+  for (let i = 0; i < 4; i++) earned['three' + i] = { lv: 'three', d: '2026-11-22', cb: 1 };
+  earned.bad = { lv: 'four', d: '2026-11-22' };
+  const sp = { earned, streaks: { 10: '2026-11-21', 25: 'nope' } };
+  const r = C.spellPoints(sp);
+  assert.deepEqual(r.entries.map(e => [e.id, e.date, e.points]), [['One Bee gems', '2026-11-21', 1], ['10 in a row', '2026-11-21', 1]]);
+  assert.equal(r.total, 2);
+  assert.deepEqual([r.gems.one, r.gems.three, r.next.one, r.next.three], [10, 4, 10, 2], '4 comeback gems are 8 of the next 10');
+  earned.three4 = { lv: 'three', d: '2026-11-23', cb: 0 }; earned.three5 = { lv: 'three', d: '2026-11-23', cb: 0 };
+  assert.equal(C.spellPoints({ earned }).entries.find(e => e.id === 'Three Bee gems').points, 3, 'Three Bee pays 3 a ten');
+  // Finishing a list.
+  const all = {};
+  for (let i = 0; i < 150; i++) all['two' + i] = { lv: 'two', d: '2026-12-01', cb: 0 };
+  const f = C.spellPoints({ earned: all });
+  assert.equal(f.total, 15 * 2 + 10);
+  assert.ok(f.entries.some(e => e.id === 'Finished Two Bee' && e.points === 10));
+  // Merging keeps every paid word (earliest copy) and the newer game state.
+  const m = C.spellMerge({ t: 5, p: { cat: [1, 0, 0] }, earned: { dog: { lv: 'one', d: '2026-11-20' } }, streaks: { 10: '2026-11-25' } },
+    { t: 9, p: { cat: [2, 1, 0] }, earned: { dog: { lv: 'one', d: '2026-11-19' }, cat: { lv: 'one', d: '2026-11-22' } }, streaks: { 10: '2026-11-24' } });
+  assert.deepEqual([m.t, m.p.cat, m.earned.dog.d, Object.keys(m.earned).length, m.streaks[10]], [9, [2, 1, 0], '2026-11-19', 2, '2026-11-24']);
+  // They show up in the ledger and as "other" points, never AR.
+  const led = C.ledger({}, { earned });
+  assert.ok(led.every(e => e.kind === 'spell' && e.year === '2026-27'));
+  const rep = C.arReport({}, {}, '2026-27', { earned });
+  assert.deepEqual([rep.yearAr, rep.yearOther], [0, 4]);
+  assert.ok(C.SYNCED_SETTINGS.includes('spelling'));
+});
