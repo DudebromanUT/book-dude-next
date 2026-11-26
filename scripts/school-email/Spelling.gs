@@ -101,6 +101,7 @@ var SPELL_LETTERS_SYSTEM =
   'oh, owe or zero is O; pea or pee is P; queue or cue is Q; are or our is R; es or ess is S; tea or tee is T; you or ewe is U; ' +
   'vee is V; double you is W; ex is X; why or wye is Y; zee or zed is Z.\n' +
   '3. "Double" before a letter means that letter twice, except "double you", which is W.\n' +
+  '3b. A letter said twice in a row ("and and", "el el", "ess ess") is that letter twice. Never merge repeated letters: every letter she says counts.\n' +
   '4. If she takes something back ("no wait", "I mean", "actually", "oops"), drop what she took back and keep the correction.\n' +
   '5. If she clarifies a letter with a word ("B as in boy", "D like dog"), keep the letter and ignore the example word.\n' +
   '6. Ignore filler words, the whole word if she says it (shown as [word]), and anything else that is not a letter.\n' +
