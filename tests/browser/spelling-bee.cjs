@@ -183,94 +183,31 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#pet-meters .bobby');
     assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 0);
 
-    // On an iPad, listening may only start right after a tap. A fake microphone that refuses anything else, like iPadOS:
-    // the page never tries on its own, a pause doesn't break it, and it keeps working word after word.
+    // On an iPad, "Say it" uses the keyboard's microphone (iOS can give the page's own listening only silence), and the
+    // letter names dictation types out ("see are you em") count as letters.
     const ipad = await browser.newContext({ ...devices['iPad (gen 7)'], timezoneId: 'America/Denver', serviceWorkers: 'block' });
-    await ipad.addInitScript(() => {
-      try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ }
-      window.__srLog = []; window.__gesture = false;
-      addEventListener('click', () => { window.__gesture = true; setTimeout(() => { window.__gesture = false; }, 0); }, true);
-      window.__srMade = 0; window.__micAsk = 0; window.__micStop = 0;
-      Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia: async () => { window.__micAsk++; return { active: true, getTracks: () => [{ stop: () => { window.__micStop++; } }] }; } } });
-      window.__srMade = 0;
-      class FakeSR {
-        constructor() { window.__srMade++; }
-        start() {
-          if (window.__mute && window.__gesture) { window.__srLog.push('start'); setTimeout(() => { if (this.onstart) this.onstart(); if (this.onaudiostart) this.onaudiostart(); if (this.onsoundstart) this.onsoundstart(); setTimeout(() => this.onend && this.onend(), 60); }, 20); return; }
-          if (!window.__gesture) { window.__srLog.push('refused'); setTimeout(() => this.onerror && this.onerror({ error: 'not-allowed' }), 10); return; }
-          window.__srLog.push('start');
-          this.live = true;
-          const say = () => { const r = [{ transcript: window.__say || '' }]; r.isFinal = true; if (this.onresult) this.onresult({ results: [r] }); };
-          if (window.__finalOnly) { setTimeout(() => { if (this.onstart) this.onstart(); if (this.onspeechstart) this.onspeechstart(); }, 20); this.flush = say; return; }
-          setTimeout(() => { if (this.onstart) this.onstart(); say(); setTimeout(() => this.onend && this.onend(), 30); }, 20);
-        }
-        stop() { if (this.live && this.flush) { const f = this.flush; this.flush = null; setTimeout(() => { f(); setTimeout(() => this.onend && this.onend(), 20); }, 40); } this.live = false; }
-        abort() { this.live = false; }
-      }
-      window.SpeechRecognition = FakeSR; window.webkitSpeechRecognition = FakeSR;
-    });
+    await ipad.addInitScript(() => { try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ } });
     const q = await ipad.newPage();
     q.on('pageerror', e => errors.push(e.message));
     await q.goto(BASE + 'games/spelling-bee/');
     await q.waitForSelector('#home:not([hidden]) #levels .lv');
     await q.click('#answerSeg [data-a="talk"]');
-    assert.match(clean(await q.textContent('#micNote')), /^Tap the microphone for each word/);
+    assert.match(clean(await q.textContent('#micNote')), /^On iPhone and iPad, BB uses the keyboard’s microphone/);
     await q.click('#mPractice');
     await q.waitForSelector('#play:not([hidden])');
-    const letters = w => [...w].map(c => (c === ' ' ? 'space' : c === '-' ? 'hyphen' : c.toUpperCase())).join(' ');
+    const names = { a: 'ay', b: 'bee', c: 'see', d: 'dee', e: 'ee', f: 'ef', g: 'gee', h: 'aitch', i: 'eye', j: 'jay', k: 'kay', l: 'el', m: 'em', n: 'en', o: 'oh', p: 'pee', q: 'cue', r: 'are', s: 'es', t: 'tee', u: 'you', v: 'vee', w: 'double you', x: 'ex', y: 'why', z: 'zee' };
     for (let n = 0; n < 3; n++) {
-      await q.waitForFunction(() => /Tap the microphone/.test(document.getElementById('bubble').textContent));
+      await q.waitForSelector('#typeArea:not([hidden])');
+      assert.equal(await q.isVisible('#micWrap'), false, 'no big microphone on an iPad');
+      assert.match(clean(await q.textContent('#typeHint')), /tap the microphone on the keyboard and say the letters/);
       const w = await q.evaluate(() => window.__bee.cur().w);
-      if (n === 0) {
-        // She pauses halfway; iOS stops listening. What she said stays, and Keep going (a tap) gets the rest.
-        const half = Math.ceil(w.length / 2);
-        await q.evaluate(t => { window.__say = t; }, letters(w.slice(0, half)));
-        await q.click('#mic');
-        await q.waitForSelector('#heardBtns:not([hidden])');
-        await q.evaluate(t => { window.__say = t; }, letters(w.slice(half)));
-        await q.click('#more');
-      } else if (n === 2) {
-        // Like iOS at its stingiest: nothing comes through while she spells, everything arrives when it stops.
-        await q.evaluate(t => { window.__say = t; window.__finalOnly = true; }, letters(w));
-        await q.click('#mic');
-        await q.waitForFunction(() => /I can hear you\. Keep spelling!/.test(document.getElementById('bubble').textContent));
-        await q.click('#mic');   // she taps the red square when she's done
-        await q.evaluate(() => { window.__finalOnly = false; });
-      } else {
-        await q.evaluate(t => { window.__say = t; }, letters(w));
-        await q.click('#mic');
-      }
-      await q.waitForSelector('#heardBtns:not([hidden])');
-      assert.equal(clean(await q.textContent('#tiles')).replace(/\s|–/g, '').toLowerCase(), w.replace(/[\s-]/g, '').toLowerCase());
-      await q.click('#checkHeard');
+      const said = [...w.toLowerCase()].map(c => names[c] || (c === ' ' ? 'space' : c === '-' ? 'hyphen' : c)).join(' ');
+      await q.fill('#ans', said.charAt(0).toUpperCase() + said.slice(1) + '.');
+      await q.click('#checkTyped');
       await q.waitForSelector('#nextRow:not([hidden])');
-      assert.match(clean(await q.textContent('#fb')), /^(Correct!|That’s right!|Nailed it!|You got it!|Perfect spelling!)/);
+      assert.match(clean(await q.textContent('#fb')), /^(Correct!|That’s right!|Nailed it!|You got it!|Perfect spelling!)/, w + ' from "' + said + '"');
       await q.click('#next');
     }
-    // The microphone was opened once for the round, and is still held.
-    assert.deepEqual(await q.evaluate(() => [window.__micAsk, window.__micStop]), [1, 0], 'one open microphone for the whole round');
-    const log = await q.evaluate(() => window.__srLog);
-    assert.ok(log.length >= 4 && log.every(x => x === 'start'), 'every start came from a tap: ' + log);
-    assert.equal(await q.isVisible('#mic'), true, 'the microphone is still on after three words');
-    // One listener for the whole visit on an iPad.
-    assert.equal(await q.evaluate(() => window.__srMade), 1, 'the same listener, word after word');
-    // If iOS sends no words, BB says what it did get, and after two quiet tries switches her to the keyboard microphone.
-    await q.waitForFunction(() => /Tap the microphone/.test(document.getElementById('bubble').textContent));
-    await q.evaluate(() => { window.__mute = true; });
-    await q.click('#mic');
-    await q.waitForFunction(() => /BB check: hold ✓ mic ✓ sound ✓ voice ✗ words 0/.test(document.getElementById('bubble').textContent));
-    await q.click('#mic');
-    await q.waitForFunction(() => /This iPad isn’t sending me your letters\. Let’s use the keyboard/.test(document.getElementById('bubble').textContent));
-    assert.equal(await q.isVisible('#ans'), true, 'the typing box (with the keyboard microphone) is ready');
-    // Dictation types letters as words; they still count as letters.
-    assert.equal(await q.evaluate(() => window.__bee.typedLetters('see are you em pee eye el why')), 'crumpily');
-    assert.equal(await q.evaluate(() => window.__bee.typedLetters('m i s t')), 'mist');
-    assert.equal(await q.evaluate(() => window.__bee.typedLetters('mist')), 'mist');
-    await q.evaluate(() => { window.__mute = false; });
-    // Leaving the round lets the microphone go.
-    await q.click('#quit');
-    await q.waitForSelector('#home:not([hidden])');
-    assert.equal(await q.evaluate(() => window.__micStop), 1, 'the microphone is let go when the round ends');
     await ipad.close();
 
     assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');

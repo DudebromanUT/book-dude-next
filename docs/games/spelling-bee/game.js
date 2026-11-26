@@ -93,17 +93,6 @@ let srBroken=false,autoOK=!IOS,L=null,tapFails=0;
    first. If BB still hears nothing twice in a row there, she switches to the keyboard's microphone, which iOS always lets
    type out the letters she says. */
 let REC=null,emptyRuns=0;
-/* On iPad and iPhone, BB talking switches iOS's audio to "playing", and after the first word it may not switch back:
-   the microphone then records silence. So during a round the page keeps the microphone open (iOS stays in "listen and
-   talk"), and lets it go when the round ends or she leaves. */
-let MIC=null;
-function holdMic(){
-  if(!IOS||MIC||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
-  MIC='asking';
-  navigator.mediaDevices.getUserMedia({audio:true}).then(st=>{if(MIC==='asking')MIC=st;else st.getTracks().forEach(t=>t.stop())}).catch(()=>{MIC=null});
-}
-function dropMic(){if(MIC&&MIC!=='asking')try{MIC.getTracks().forEach(t=>t.stop())}catch(e){}MIC=null}
-const micHeld=()=>!!(MIC&&MIC!=='asking'&&MIC.active!==false);
 const LETTER=new Map();
 Object.entries({a:['a','ay'],b:['b','be','bee','bea','bi'],c:['c','see','sea','cee','si'],d:['d','dee','de'],e:['e','ee'],f:['f','ef','eff'],g:['g','gee','ji','jee','gi'],h:['h','aitch','age','ach','haitch'],i:['i','eye','aye','ai'],j:['j','jay','jae'],k:['k','kay','cay','kaye'],l:['l','el','ell','elle'],m:['m','em'],n:['n','en','and','in'],o:['o','oh','owe','0'],p:['p','pee','pea','pe'],q:['q','queue','cue','cu','kyu','que'],r:['r','are','ar','arr'],s:['s','es','ess'],t:['t','tee','tea','ti','te'],u:['u','you','yu','ewe','yoo'],v:['v','vee','vi','ve'],w:['w','dubya','dub'],x:['x','ex','ecks','eks'],y:['y','why','wye','wie'],z:['z','zee','zed']}).forEach(([k,v])=>v.forEach(s=>LETTER.set(s,k)));
 const FILL=new Set(['um','uh','umm','uhh','hmm','hm','er','erm','okay','like','so','the','please','done','finished','spelled','spell','spelling','word','that','thats','its','it','is','um-hmm','uh-huh']);
@@ -229,7 +218,7 @@ function finishListen(sess,forCommand){
       keyboardFallback('This iPad isn’t sending me your letters. Let’s use the keyboard: tap the box, tap the microphone on the keyboard, and say the letters.');return}
     const e=sess.ev||{},y=v=>v?'✓':'✗';
     bubble((p.sawWord?'I heard the word, but not the letters. Tap the microphone and say each letter with a tiny pause.':'I didn’t hear any letters. Tap the microphone and spell the word.')+
-      (IOS?` (BB check: hold ${y(micHeld())} mic ${y(e.audio)} sound ${y(e.sound)} voice ${y(e.speech)} words ${e.words||0})`:''));
+      (IOS?` (BB check: mic ${y(e.audio)} sound ${y(e.sound)} voice ${y(e.speech)} words ${e.words||0})`:''));
     return;
   }
   if(useClaude()&&p.tokens.some(t=>t.unsure)){readWithClaude(sess.base,full,w,tokens);return}
@@ -333,7 +322,9 @@ function askBB(q,fromVoice){
 
 /* ---------- screens ---------- */
 function show(id){for(const s of['home','play','done'])$(s).hidden=s!==id;window.scrollTo(0,0)}
-const answerMode=()=>SET.answer==='talk'&&(!SR||srBroken)?'keyboard':SET.answer;
+/* On iPhone and iPad, "Say it" uses the keyboard's microphone: after BB talks, iOS can hand the page's own listening
+   nothing but silence, while the keyboard's dictation always works. Computers keep the big microphone button. */
+const answerMode=()=>SET.answer==='talk'&&(!SR||srBroken||IOS)?'keyboard':SET.answer;
 const words=()=>SET.level==='all'?W:W.filter(w=>w.lv===SET.level);
 let filter='all',query='';
 
@@ -342,7 +333,7 @@ function renderMicNote(){
   if(SET.answer==='talk'){
     if(!SR)t='This browser can’t listen, so BB will ask you to use the microphone on the keyboard instead.';
     else if(srBroken)t='Listening isn’t working here. Make sure Dictation is on (Settings, General, Keyboard), or use the microphone on the keyboard.';
-    else t=IOS?'Tap the microphone for each word, then spell it. The first time, tap Allow so BB can hear you.':'The first time, tap Allow so BB can hear you.';
+    else t=IOS?'On iPhone and iPad, BB uses the keyboard’s microphone: tap the box, tap the microphone on the keyboard, and spell out loud.':'The first time, tap Allow so BB can hear you.';
   }else if(SET.answer==='grownup')t='BB reads the word, you spell it out loud, and a grown-up checks.';
   $('micNote').textContent=t;$('micNote').hidden=!t;
 }
@@ -385,7 +376,6 @@ const cur=()=>S.q[S.i];
 function pickSet(pool){const un=shuf(pool.filter(w=>!get(w)[1]));const tricky=un.filter(w=>get(w)[2]),fresh=un.filter(w=>!get(w)[2]);
   let q=[...tricky.slice(0,3),...fresh].slice(0,10);if(q.length<10)q=q.concat(shuf(pool.filter(w=>get(w)[1]&&!q.includes(w))).slice(0,10-q.length));return shuf(q)}
 function start(kind){
-  holdMic();
   unlock();
   const pool=words();let q;
   S0=pointsNow().total;
@@ -519,7 +509,7 @@ function record(w,ok,ans){
 }
 function next(){unlock();if(!S)return;if(S.over){finish();return}S.i++;if(S.i>=S.q.length)finish();else nextWord()}
 function finish(){
-  hush();if(L)stopRec(L);flushLog();dropMic();
+  hush();if(L)stopRec(L);flushLog();
   const right=S.res.filter(r=>r.ok).length;
   if(S.kind==='bee'){
     $('dTitle').textContent=`${S.streak} in a row!`;
@@ -537,7 +527,7 @@ function finish(){
   $('dList').innerHTML=S.res.map(r=>`<div><svg style="color:${r.ok?'var(--good)':'var(--bad)'}" aria-label="${r.ok?'right':'missed'}"><use href="#${r.ok?'i-ok':'i-miss'}"/></svg>${esc(r.w.w)}</div>`).join('');
   show('done');
 }
-function goHome(){hush();if(L)stopRec(L);flushLog();dropMic();S=null;closeCard();renderHome();show('home')}
+function goHome(){hush();if(L)stopRec(L);flushLog();S=null;closeCard();renderHome();show('home')}
 
 /* ---------- study card ---------- */
 function openCard(w){
@@ -568,7 +558,7 @@ $('mPractice').onclick=()=>start('practice');$('mBee').onclick=()=>start('bee');
 $('asks').addEventListener('click',e=>{const b=e.target.closest('[data-ask]');if(!b)return;unlock();if(b.dataset.ask==='bj'){const r=$('askRow');r.hidden=!r.hidden;if(!r.hidden)$('askIn').focus();return}ask(b.dataset.ask,false)});
 $('askGo').onclick=()=>{unlock();const v=$('askIn').value;if(!v.trim())return;$('askIn').value='';askBB(v,false)};
 $('askIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('askGo').click()}});
-$('mic').onclick=()=>{unlock();holdMic();if(IOS&&!L&&synth&&(synth.speaking||synth.pending))try{synth.cancel()}catch(e){}if(L){finishListen(L);return}listen(true,false)};
+$('mic').onclick=()=>{unlock();if(L){finishListen(L);return}listen(true,false)};
 $('more').onclick=()=>listen(true,true);
 $('redo').onclick=()=>{S.heard='';S.heardTokens=[];$('tiles').innerHTML='';listen(true,false)};
 $('fix').onclick=()=>{$('talkArea').hidden=true;$('typeArea').hidden=false;$('typeHint').textContent='Fix any letter BB heard wrong, then tap Check it.';$('ans').value=S.heard.toUpperCase();$('ans').focus();bubble('Fix the letters I heard wrong.')};
@@ -588,10 +578,10 @@ $('quit').onclick=goHome;$('home2').onclick=goHome;
 $('again').onclick=()=>{const k=S&&S.kind==='tricky'&&!words().some(isTricky)?'practice':(S?S.kind:'practice');start(k)};
 $('ov').addEventListener('click',e=>{if(e.target===$('ov'))closeCard()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('ov').hidden)closeCard()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(L)finishListen(L);hush();dropMic()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(L)finishListen(L);hush()}});
 
 CLAUDE=GAS;
-addEventListener('pagehide',()=>{flushLog();dropMic()});
+addEventListener('pagehide',flushLog);
 renderHome();
 window.__bee={showHeard,bestGuess,alikeOf,snapshot,EARNED:()=>EARNED,STREAKS:()=>STREAKS,parseSpelling,commandOf,typedLetters,W,BYW,diff,cur:()=>S&&S.q[S.i],maskTarget,maskAnswer,looksLikeQuestion};
 }
