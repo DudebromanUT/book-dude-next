@@ -123,7 +123,7 @@ function timerUp() {
   }
   if (Date.now() - t.ends > 30 * 60000 || !textsOn()) return;   // long past: say nothing
   sendText('Book Dude: ' + t.name + '\'s screen time is up' + (t.endsText ? ' (' + t.endsText + ')' : '') + '. Time to hand over the remote.' +
-    bankLine(t.bank >= 0 ? t.bank : -1) + '\nFig-o-Clock: ' + figLink({ state: 'running', minutes: t.minutes || 0, ends: t.ends, bank: t.bank >= 0 ? t.bank : -1, name: t.name, page: t.page }));
+    bankLine(t.bank >= 0 ? t.bank : -1) + ' Reply STOP to opt out.\nFig-o-Clock: ' + figLink({ state: 'running', minutes: t.minutes || 0, ends: t.ends, bank: t.bank >= 0 ? t.bank : -1, name: t.name, page: t.page }));
 }
 
 function clearTimerAlarm() {
