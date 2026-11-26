@@ -1,9 +1,9 @@
-/* Bobby Joe's Spelling Bee, the look. Fredoka and Nunito ship with the app (SIL Open Font License; see fonts/README.md). */
+/* Spelling BB, the look. Fredoka and Nunito ship with the app (SIL Open Font License; see fonts/README.md). */
 @font-face { font-family: "Fredoka"; font-weight: 300 700; font-display: swap; src: url(fonts/fredoka.woff2) format("woff2"); }
 @font-face { font-family: "Nunito"; font-weight: 200 1000; font-display: swap; src: url(fonts/nunito.woff2) format("woff2"); }
 /* VOICE: a warm, playful coach for a 10 year old practicing for her school bee
-   IDEA: Bobby Joe, the Book Dude crew's secretary bird, is the pronouncer; his quill crest is the spelling motif
-   PICTURE: Bobby Joe and his speech bubble lead every screen; the practice card with the big mic is the working object
+   IDEA: BB (Birdie Blanky), the Book Dude crew's reading blanket, is the pronouncer
+   PICTURE: BB and a speech bubble lead every screen; the practice card with the big mic is the working object
    COLOUR and TYPE: library green ground, white cards, secretary-bird orange for actions, gem colours per list; Fredoka + Nunito
    LAYOUT: one centered column up to 860px, big touch targets for an iPad, stacks cleanly on a phone */
 :root{--bg:#e4eee7;--panel:#fff;--ink:#12241b;--soft:#4b6556;--line:#d1e1d6;--chip:#edf4ef;--act:#e8571a;--actDk:#b5420f;--gold:#e3a21a;--good:#12925a;--bad:#d03a34;
@@ -39,7 +39,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 .go{background:var(--act);color:#fff;font:600 20px/1 Fredoka,Nunito,sans-serif;padding:15px 24px;border-radius:16px;min-height:54px;box-shadow:0 4px 0 var(--actDk)}
 .go:active{transform:translateY(2px);box-shadow:0 2px 0 var(--actDk)}
 .go.alt{background:var(--chip);color:var(--ink);box-shadow:0 4px 0 var(--line)}
-/* Bobby Joe */
+/* BB */
 .stage{display:flex;align-items:flex-end;gap:10px;margin:14px 0 16px}
 .bjbox{width:118px;flex:none}
 .bj{display:block;width:100%;height:auto;color:var(--act)}
@@ -136,3 +136,9 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 #pts { font-weight: 800; }
 #beeDay { margin-top: 2px; }
 #dPts:empty { display: none; }
+.bj.bb{width:100%;height:auto;transform-origin:50% 100%;-webkit-user-select:none;user-select:none}
+.bj.bb.talk{animation:bb-talk .5s ease-in-out infinite alternate}
+.bj.bb.listen{animation:bb-listen 1s ease-in-out infinite alternate}
+@keyframes bb-talk{from{transform:rotate(-3deg)}to{transform:rotate(3deg) translateY(-2px)}}
+@keyframes bb-listen{from{transform:scale(1)}to{transform:scale(1.04) translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.bj.bb{animation:none!important}}

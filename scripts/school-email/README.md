@@ -125,9 +125,9 @@ fallback); if it is still declined, COBOL gives a gentle answer that points her 
 - **If you change the script later:** go to Deploy → Manage deployments → edit (pencil) → Version: New version →
   Deploy. The link stays the same.
 
-## Bobby Joe's Spelling Bee (optional)
+## Spelling BB (optional)
 
-The Spelling Bee is a game in Book Dude (Games tab). It works without this script; with it, Bobby Joe uses Claude to
+Spelling BB is a game in Book Dude (Games tab). It works without this script; with it, BB uses Claude to
 answer her questions about a word, give memory tricks, and understand messy spelling out loud, and every answer goes
 into a "Spelling log" spreadsheet you can read.
 

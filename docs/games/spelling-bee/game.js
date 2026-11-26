@@ -1,4 +1,4 @@
-/* Bobby Joe's Spelling Bee in Book Dude: practice for the school spelling bee. Bobby Joe reads a word; she spells it
+/* Spelling BB in Book Dude: practice for the school spelling bee with BB, the reading blanket. BB reads a word; she spells it
  * out loud (or types it, or a grown-up checks). Spelling a word right twice in a row makes it a gem, and gems earn
  * points in Book Dude: see core.js spellPoints. The words are in words.js. */
 'use strict';
@@ -27,7 +27,7 @@ const lowerFirst=s=>s.charAt(0).toLowerCase()+s.slice(1);
 const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 /* ---------- saving ---------- */
-/* Bobby Joe's Claude help goes through Book Dude's school-email script, with its key (the app hands the link over).
+/* BB's Claude help goes through Book Dude's school-email script, with its key (the app hands the link over).
    Her progress is kept where Book Dude's games keep things; the app puts it in her family account, and every 10
    gems earn points there (core.js spellPoints). */
 const C=window.ReadingCore;
@@ -59,23 +59,9 @@ let LOG=[];
 function logAttempt(w,ans,ok){if(!GAS)return;LOG.push([new Date().toISOString(),LV_NAME[w.lv],w.w,ans,ok?'right':'missed',S.kind+' / '+answerMode()]);if(LOG.length>=5)flushLog()}
 function flushLog(){if(!GAS||!LOG.length)return;const rows=LOG;LOG=[];post('spell-log',rows,15000).catch(()=>{})}
 
-/* ---------- Bobby Joe ---------- */
-const BJ=`<svg class="bj" viewBox="0 0 140 170" aria-hidden="true">
-<ellipse cx="68" cy="164" rx="38" ry="5" fill="#000" opacity=".12"/>
-<path d="M45 96 L13 151 L24 154 L54 104 Z" fill="#9ba6a3"/><path d="M13 151 L24 154 L21 161 L10 158 Z" fill="#1d201f"/>
-<g fill="none" stroke-linecap="round"><path d="M60 106 L56 128 M79 106 L83 128" stroke="#1d201f" stroke-width="8"/><path d="M56 128 L54 159 M83 128 L87 159" stroke="#e4a083" stroke-width="3.5"/><path d="M54 159 l-9 2 M54 159 l7 1.5 M87 159 l-7 1.5 M87 159 l9 2" stroke="#e4a083" stroke-width="3"/></g>
-<ellipse cx="68" cy="88" rx="31" ry="24" fill="#d6ddda"/>
-<path d="M43 80 Q70 68 97 86 Q88 108 61 109 Q45 104 43 80 Z" fill="#a8b2af"/><path d="M43 91 Q52 111 71 111 L38 118 Z" fill="#1d201f"/>
-<path d="M80 74 Q85 58 85 42" stroke="#d6ddda" stroke-width="16" stroke-linecap="round" fill="none"/>
-<g class="crest" stroke="#1d201f" stroke-width="3" stroke-linecap="round" fill="#1d201f"><path d="M77 27 L57 6"/><path d="M76 30 L49 15"/><path d="M76 33 L46 28"/><path d="M77 37 L51 41"/><circle cx="57" cy="6" r="3.3"/><circle cx="49" cy="15" r="3.3"/><circle cx="46" cy="28" r="3.3"/><circle cx="51" cy="41" r="3.3"/></g>
-<circle cx="86" cy="34" r="14.5" fill="#e2e8e5"/>
-<ellipse cx="92" cy="33" rx="9.5" ry="7.5" fill="#f06a22"/>
-<circle cx="92.5" cy="32" r="3.4" fill="#1d201f"/><circle cx="93.7" cy="30.9" r="1.15" fill="#fff"/>
-<path d="M89 27.4 l-1.6 -3.6 M92.5 26.4 l0 -4.2 M96 27.4 l1.7 -3.5" stroke="#1d201f" stroke-width="1.4" stroke-linecap="round"/>
-<path d="M100 31.5 Q112 31.5 113.5 40 Q108 36 100 37 Z" fill="#6b7782"/>
-<path class="jaw" d="M100 37 Q106 37.5 109.5 40.5 Q104 42 100 39.6 Z" fill="#55606a"/>
-<g class="waves" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M121 25 q6 10 0 20"/><path d="M129 18 q10 17 0 34"/></g>
-</svg>`;
+/* ---------- BB ---------- */
+/* BB (Birdie Blanky), the Book Dude crew's sentient reading blanket, a hand drawing: sways while talking, perks up while listening. */
+const BJ='<img class="bj bb" src="../../img/bb.webp" alt="" width="152" height="210" draggable="false">';
 for(const id of['bjHome','bjPlay','bjDone'])$(id).innerHTML=BJ;
 function setBJ(state){const el=document.querySelector('#bjPlay .bj');if(!el)return;el.classList.toggle('talk',state==='talk');el.classList.toggle('listen',state==='listen')}
 function bubble(t){$('bubble').textContent=t}
@@ -190,7 +176,7 @@ function finishListen(sess,forCommand){
   if(sess.finished)return;stopRec(sess);
   if(forCommand||!S||S.checked)return;
   const w=cur(),full=(sess.acc+' '+sess.cur).trim(),p=parseSpelling(full,w);
-  if(useClaude()&&!sess.base.length&&full&&looksLikeQuestion(full)){askBobby(full,true);return}
+  if(useClaude()&&!sess.base.length&&full&&looksLikeQuestion(full)){askBB(full,true);return}
   const tokens=sess.base.concat(p.tokens);
   if(!tokens.length){
     showTalk('idle');$('tiles').innerHTML='';
@@ -254,7 +240,7 @@ function maskTarget(raw,w){
 }
 function looksLikeQuestion(raw){
   const t=' '+norm(raw).replace(/[^a-z' ]/g,' ').replace(/\s+/g,' ').trim()+' ';
-  const q=/\?/.test(raw)||/^ (what|whats|how|why|does|do|is|are|can|could|where|who|which|when|will|would|should|tell|hey|bobby) /.test(t)||/ (can you|could you|tell me|what does|what is|is it|does it|how do) /.test(t);
+  const q=/\?/.test(raw)||/^ (what|whats|how|why|does|do|is|are|can|could|where|who|which|when|will|would|should|tell|hey|bb|bebe|birdie) /.test(t)||/ (can you|could you|tell me|what does|what is|is it|does it|how do) /.test(t);
   if(!q)return false;
   let letterish=0,other=0;for(const x of tokenize(raw)){const n=norm(x).replace(/'/g,'');if(n.length===1||LETTER.has(n))letterish++;else other++}
   return letterish<=3&&other>=2;
@@ -265,25 +251,25 @@ function maskAnswer(t,w){
     if(Ls.length>=3)s=s.replace(new RegExp('(^|[^'+WB+'])('+Ls.map(reEsc).join('[\\s\\-.,–—]+')+')(?!['+WB+'])','gi'),(m,p)=>p+'(no peeking!)')}
   return s.replace(/\b(an?|the)\s+your word/gi,'your word');
 }
-function askBobby(q,fromVoice){
+function askBB(q,fromVoice){
   if(!S||!useClaude())return;
   q=String(q||'').trim().slice(0,200);if(!q)return;
   const w=cur(),id=++askId,answered=!!S.checked;
   if(L)stopRec(L);hush();
   if(!S.checked&&!$('talkArea').hidden&&!S.heard)showTalk('idle');
-  const info=$('info');info.innerHTML='<b>You asked:</b> '+esc(q)+'<br><span class="note">Bobby Joe is thinking…</span>';info.hidden=false;
+  const info=$('info');info.innerHTML='<b>You asked:</b> '+esc(q)+'<br><span class="note">BB is thinking…</span>';info.hidden=false;
   bubble('Good question! Let me think…');
   gs('spellAsk',[{word:w.w,alts:w.alts,pos:POS_SHOW[w.pos],def:w.def,sen:w.sen,ori:w.ori,question:q,answered}],25000).then(a=>{
     if(id!==askId||!S||cur()!==w)return;
     let txt=String(a||'').trim();if(!txt)throw new Error('empty');
     if(!S.checked)txt=maskAnswer(txt,w);
-    info.innerHTML='<b>You asked:</b> '+esc(q)+'<br><b>Bobby Joe:</b> '+esc(txt);
+    info.innerHTML='<b>You asked:</b> '+esc(q)+'<br><b>BB:</b> '+esc(txt);
     bubble(S.checked?'Here’s what I think.':'There’s a hint. Now you try!');
     return say([txt]).then(ok=>{if(ok&&id===askId&&S&&cur()===w&&!S.checked&&fromVoice&&answerMode()==='talk'&&!S.heard){if(autoOK)listen(false,false);else bubble('Your turn! Tap the microphone and spell the word.')}});
   }).catch(e=>{
     if(id!==askId||!S||cur()!==w)return;
     const m=String(e&&e.message||e);
-    info.innerHTML='<b>You asked:</b> '+esc(q)+'<br>'+(/limit/.test(m)?'Bobby Joe has answered lots of questions today and needs a rest. Try again tomorrow.':'Bobby Joe couldn’t answer just now. Try again in a minute.');
+    info.innerHTML='<b>You asked:</b> '+esc(q)+'<br>'+(/limit/.test(m)?'BB has answered lots of questions today and needs a nap. Try again tomorrow.':'BB couldn’t answer just now. Try again in a minute.');
     bubble('My brain is a little foggy. Let’s keep spelling!');
   });
 }
@@ -297,10 +283,10 @@ let filter='all',query='';
 function renderMicNote(){
   let t='';
   if(SET.answer==='talk'){
-    if(!SR)t='This browser can’t listen, so Bobby Joe will ask you to use the microphone on the keyboard instead.';
+    if(!SR)t='This browser can’t listen, so BB will ask you to use the microphone on the keyboard instead.';
     else if(srBroken)t='Listening isn’t working here. Make sure Dictation is on (Settings, General, Keyboard), or use the microphone on the keyboard.';
-    else t='The first time, tap Allow so Bobby Joe can hear you.';
-  }else if(SET.answer==='grownup')t='Bobby Joe reads the word, you spell it out loud, and a grown-up checks.';
+    else t='The first time, tap Allow so BB can hear you.';
+  }else if(SET.answer==='grownup')t='BB reads the word, you spell it out loud, and a grown-up checks.';
   $('micNote').textContent=t;$('micNote').hidden=!t;
 }
 function pointsNow(){return C.spellPoints({earned:EARNED,streaks:STREAKS})}
@@ -315,7 +301,7 @@ function renderPoints(){
 function renderHome(){
   renderPoints();
   const tot=W.filter(w=>get(w)[1]).length;
-  $('hello').textContent=tot?`You have ${tot} gem${tot>1?'s':''}. Pick a list and let’s spell!`:'Hello! I’m Bobby Joe. I stomp typos. Pick a list and let’s spell!';
+  $('hello').textContent=tot?`You have ${tot} gem${tot>1?'s':''}. Pick a list and let’s spell!`:'Hi, I’m BB! I’m a blanket, and so many stories were read under me that I know a LOT of words. Pick a list and let’s spell!';
   $('levels').innerHTML=['one','two','three','all'].map(k=>{const ws=k==='all'?W:W.filter(w=>w.lv===k);const m=ws.filter(w=>get(w)[1]).length;
     return`<button class="lv${k===SET.level?' on':''}" data-lv="${k}" style="--c:${LV_COL[k]}"><b>${LV_NAME[k]}</b><span class="bar"><i style="width:${(m/ws.length*100).toFixed(1)}%"></i></span><small>${m} of ${ws.length} gems</small></button>`}).join('');
   for(const b of $('answerSeg').children)b.classList.toggle('on',b.dataset.a===SET.answer);
@@ -425,7 +411,7 @@ function diff(word,attempt){
   return shown.map((ch,k)=>lettersOnly(ch)&&!keep.has(k)?`<span class="bad">${esc(ch)}</span>`:(ch===' '?'&nbsp;':esc(ch))).join('');
 }
 const PRAISE=['Correct!','That’s right!','Nailed it!','You got it!','Perfect spelling!'];
-const CHEER=['Bobby Joe does a happy stomp.','Fig opens one eye, impressed.','Maple wags approvingly.','The Dude tips his glasses.'];
+const CHEER=['BB does a happy wiggle.','Fig opens one eye, impressed.','Maple wags approvingly.','The Dude tips his glasses.'];
 function submit(letters,shown,raw){
   if(!S||S.checked)return;
   if(L)stopRec(L);
@@ -439,7 +425,7 @@ function submit(letters,shown,raw){
   if(ok){h+=`<div class="big ok pop">${pick(PRAISE)}</div><p class="note">${pick(CHEER)}</p><div class="spell">${esc(w.w)}</div>`;
     if(newGem)h+=`<div class="gemline pop" style="--c:${LV_COL[w.lv]}"><svg><use href="#gem"/></svg>New gem!</div>`;
     if(w.w.includes('-')&&!/hyphen|dash|-/i.test(raw||''))h+=`<p class="note">At the bee, remember to say “hyphen” where the dashes go.</p>`;}
-  else{h+=`<div class="big no">Not quite</div><p class="note">Bobby Joe stomped on a typo. Here’s how it’s spelled:</p><div class="spell">${diff(w.w,letters)}</div>`;
+  else{h+=`<div class="big no">Not quite</div><p class="note">BB caught a typo. Here’s how it’s spelled:</p><div class="spell">${diff(w.w,letters)}</div>`;
     if(shown)h+=`<p class="note">You spelled: <b>${esc(shown)}</b></p>`;
     if(S.kind!=='bee')h+=`<p class="note">This word will come back for another try.</p>`;}
   if(w.alts.length>1)h+=`<p class="note">${w.alts.map(esc).join(' and ')} are both correct.</p>`;
@@ -450,12 +436,12 @@ function submit(letters,shown,raw){
   bubble(ok?(newGem?'Correct! You won a gem!':'Correct!'):'Not quite. Listen to how it’s spelled.');
   const fbSay=say(ok?[newGem?'Correct! You won a gem!':pick(PRAISE)]:['Not quite. '+spoken(w)+' is spelled: '+spellOut(w.w)]);
   if(!ok&&useClaude()){
-    const box=document.createElement('p');box.className='trick';box.innerHTML='<b>Bobby Joe\u2019s trick:</b> <span class="note">thinking of one\u2026</span>';
+    const box=document.createElement('p');box.className='trick';box.innerHTML='<b>BB\u2019s trick:</b> <span class="note">thinking of one\u2026</span>';
     const learn=$('fb').querySelector('.learn');if(learn)learn.before(box);else $('fb').append(box);
     const ref=S;
     gs('spellTrick',[{word:w.w,attempt:shown||'',def:w.def}],20000).then(t=>{
       if(S!==ref||cur()!==w)return;const txt=String(t||'').trim();if(!txt){box.remove();return}
-      box.innerHTML='<b>Bobby Joe\u2019s trick:</b> '+esc(txt);
+      box.innerHTML='<b>BB\u2019s trick:</b> '+esc(txt);
       fbSay.then(()=>{if(S===ref&&cur()===w&&S.checked&&!saying)say([txt])});
     }).catch(()=>box.remove());
   }
@@ -477,11 +463,11 @@ function finish(){
     $('dTitle').textContent=`${S.streak} in a row!`;
     const miss=S.res.find(r=>!r.ok);
     $('dSub').innerHTML=`Best on ${esc(LV_NAME[SET.level])}: ${BEST[SET.level]||0}.`+(miss?` The word that got you: <b>${esc(miss.w.w)}</b>.`:'');
-    $('doneBubble').textContent=S.streak>=5?'What a streak! I’m doing my happy stomp.':'Good round! Every try makes you stronger.';
+    $('doneBubble').textContent=S.streak>=5?'What a streak! I’m doing my happy wiggle.':'Good round! Every try makes you stronger.';
   }else{
     $('dTitle').textContent=`${right} of ${S.res.length} on the first try`;
     $('dSub').textContent=right===S.res.length?'A perfect round!':'Missed words are waiting in Tricky words.';
-    $('doneBubble').textContent=right===S.res.length?'Perfect! Not a single typo to stomp.':'Nice work! Let’s stomp those typos next time.';
+    $('doneBubble').textContent=right===S.res.length?'Perfect! Not a single wrinkle of a typo.':'Nice work! Let’s smooth out those typos next time.';
   }
   const won=pointsNow().total-S0;
   $('dPts').textContent=ARCADE.kind==='grownup'?'':won>0?`+${won} spelling point${won>1?'s':''}! They’re waiting on the Progress tab.`:`${pointsNow().next[S.q[0]?S.q[0].lv:'one']} more gems to the next point.`;
@@ -518,12 +504,12 @@ for(const b of document.querySelectorAll('[data-r]'))b.addEventListener('click',
 let armed=false;$('reset').addEventListener('click',()=>{if(!armed){armed=true;$('reset').textContent='Tap again to erase all progress';setTimeout(()=>{armed=false;$('reset').textContent='Reset progress'},4000);return}armed=false;P={};BEST={};save();/* the points she earned stay: EARNED and STREAKS are kept */$('reset').textContent='Reset progress';renderHome()});
 $('mPractice').onclick=()=>start('practice');$('mBee').onclick=()=>start('bee');$('mTricky').onclick=()=>start('tricky');
 $('asks').addEventListener('click',e=>{const b=e.target.closest('[data-ask]');if(!b)return;unlock();if(b.dataset.ask==='bj'){const r=$('askRow');r.hidden=!r.hidden;if(!r.hidden)$('askIn').focus();return}ask(b.dataset.ask,false)});
-$('askGo').onclick=()=>{unlock();const v=$('askIn').value;if(!v.trim())return;$('askIn').value='';askBobby(v,false)};
+$('askGo').onclick=()=>{unlock();const v=$('askIn').value;if(!v.trim())return;$('askIn').value='';askBB(v,false)};
 $('askIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('askGo').click()}});
 $('mic').onclick=()=>{unlock();if(L){finishListen(L);return}listen(true,false)};
 $('more').onclick=()=>listen(true,true);
 $('redo').onclick=()=>{S.heard='';S.heardTokens=[];$('tiles').innerHTML='';listen(true,false)};
-$('fix').onclick=()=>{$('talkArea').hidden=true;$('typeArea').hidden=false;$('typeHint').textContent='Fix any letter Bobby Joe heard wrong, then tap Check it.';$('ans').value=S.heard.toUpperCase();$('ans').focus();bubble('Fix the letters I heard wrong.')};
+$('fix').onclick=()=>{$('talkArea').hidden=true;$('typeArea').hidden=false;$('typeHint').textContent='Fix any letter BB heard wrong, then tap Check it.';$('ans').value=S.heard.toUpperCase();$('ans').focus();bubble('Fix the letters I heard wrong.')};
 $('checkHeard').onclick=()=>submit(lettersOnly(S.heard),S.heard.toUpperCase(),S.heard);
 $('checkTyped').onclick=()=>{const v=$('ans').value;if(!v.trim())return;submit(typedLetters(v),v.trim(),v)};
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('checkTyped').click()}});

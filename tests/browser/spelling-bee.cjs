@@ -1,6 +1,6 @@
-/* Bobby Joe's Spelling Bee: the Games tab opens it, she spells (typing here), words become gems, and gems become
+/* Spelling BB: the Games tab opens it, she spells (typing here), words become gems, and gems become
  * points in Book Dude, counted by list (core.js spellPoints) and shown on the Progress tab's Spell-o-Meter and in
- * "Where your points came from". Bobby Joe's Claude help goes through the school script, played by the test.
+ * "Where your points came from". BB's Claude help goes through the school script, played by the test.
  * The clock is fixed at November 26, 2026.
  *
  *   Run:  node tests/browser/spelling-bee.cjs
@@ -42,7 +42,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   const SHOTS = process.env.SHOTS;
   try {
     const ctx = await browser.newContext({ ...devices['iPhone 13'], timezoneId: 'America/Denver', serviceWorkers: 'block' });
-    // No device voice in the test: Bobby Joe's lines are shown without being spoken.
+    // No device voice in the test: BB's lines are shown without being spoken.
     await ctx.addInitScript(() => { try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ } });
     // Book Dude's school script, played by the test.
     await ctx.route('https://script.google.com/**', async route => {
@@ -78,8 +78,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // The Games tab has the Spelling Bee.
     await p.$eval('.tab[data-tab="games"]', e => e.click());
     await p.waitForSelector('.game-card');
-    assert.match(clean(await p.textContent('#main')), /Bobby Joe’s Spelling Bee\s*Practice for the school spelling bee with Bobby Joe\./);
-    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card', els => els.find(e => /Spelling Bee/.test(e.textContent)).querySelector('a.btn').click())]);
+    assert.match(clean(await p.textContent('#main')), /Spelling BB\s*Practice for the school spelling bee with BB, the reading blanket\./);
+    await Promise.all([p.waitForNavigation(), p.$$eval('.game-card', els => els.find(e => /Spelling BB/.test(e.textContent)).querySelector('a.btn').click())]);
     await p.waitForSelector('#home:not([hidden]) #levels .lv');
     assert.ok(p.url().endsWith('/book-dude-next/games/spelling-bee/'));
     assert.equal(await p.evaluate(() => document.fonts.ready.then(() => document.fonts.check('600 20px Fredoka'))), true, 'its fonts ship with the app');
@@ -107,19 +107,19 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     let asked = false, missed = '';
     await round(async (w, i) => {
       if (i === 0) {
-        // Ask Bobby Joe: the answer comes through the school script, and never shows the word before she spells it.
+        // Ask BB: the answer comes through the school script, and never shows the word before she spells it.
         assert.ok(ONE.slice(140).includes(w), 'only words without gems: ' + w);
         await p.click('#askBJ');
         await p.fill('#askIn', 'What does it mean?');
         await p.click('#askGo');
-        await p.waitForFunction(() => /Bobby Joe:/.test(document.getElementById('info').textContent));
+        await p.waitForFunction(() => /BB:/.test(document.getElementById('info').textContent));
         const said = clean(await p.textContent('#info'));
-        assert.match(said, /Bobby Joe: Your word is your word, and it is a fun one\./, 'masked: ' + said);
+        assert.match(said, /BB: Your word is your word, and it is a fun one\./, 'masked: ' + said);
         asked = true;
-        // A miss: Bobby Joe's memory trick, and the word comes back later in the round.
+        // A miss: BB's memory trick, and the word comes back later in the round.
         missed = w;
         await p.fill('#ans', 'zzz'); await p.click('#checkTyped');
-        await p.waitForFunction(() => /Bobby Joe.s trick:/.test(document.body.textContent), null, { timeout: 5000 });
+        await p.waitForFunction(() => /BB.s trick:/.test(document.body.textContent), null, { timeout: 5000 });
       }
     });
     assert.ok(asked);
@@ -142,7 +142,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     // Back in Book Dude: the gems are hers, and the points count.
     await Promise.all([p.waitForNavigation(), p.click('#back')]);
     await p.waitForSelector('.game-card');
-    await p.waitForFunction(() => /Spelling Bee: /.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+    await p.waitForFunction(() => /Spelling BB: /.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
     const after = await p.evaluate(async () => (await import('/book-dude-next/app/money.js')).rewardPoints());
     assert.equal(after, 20, '150 gems (one a comeback) = 15, plus 5 for finishing One Bee');
     const sp = await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.spelling);
@@ -150,8 +150,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.$eval('.tab[data-tab="progress"]', e => e.click());
     await p.waitForSelector('#pet-meters .bobby');
     const meter = clean(await p.innerText('#pet-meters .bobby'));
-    assert.match(meter, /^Bobby Joe’s Spell-o-Meter Typo Stomper .* One Bee 150\/150 Two Bee 0\/150 Three Bee 0\/150 20 spelling points 10 more gems on Two Bee for 2 more points\. Finishing it is worth 10 more\. School spelling bee: January 10\. 45 days to go\. Practice with Bobby Joe$/);
-    assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 1, 'Bobby Joe stomps for new points');
+    assert.match(meter, /^BB’s Spell-o-Meter Typo Smoother .* One Bee 150\/150 Two Bee 0\/150 Three Bee 0\/150 20 spelling points 10 more gems on Two Bee for 2 more points\. Finishing it is worth 10 more\. School spelling bee: January 10\. 45 days to go\. Practice with BB$/);
+    assert.equal(await p.$$eval('#pet-meters .bobby-art.stomp', e => e.length), 1, 'BB wiggles for new points');
     const ledger = clean(await p.innerText('#ledger'));
     assert.match(ledger, /Spelling Bee 20 points Nov 26, 2026 Finished One Bee \+5 Nov 26, 2026 One Bee gems \+1 Nov 20, 2026 One Bee gems \+14 How your points/);
     assert.match(ledger, /\+ spelling: 20 = 20 points/);
@@ -163,7 +163,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 
     assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
     assert.deepStrictEqual(errors, []);
-    console.log('Bobby Joe’s Spelling Bee is on the Games tab: gems turn into points that reach the app, Bobby Joe’s Claude help goes through the school script with its key, and the Spell-o-Meter counts down to the bee.');
+    console.log('Spelling BB is on the Games tab: gems turn into points that reach the app, BB’s Claude help goes through the school script with its key, and the Spell-o-Meter counts down to the bee.');
   } finally {
     await browser.close();
     server.close();

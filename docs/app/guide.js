@@ -36,7 +36,7 @@ function guideHtml() {
       '<b>AR quizzes at school.</b> When the school emails a quiz result, it lands in Book Dude by itself, with its points. Nothing to type.',
       '<b>Library tests in the COBOL tab.</b> Articles with a short test. Passing one earns 2 points for a short article or 4 for a long one, plus 1 bonus point for answering the think-about-it question.',
       '<b>Home points.</b> For a book the school has no AR quiz for, a grown-up can give points on that book’s page (Home points box, passcode needed).',
-      '<b>Bobby Joe’s Spelling Bee</b> (Games tab). Spelling a word right twice in a row makes it a gem. Every 10 gems earn 1 point on One Bee, 2 on Two Bee, 3 on Three Bee; finishing a list adds 5, 10 or 15; Bee-round streaks of 10, 25 and 50 add 1 each. A word she had missed before counts double. Each word pays once, and points are never taken back.',
+      '<b>Spelling BB</b> (Games tab). Spelling a word right twice in a row makes it a gem. Every 10 gems earn 1 point on One Bee, 2 on Two Bee, 3 on Three Bee; finishing a list adds 5, 10 or 15; Bee-round streaks of 10, 25 and 50 add 1 each. A word she had missed before counts double. Each word pays once, and points are never taken back.',
       'All of these count the same toward money and screen time.'
     ]) + '<p class="hint">AR points are also tracked on their own on the Progress tab, against the school goal: ' + fmtNum(ar.goal.quarter) + ' a quarter, ' + fmtNum(ar.goal.year) + ' for the year. Library tests, home points and spelling never count as AR.</p>') +
 

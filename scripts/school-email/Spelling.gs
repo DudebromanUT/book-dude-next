@@ -1,16 +1,16 @@
 /**
- * Bobby Joe's Spelling Bee, server side (Google Apps Script), for Book Dude.
+ * Spelling BB, server side (Google Apps Script), for Book Dude.
  *
- * The Spelling Bee itself is a page in Book Dude (docs/games/spelling-bee). This file answers its requests, which come
+ * Spelling BB itself is a page in Book Dude (docs/games/spelling-bee). This file answers its requests, which come
  * through doPost in Code.gs with the same key as everything else Book Dude sends, so nobody without the link can use
  * them:
  *   spell-letters  Claude turns a messy transcript ("B as in boy, no wait...") into the letters she said. It never
  *                  sees the word itself, so it can't fix her spelling for her.
- *   spell-ask      Bobby Joe answers her questions about the current word. Before she spells it, he never reveals the
+ *   spell-ask      BB answers her questions about the current word. Before she spells it, he never reveals the
  *                  spelling (and the server masks it out if he slips).
  *   spell-trick    a short memory trick after she misses a word.
  *   spell-log      her answers (word, what she said, right or missed), for the Spelling log.
- * Every answer and every question to Bobby Joe goes into a "Spelling log" tab you can read: in the spreadsheet this
+ * Every answer and every question to BB goes into a "Spelling log" tab you can read: in the spreadsheet this
  * project is attached to, or a new one named "Book Dude spelling log" in your Drive (run spellLogUrl() for its link).
  *
  * SETUP: in the Book Dude Apps Script project, click + next to Files, choose Script, name it Spelling, and paste in
@@ -85,7 +85,7 @@ var SPELL_KEY_NAMES = ['SPELL_ANTHROPIC_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_K
 
 var SPELL_SAFETY =
   'Stay on topic: spelling, words, meanings, word origins and roots, grammar, and the spelling bee. ' +
-  'If she asks about anything else, kindly say you are just a spelling bird and steer back to her word. ' +
+  'If she asks about anything else, kindly say you are just a spelling blanket and steer back to her word. ' +
   'Never ask for or repeat personal information such as names, schools, addresses or phone numbers. ' +
   'If she says something that sounds like she is sad, scared, hurt or unsafe, be kind and tell her to talk ' +
   'to her mom, dad or another trusted grown up right away. Do not try to handle it yourself. ' +
@@ -110,7 +110,7 @@ var SPELL_LETTERS_SYSTEM =
   'Reply with only JSON like {"letters":"BUNNY","unsure":[]}';
 
 var SPELL_ASK_SYSTEM =
-  'You are Bobby Joe, a cheerful secretary bird in the Book Dude reading app. You help a 10 year old girl practice for her ' +
+  'You are BB, short for Birdie Blanky, a cozy, cheerful talking reading blanket in the Book Dude reading app. So many stories were read under you that the words soaked in. You help a 10 year old girl practice for her ' +
   'school spelling bee. Talk in warm, simple words: one to three short sentences, plain text, no emojis, no lists. ' +
   SPELL_SAFETY +
   'If "answered" is false, she has NOT spelled the word yet: never write the word, never spell it, and never reveal any of its ' +
@@ -122,7 +122,7 @@ var SPELL_ASK_SYSTEM =
   'The word facts you are given are correct; do not contradict them. If you are not sure of something, say so instead of guessing.';
 
 var SPELL_TRICK_SYSTEM =
-  'You are Bobby Joe, a cheerful secretary bird who helps a 10 year old girl practice spelling. Write ONE short memory trick, ' +
+  'You are BB, short for Birdie Blanky, a cozy, cheerful talking reading blanket who helps a 10 year old girl practice spelling. Write ONE short memory trick, ' +
   'one or two sentences, plain text, no emojis, that will help her remember how to spell the word. Focus on the part she got wrong. ' +
   'Good tricks: a smaller word hidden inside the word, a silly sentence, a rhyme, or a true fact about where the word comes from. ' +
   'Never invent a fake word history. Write the word in capital letters once so she sees it spelled correctly. ' +
@@ -269,7 +269,7 @@ function spellAsk(info) {
   if (!answered) answer = spellMask_(answer, alts);
   answer = answer.slice(0, 600);
   try {
-    spellLogSheet_().appendRow([new Date(), 'Ask Bobby Joe', word, 'Q: ' + question, 'A: ' + answer.slice(0, 400), answered ? 'after answering' : 'before answering']);
+    spellLogSheet_().appendRow([new Date(), 'Ask BB', word, 'Q: ' + question, 'A: ' + answer.slice(0, 400), answered ? 'after answering' : 'before answering']);
   } catch (e) {}
   return answer;
 }

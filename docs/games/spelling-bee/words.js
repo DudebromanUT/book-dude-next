@@ -1,4 +1,4 @@
-/* Bobby Joe's Spelling Bee: the words, from the Scripps 2026 to 2027 School Spelling Bee Study List.
+/* Spelling BB: the words, from the Scripps 2026 to 2027 School Spelling Bee Study List.
  * Fields: word (alternates split by |), part of speech code, definition, sentence, origin. */
 'use strict';
 window.SPELL_DATA={};

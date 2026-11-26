@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#f6efe2">
-<title>Bobby Joe's Spelling Bee</title>
+<title>Spelling BB</title>
 <link rel="icon" href="../../icons/icon-192.png" type="image/png">
 <link rel="stylesheet" href="game.css">
 <script src="../../core.js" defer></script>
@@ -28,8 +28,8 @@
 <div class="topbar"><a id="back" class="pill" href="../../#games">&larr; Back to Book Dude</a></div>
 
 <section id="home">
-  <h1>Bobby Joe's Spelling Bee</h1>
-  <p class="lede">Bobby Joe reads the word. You spell it out loud. Spell a word right two times in a row and it turns into a gem.</p>
+  <h1>Spelling BB</h1>
+  <p class="lede">BB reads the word. You spell it out loud. Spell a word right two times in a row and it turns into a gem.</p>
   <p class="note" id="pts"></p>
   <p class="note" id="beeDay"></p>
   <div class="stage"><div class="bjbox" id="bjHome"></div><div class="bubble" id="hello"></div></div>
@@ -69,11 +69,11 @@
     <div class="set"><span>Read a sentence too</span><button class="sw" role="switch" data-s="autoSen" aria-label="Read a sentence too"></button></div>
     <div class="set"><span>Start listening by itself after the word</span><button class="sw" role="switch" data-s="autoListen" aria-label="Start listening by itself"></button></div>
     <div class="set"><span>Check my spelling as soon as I stop talking</span><button class="sw" role="switch" data-s="autoCheck" aria-label="Check as soon as I stop talking"></button></div>
-    <div class="set" id="claudeSet" hidden><span>Let Bobby Joe use Claude for questions, hints and memory tricks</span><button class="sw" role="switch" data-s="claude" aria-label="Let Bobby Joe use Claude"></button></div>
+    <div class="set" id="claudeSet" hidden><span>Let BB use Claude for questions, hints and memory tricks</span><button class="sw" role="switch" data-s="claude" aria-label="Let BB use Claude"></button></div>
     <div class="set"><span>Voice speed</span><span class="seg" id="rateSeg"><button class="pill" data-r="0.8">Slow</button><button class="pill" data-r="1">Normal</button></span></div>
     <div class="set"><span class="note" id="saveNote"></span><button class="pill" id="reset">Reset progress</button></div>
   </div>
-  <p class="note center" id="aiNote" hidden>Bobby Joe’s answers, hints and memory tricks come from Claude, an AI made by Anthropic. Grown-ups can read every question in the spelling log.</p>
+  <p class="note center" id="aiNote" hidden>BB’s answers, hints and memory tricks come from Claude, an AI made by Anthropic. Grown-ups can read every question in the spelling log.</p>
   <p class="note center">Words from the Scripps 2026 to 2027 School Spelling Bee Study List. For official pronunciations, try the Word Club app.</p>
 </section>
 
@@ -90,13 +90,13 @@
       <button class="ask" data-ask="sen">Sentence</button>
       <button class="ask" data-ask="pos">Part of speech</button>
       <button class="ask" data-ask="ori">Origin</button>
-      <button class="ask bjask" data-ask="bj" id="askBJ" hidden>Ask Bobby Joe</button>
+      <button class="ask bjask" data-ask="bj" id="askBJ" hidden>Ask BB</button>
     </div>
     <div class="info" id="info" hidden></div>
     <div class="askrow" id="askRow" hidden>
-      <input id="askIn" maxlength="200" placeholder="Ask Bobby Joe about your word" autocomplete="off" aria-label="Ask Bobby Joe a question">
+      <input id="askIn" maxlength="200" placeholder="Ask BB about your word" autocomplete="off" aria-label="Ask BB a question">
       <button class="go" id="askGo">Ask</button>
-      <p class="note">Bobby Joe is an AI helper. You can also just ask out loud when the microphone is on.</p>
+      <p class="note">BB is an AI helper. You can also just ask out loud when the microphone is on.</p>
     </div>
 
     <div id="talkArea">
