@@ -89,6 +89,10 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
    after BB reads the word, and not again after a pause), and a "no" from iOS never turns the microphone off for good. */
 const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let srBroken=false,autoOK=!IOS,L=null,tapFails=0;
+/* On iPad and iPhone, one listener for the whole visit: a new one for every word can leave iOS sending no words after the
+   first. If BB still hears nothing twice in a row there, she switches to the keyboard's microphone, which iOS always lets
+   type out the letters she says. */
+let REC=null,emptyRuns=0;
 const LETTER=new Map();
 Object.entries({a:['a','ay'],b:['b','be','bee','bea','bi'],c:['c','see','sea','cee','si'],d:['d','dee','de'],e:['e','ee'],f:['f','ef','eff'],g:['g','gee','ji','jee','gi'],h:['h','aitch','age','ach','haitch'],i:['i','eye','aye','ai'],j:['j','jay','jae'],k:['k','kay','cay','kaye'],l:['l','el','ell','elle'],m:['m','em'],n:['n','en','and','in'],o:['o','oh','owe','0'],p:['p','pee','pea','pe'],q:['q','queue','cue','cu','kyu','que'],r:['r','are','ar','arr'],s:['s','es','ess'],t:['t','tee','tea','ti','te'],u:['u','you','yu','ewe','yoo'],v:['v','vee','vi','ve'],w:['w','dubya','dub'],x:['x','ex','ecks','eks'],y:['y','why','wye','wie'],z:['z','zee','zed']}).forEach(([k,v])=>v.forEach(s=>LETTER.set(s,k)));
 const FILL=new Set(['um','uh','umm','uhh','hmm','hm','er','erm','okay','like','so','the','please','done','finished','spelled','spell','spelling','word','that','thats','its','it','is','um-hmm','uh-huh']);
@@ -152,18 +156,21 @@ function listen(fromTap,keep){
   const base=keep?(S.heardTokens||[]):[];
   if(!keep){S.heard='';S.heardTokens=[]}
   const sess={rec:null,acc:'',cur:'',prev:'',base,finished:false,restarts:0,started:Date.now(),sil:0,max:0,dead:0,alive:false,gotAny:false,fromTap};
-  try{sess.rec=new SR()}catch(e){srBroken=true;keyboardFallback();return}
+  try{sess.rec=IOS&&REC?REC:new SR();if(IOS)REC=sess.rec;sess.rec.owner=sess}catch(e){srBroken=true;keyboardFallback();return}
+  sess.ev={audio:0,sound:0,speech:0,words:0};
   L=sess;const r=sess.rec;
   r.lang='en-US';r.continuous=true;r.interimResults=true;try{r.maxAlternatives=5}catch(e){}
-  r.onstart=r.onaudiostart=()=>{sess.alive=true;tapFails=0};
-  r.onresult=e=>{if(L!==sess||sess.finished)return;sess.gotAny=true;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
+  r.onstart=()=>{sess.alive=true;tapFails=0};
+  r.onaudiostart=()=>{sess.alive=true;tapFails=0;sess.ev.audio=1};
+  r.onsoundstart=()=>{sess.ev.sound=1};
+  r.onresult=e=>{if(L!==sess||sess.finished)return;sess.gotAny=true;sess.ev.words++;emptyRuns=0;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
   r.onerror=e=>{if(L!==sess||sess.finished)return;onSRError(sess,e.error||'error')};
   r.onend=()=>{if(L!==sess||sess.finished)return;
     sess.acc=(sess.acc+' '+sess.cur).trim();sess.cur='';sess.prev='';
     if(!sess.stopping&&!IOS&&sess.restarts<3&&Date.now()-sess.started<40000){sess.restarts++;try{r.start();return}catch(e){}}
     sess.ended=true;finishListen(sess)};
   /* she's talking: say so, even before any letters come through */
-  r.onspeechstart=()=>{if(L===sess&&!sess.finished&&!sess.gotAny&&!sess.stopping)bubble('I can hear you. Keep spelling!')};
+  r.onspeechstart=()=>{sess.ev.speech=1;if(L===sess&&!sess.finished&&!sess.gotAny&&!sess.stopping)bubble('I can hear you. Keep spelling!')};
   try{r.start()}catch(e){onSRError(sess,'start-failed');return}
   sess.max=setTimeout(()=>finishListen(sess),45000);
   sess.sil=setTimeout(()=>{if(!sess.gotAny)finishListen(sess)},9000);
@@ -189,7 +196,7 @@ function onHeard(sess,t){
   $('tiles').innerHTML=tilesHTML(sess.base.concat(p.tokens));
   clearTimeout(sess.sil);sess.sil=setTimeout(()=>finishListen(sess),p.letters.length?2300:4200);
 }
-function stopRec(sess){sess.finished=true;clearTimeout(sess.sil);clearTimeout(sess.max);clearTimeout(sess.dead);const r=sess.rec;if(r){r.onresult=null;r.onend=null;r.onerror=null;try{r.stop()}catch(e){}setTimeout(()=>{try{r.abort()}catch(e){}},350)}if(L===sess)L=null;setBJ('')}
+function stopRec(sess){sess.finished=true;clearTimeout(sess.sil);clearTimeout(sess.max);clearTimeout(sess.dead);const r=sess.rec;if(r){r.onresult=null;r.onend=null;r.onerror=null;try{r.stop()}catch(e){}setTimeout(()=>{if(r.owner===sess)try{r.abort()}catch(e){}},350)}if(L===sess)L=null;setBJ('')}
 function finishListen(sess,forCommand){
   if(sess.finished)return;
   /* iOS can hold back what it heard until listening stops: ask it to stop, and wait (up to 1.5 seconds) for those
@@ -207,7 +214,11 @@ function finishListen(sess,forCommand){
   const tokens=sess.base.concat(p.tokens);
   if(!tokens.length){
     showTalk('idle');$('tiles').innerHTML='';
-    bubble(p.sawWord?'I heard the word, but not the letters. Tap the microphone and say each letter with a tiny pause.':'I didn’t hear any letters. Tap the microphone and spell the word.');
+    if(IOS&&!p.sawWord&&++emptyRuns>=2){emptyRuns=0;srBroken=true;renderMicNote();
+      keyboardFallback('This iPad isn’t sending me your letters. Let’s use the keyboard: tap the box, tap the microphone on the keyboard, and say the letters.');return}
+    const e=sess.ev||{},y=v=>v?'✓':'✗';
+    bubble((p.sawWord?'I heard the word, but not the letters. Tap the microphone and say each letter with a tiny pause.':'I didn’t hear any letters. Tap the microphone and spell the word.')+
+      (IOS?` (BB check: mic ${y(e.audio)} sound ${y(e.sound)} voice ${y(e.speech)} words ${e.words||0})`:''));
     return;
   }
   if(useClaude()&&p.tokens.some(t=>t.unsure)){readWithClaude(sess.base,full,w,tokens);return}
@@ -435,7 +446,11 @@ function ask(cmd,fromVoice){
   bubble(cmd==='rep'?'Here it is again.':'Here you go.');
   say(cmd==='rep'?[spoken(w)+'.']:[text,spoken(w)+'.']).then(ok=>{if(ok&&S&&cur()===w&&!S.checked){if(answerMode()==='talk'&&!S.heard){if(fromVoice&&autoOK)listen(false,false);else bubble('Your turn! Tap the microphone and spell the word.')}else bubble('Your turn!')}});
 }
-function typedLetters(text){const toks=tokenize(text).map(norm);if(toks.length>1&&toks.every(t=>t.length===1))return toks.join('');return lettersOnly(text)}
+/* Typed, or dictated with the keyboard's microphone: "c r u m p", or letter names like "see are you em pee",
+   "double L", "hyphen", which dictation types out as words. */
+function typedLetters(text){const toks=tokenize(text).map(t=>norm(t).replace(/'/g,''));if(toks.length>1&&toks.every(t=>t.length===1))return toks.join('');
+  if(toks.length>1&&toks.every(t=>t.length===1||LETTER.has(t)||['double','hyphen','dash','space','as','in','like','for'].includes(t)||FILL.has(t)))return parseSpelling(text,S&&cur()).letters.replace(/[\s-]/g,'')||lettersOnly(text);
+  return lettersOnly(text)}
 function diff(word,attempt){
   const shown=[...word],c=[],pos=[];
   shown.forEach((ch,k)=>{const l=lettersOnly(ch);if(l){c.push(l);pos.push(k)}});

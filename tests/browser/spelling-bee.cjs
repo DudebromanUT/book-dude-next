@@ -190,8 +190,11 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       try { Object.defineProperty(window, 'speechSynthesis', { value: undefined }); } catch (e) { /* fine */ }
       window.__srLog = []; window.__gesture = false;
       addEventListener('click', () => { window.__gesture = true; setTimeout(() => { window.__gesture = false; }, 0); }, true);
+      window.__srMade = 0;
       class FakeSR {
+        constructor() { window.__srMade++; }
         start() {
+          if (window.__mute && window.__gesture) { window.__srLog.push('start'); setTimeout(() => { if (this.onstart) this.onstart(); if (this.onaudiostart) this.onaudiostart(); if (this.onsoundstart) this.onsoundstart(); setTimeout(() => this.onend && this.onend(), 60); }, 20); return; }
           if (!window.__gesture) { window.__srLog.push('refused'); setTimeout(() => this.onerror && this.onerror({ error: 'not-allowed' }), 10); return; }
           window.__srLog.push('start');
           this.live = true;
@@ -245,6 +248,21 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     const log = await q.evaluate(() => window.__srLog);
     assert.ok(log.length >= 4 && log.every(x => x === 'start'), 'every start came from a tap: ' + log);
     assert.equal(await q.isVisible('#mic'), true, 'the microphone is still on after three words');
+    // One listener for the whole visit on an iPad.
+    assert.equal(await q.evaluate(() => window.__srMade), 1, 'the same listener, word after word');
+    // If iOS sends no words, BB says what it did get, and after two quiet tries switches her to the keyboard microphone.
+    await q.waitForFunction(() => /Tap the microphone/.test(document.getElementById('bubble').textContent));
+    await q.evaluate(() => { window.__mute = true; });
+    await q.click('#mic');
+    await q.waitForFunction(() => /BB check: mic ✓ sound ✓ voice ✗ words 0/.test(document.getElementById('bubble').textContent));
+    await q.click('#mic');
+    await q.waitForFunction(() => /This iPad isn’t sending me your letters\. Let’s use the keyboard/.test(document.getElementById('bubble').textContent));
+    assert.equal(await q.isVisible('#ans'), true, 'the typing box (with the keyboard microphone) is ready');
+    // Dictation types letters as words; they still count as letters.
+    assert.equal(await q.evaluate(() => window.__bee.typedLetters('see are you em pee eye el why')), 'crumpily');
+    assert.equal(await q.evaluate(() => window.__bee.typedLetters('m i s t')), 'mist');
+    assert.equal(await q.evaluate(() => window.__bee.typedLetters('mist')), 'mist');
+    await q.evaluate(() => { window.__mute = false; });
     await ipad.close();
 
     assert.deepStrictEqual(outside, [], 'nothing is loaded from another site');
