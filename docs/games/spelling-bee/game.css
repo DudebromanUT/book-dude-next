@@ -142,3 +142,6 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 @keyframes bb-talk{from{transform:rotate(-3deg)}to{transform:rotate(3deg) translateY(-2px)}}
 @keyframes bb-listen{from{transform:scale(1)}to{transform:scale(1.04) translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.bj.bb{animation:none!important}}
+button.tile.tap{cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
+button.tile.tap:active{transform:scale(.94)}
+button.tile.tap:focus-visible{outline:3px solid var(--act);outline-offset:2px}

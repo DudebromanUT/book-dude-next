@@ -121,6 +121,28 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         await p.fill('#ans', 'zzz'); await p.click('#checkTyped');
         await p.waitForFunction(() => /BB.s trick:/.test(document.body.textContent), null, { timeout: 5000 });
       }
+      if (i === 1) {
+        // What BB heard, with one sound-alike letter wrong and marked unsure: BB says which, and a tap fixes it.
+        const j = await p.evaluate(word => {
+          const toks = [...word.toLowerCase()].map(ch => ({ ch }));
+          const k = toks.findIndex(o => window.__bee.alikeOf(o.ch));
+          const g = window.__bee.alikeOf(toks[k].ch);
+          toks[k] = { ch: g[(g.indexOf(toks[k].ch) - 1 + g.length) % g.length], unsure: true };
+          document.getElementById('typeArea').hidden = true; document.getElementById('talkArea').hidden = false;   // as when she talks
+          window.__bee.showHeard(toks);
+          return k;
+        }, w);
+        const nth = ['1st', '2nd', '3rd'][j] || (j + 1) + 'th';
+        assert.equal(clean(await p.textContent('#bubble')), 'I wasn’t sure about the ' + nth + ' letter. Tap a letter to change it, then tap Check it.');
+        if (SHOTS) { await p.$eval('#play .stage', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(SHOTS, 'spell-heard.png') }); }
+        await p.click('#tiles .tile.tap[data-i="' + j + '"]');
+        assert.equal(clean(await p.textContent('#tiles')).toLowerCase(), w.toLowerCase(), 'one tap put the right letter back');
+        await p.click('#checkHeard');
+        await p.waitForSelector('#nextRow:not([hidden])');
+        // Of the browser's guesses, the one that reads most like spelled letters wins.
+        const pick = await p.evaluate(() => window.__bee.bestGuess([{ transcript: 'hello there' }, { transcript: 'B. E. E.' }, { transcript: 'bee' }]));
+        assert.equal(pick, 'B. E. E.');
+      }
     });
     assert.ok(asked);
     assert.deepEqual(calls.filter(c => c.action !== 'spell-log').map(c => c.action), ['spell-ask', 'spell-trick']);

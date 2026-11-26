@@ -128,7 +128,20 @@ function commandOf(raw){
   let letterish=0;for(const x of tokenize(raw)){const n=norm(x);if(n.length===1||LETTER.has(n))letterish++}
   return letterish<=3?cmd:null;
 }
-function tilesHTML(tokens){return tokens.map(o=>o.ch===' '?'<span class="tile gap"></span>':`<span class="tile${o.unsure?' unsure':''}">${esc(o.ch==='-'?'–':o.ch)}</span>`).join('')}
+/* The browser can offer several guesses for what she said. Keep the one that reads most like spelled letters: the
+   most letters it is sure of, and the fewest it had to guess at. The first guess wins a tie. */
+function bestGuess(result){
+  const w=S&&cur();let best=result[0]?result[0].transcript:'',top=-Infinity;
+  for(let k=0;k<result.length;k++){const t=result[k].transcript,toks=parseSpelling(t,w).tokens,sure=toks.filter(o=>!o.unsure).length;
+    const score=sure*2-(toks.length-sure)*3;if(score>top){top=score;best=t}}
+  return best;
+}
+/* Letters that sound alike, in the order a tap on a tile tries them. */
+const ALIKE=[['b','d','e','p','t','v','z','c','g'],['m','n'],['f','s','x'],['a','j','k'],['i','y'],['q','u','w'],['l','r']];
+const alikeOf=ch=>ALIKE.find(g=>g.includes(ch));
+const ordinal=n=>n+(n%100>10&&n%100<14?'th':['th','st','nd','rd'][n%10]||'th');
+function tilesHTML(tokens,tappable){if(tappable)return tokens.map((o,i)=>o.ch===' '?'<span class="tile gap"></span>':alikeOf(o.ch)?`<button type="button" class="tile tap${o.unsure?' unsure':''}" data-i="${i}" aria-label="Letter ${i+1}, ${esc(o.ch.toUpperCase())}. Tap for a letter that sounds like it">${esc(o.ch)}</button>`:`<span class="tile${o.unsure?' unsure':''}">${esc(o.ch==='-'?'–':o.ch)}</span>`).join('');
+return tokens.map(o=>o.ch===' '?'<span class="tile gap"></span>':`<span class="tile${o.unsure?' unsure':''}">${esc(o.ch==='-'?'–':o.ch)}</span>`).join('')}
 function listen(fromTap,keep){
   if(!S||S.checked)return;
   if(!SR||srBroken){keyboardFallback();return}
@@ -138,9 +151,9 @@ function listen(fromTap,keep){
   const sess={rec:null,acc:'',cur:'',prev:'',base,finished:false,restarts:0,started:Date.now(),sil:0,max:0,dead:0,alive:false,gotAny:false,fromTap};
   try{sess.rec=new SR()}catch(e){srBroken=true;keyboardFallback();return}
   L=sess;const r=sess.rec;
-  r.lang='en-US';r.continuous=true;r.interimResults=true;try{r.maxAlternatives=1}catch(e){}
+  r.lang='en-US';r.continuous=true;r.interimResults=true;try{r.maxAlternatives=5}catch(e){}
   r.onstart=r.onaudiostart=()=>{sess.alive=true};
-  r.onresult=e=>{if(L!==sess||sess.finished)return;let t='';for(let i=0;i<e.results.length;i++)t+=' '+e.results[i][0].transcript;onHeard(sess,t.trim())};
+  r.onresult=e=>{if(L!==sess||sess.finished)return;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
   r.onerror=e=>{if(L!==sess||sess.finished)return;onSRError(sess,e.error||'error')};
   r.onend=()=>{if(L!==sess||sess.finished)return;
     sess.acc=(sess.acc+' '+sess.cur).trim();sess.cur='';sess.prev='';
@@ -188,7 +201,11 @@ function finishListen(sess,forCommand){
 }
 function showHeard(tokens,msg){
   S.heardTokens=tokens;S.heard=tokens.map(o=>o.ch).join('');
-  $('tiles').innerHTML=tilesHTML(tokens);
+  $('tiles').innerHTML=tilesHTML(tokens,true);
+  /* 3. say which letters BB wasn't sure of */
+  const doubt=tokens.map((o,i)=>o.unsure?i:-1).filter(i=>i>=0);
+  if(!msg&&doubt.length)msg=(doubt.length===1?`I wasn’t sure about the ${ordinal(doubt[0]+1)} letter.`:`I wasn’t sure about the ${doubt.slice(0,-1).map(i=>ordinal(i+1)).join(', ')} and ${ordinal(doubt[doubt.length-1]+1)} letters.`)+' Tap a letter to change it, then tap Check it.';
+  else if(!msg)msg='Is that what you said? Tap a letter to change it, or tap Check it.';
   if(SET.autoCheck){submit(lettersOnly(S.heard),S.heard.toUpperCase(),S.heard);return}
   showTalk('heard');
   bubble(msg||'Is that what you said? Tap Check it, or fix it first.');
@@ -510,6 +527,10 @@ $('mic').onclick=()=>{unlock();if(L){finishListen(L);return}listen(true,false)};
 $('more').onclick=()=>listen(true,true);
 $('redo').onclick=()=>{S.heard='';S.heardTokens=[];$('tiles').innerHTML='';listen(true,false)};
 $('fix').onclick=()=>{$('talkArea').hidden=true;$('typeArea').hidden=false;$('typeHint').textContent='Fix any letter BB heard wrong, then tap Check it.';$('ans').value=S.heard.toUpperCase();$('ans').focus();bubble('Fix the letters I heard wrong.')};
+$('tiles').addEventListener('click',e=>{const t=e.target.closest('.tile.tap');if(!t||!S||S.checked||!S.heardTokens)return;
+  const i=+t.dataset.i,o=S.heardTokens[i],g=alikeOf(o.ch);if(!g)return;
+  S.heardTokens[i]={ch:g[(g.indexOf(o.ch)+1)%g.length]};S.heard=S.heardTokens.map(x=>x.ch).join('');
+  $('tiles').innerHTML=tilesHTML(S.heardTokens,true);const b=$('tiles').querySelector('[data-i="'+i+'"]');if(b)b.focus()});
 $('checkHeard').onclick=()=>submit(lettersOnly(S.heard),S.heard.toUpperCase(),S.heard);
 $('checkTyped').onclick=()=>{const v=$('ans').value;if(!v.trim())return;submit(typedLetters(v),v.trim(),v)};
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('checkTyped').click()}});
@@ -527,5 +548,5 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(L)finis
 CLAUDE=GAS;
 addEventListener('pagehide',flushLog);
 renderHome();
-window.__bee={pointsNow,snapshot,EARNED:()=>EARNED,STREAKS:()=>STREAKS,parseSpelling,commandOf,typedLetters,W,BYW,diff,cur:()=>S&&S.q[S.i],maskTarget,maskAnswer,looksLikeQuestion};
+window.__bee={showHeard,bestGuess,alikeOf,snapshot,EARNED:()=>EARNED,STREAKS:()=>STREAKS,parseSpelling,commandOf,typedLetters,W,BYW,diff,cur:()=>S&&S.q[S.i],maskTarget,maskAnswer,looksLikeQuestion};
 }
