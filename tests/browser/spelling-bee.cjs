@@ -194,9 +194,13 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         start() {
           if (!window.__gesture) { window.__srLog.push('refused'); setTimeout(() => this.onerror && this.onerror({ error: 'not-allowed' }), 10); return; }
           window.__srLog.push('start');
-          setTimeout(() => { if (this.onstart) this.onstart(); const r = [{ transcript: window.__say || '' }]; r.isFinal = true; if (this.onresult) this.onresult({ results: [r] }); setTimeout(() => this.onend && this.onend(), 30); }, 20);
+          this.live = true;
+          const say = () => { const r = [{ transcript: window.__say || '' }]; r.isFinal = true; if (this.onresult) this.onresult({ results: [r] }); };
+          if (window.__finalOnly) { setTimeout(() => { if (this.onstart) this.onstart(); if (this.onspeechstart) this.onspeechstart(); }, 20); this.flush = say; return; }
+          setTimeout(() => { if (this.onstart) this.onstart(); say(); setTimeout(() => this.onend && this.onend(), 30); }, 20);
         }
-        stop() {} abort() {}
+        stop() { if (this.live && this.flush) { const f = this.flush; this.flush = null; setTimeout(() => { f(); setTimeout(() => this.onend && this.onend(), 20); }, 40); } this.live = false; }
+        abort() { this.live = false; }
       }
       window.SpeechRecognition = FakeSR; window.webkitSpeechRecognition = FakeSR;
     });
@@ -220,6 +224,13 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         await q.waitForSelector('#heardBtns:not([hidden])');
         await q.evaluate(t => { window.__say = t; }, letters(w.slice(half)));
         await q.click('#more');
+      } else if (n === 2) {
+        // Like iOS at its stingiest: nothing comes through while she spells, everything arrives when it stops.
+        await q.evaluate(t => { window.__say = t; window.__finalOnly = true; }, letters(w));
+        await q.click('#mic');
+        await q.waitForFunction(() => /I can hear you\. Keep spelling!/.test(document.getElementById('bubble').textContent));
+        await q.click('#mic');   // she taps the red square when she's done
+        await q.evaluate(() => { window.__finalOnly = false; });
       } else {
         await q.evaluate(t => { window.__say = t; }, letters(w));
         await q.click('#mic');
@@ -228,7 +239,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
       assert.equal(clean(await q.textContent('#tiles')).replace(/\s|–/g, '').toLowerCase(), w.replace(/[\s-]/g, '').toLowerCase());
       await q.click('#checkHeard');
       await q.waitForSelector('#nextRow:not([hidden])');
-      assert.match(clean(await q.textContent('#fb')), /^(Right|Correct|Yes|You got it|Nice|Great|Perfect|Spot on|Nailed it)/i);
+      assert.match(clean(await q.textContent('#fb')), /^(Correct!|That’s right!|Nailed it!|You got it!|Perfect spelling!)/);
       await q.click('#next');
     }
     const log = await q.evaluate(() => window.__srLog);

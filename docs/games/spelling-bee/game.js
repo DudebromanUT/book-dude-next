@@ -156,12 +156,14 @@ function listen(fromTap,keep){
   L=sess;const r=sess.rec;
   r.lang='en-US';r.continuous=true;r.interimResults=true;try{r.maxAlternatives=5}catch(e){}
   r.onstart=r.onaudiostart=()=>{sess.alive=true;tapFails=0};
-  r.onresult=e=>{if(L!==sess||sess.finished)return;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
+  r.onresult=e=>{if(L!==sess||sess.finished)return;sess.gotAny=true;let t='';for(let i=0;i<e.results.length;i++)t+=' '+bestGuess(e.results[i]);onHeard(sess,t.trim())};
   r.onerror=e=>{if(L!==sess||sess.finished)return;onSRError(sess,e.error||'error')};
   r.onend=()=>{if(L!==sess||sess.finished)return;
     sess.acc=(sess.acc+' '+sess.cur).trim();sess.cur='';sess.prev='';
-    if(!IOS&&sess.restarts<3&&Date.now()-sess.started<40000){sess.restarts++;try{r.start();return}catch(e){}}
-    finishListen(sess)};
+    if(!sess.stopping&&!IOS&&sess.restarts<3&&Date.now()-sess.started<40000){sess.restarts++;try{r.start();return}catch(e){}}
+    sess.ended=true;finishListen(sess)};
+  /* she's talking: say so, even before any letters come through */
+  r.onspeechstart=()=>{if(L===sess&&!sess.finished&&!sess.gotAny&&!sess.stopping)bubble('I can hear you. Keep spelling!')};
   try{r.start()}catch(e){onSRError(sess,'start-failed');return}
   sess.max=setTimeout(()=>finishListen(sess),45000);
   sess.sil=setTimeout(()=>{if(!sess.gotAny)finishListen(sess)},9000);
@@ -189,7 +191,16 @@ function onHeard(sess,t){
 }
 function stopRec(sess){sess.finished=true;clearTimeout(sess.sil);clearTimeout(sess.max);clearTimeout(sess.dead);const r=sess.rec;if(r){r.onresult=null;r.onend=null;r.onerror=null;try{r.stop()}catch(e){}setTimeout(()=>{try{r.abort()}catch(e){}},350)}if(L===sess)L=null;setBJ('')}
 function finishListen(sess,forCommand){
-  if(sess.finished)return;stopRec(sess);
+  if(sess.finished)return;
+  /* iOS can hold back what it heard until listening stops: ask it to stop, and wait (up to 1.5 seconds) for those
+     last words before reading the letters. */
+  if(!forCommand&&sess.rec&&!sess.ended){
+    if(!sess.stopping){sess.stopping=true;clearTimeout(sess.sil);clearTimeout(sess.max);try{sess.rec.stop()}catch(e){}
+      sess.grace=setTimeout(()=>{sess.ended=true;finishListen(sess)},1500);
+      if(!(sess.acc+' '+sess.cur).trim())bubble('One second…');}
+    return;
+  }
+  clearTimeout(sess.grace);stopRec(sess);
   if(forCommand||!S||S.checked)return;
   const w=cur(),full=(sess.acc+' '+sess.cur).trim(),p=parseSpelling(full,w);
   if(useClaude()&&!sess.base.length&&full&&looksLikeQuestion(full)){askBB(full,true);return}
