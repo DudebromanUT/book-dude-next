@@ -23,6 +23,20 @@
   // Fig, drawn facing you on her cushion: a gray tabby with yellow-green eyes.
 
   var GRAY = '#8C9198', DARK = '#5B6067', LIGHT = '#C9CDD2', PINK = '#E8A9B5', EYE = '#C8D64F';
+  // Her fluffy mane: tufts all the way around, drawn as a soft star (n tufts, each `depth` deep) from angle a0 to a1
+  // (degrees, 0 = right, 90 = down), closed through the middle so the head covers the inside.
+  var fluff = function (cx, cy, rx, ry, n, depth, a0, a1, fill) {
+    var d = '', step = (a1 - a0) / n;
+    for (var i = 0; i <= n; i++) {
+      var a = (a0 + i * step) * Math.PI / 180, m = (a0 + (i + .5) * step) * Math.PI / 180;
+      var x = cx + rx * Math.cos(a), y = cy + ry * Math.sin(a);
+      var tx = cx + (rx + depth) * Math.cos(m), ty = cy + (ry + depth) * Math.sin(m);
+      d += (i ? ' Q' + (tx - depth * .35 * Math.sin(m)).toFixed(1) + ' ' + (ty + depth * .35 * Math.cos(m)).toFixed(1) + ' ' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+      if (i < n) d += ' L' + tx.toFixed(1) + ' ' + ty.toFixed(1);
+    }
+    return '<path d="' + d + ' L' + cx + ' ' + cy + ' Z" fill="' + fill + '"/>';
+  };
+  var MANE = '#A7ACB3', MANE_DARK = '#757A81', BIB = '#DDE0E4';
   var eye = function (side, cx) {
     return '<g class="eye-' + side + '">' +
       '<clipPath id="clip-' + side + '"><ellipse cx="' + cx + '" cy="88" rx="13" ry="14"/></clipPath>' +
@@ -41,13 +55,19 @@
       '<path d="M183 160 l-8 -3 M187 146 l-9 0 M181 134 l-8 4" stroke="' + DARK + '" stroke-width="3.5" stroke-linecap="round"/></g>' +
     '<g class="breath"><ellipse cx="100" cy="160" rx="66" ry="30" fill="' + GRAY + '"/>' +
       '<path d="M70 140 q4 14 0 28 M88 136 q4 16 0 32 M112 136 q-4 16 0 32 M130 140 q-4 14 0 28" stroke="' + DARK + '" stroke-width="4" fill="none" stroke-linecap="round"/>' +
-      '<ellipse cx="72" cy="182" rx="14" ry="7" fill="' + LIGHT + '"/><ellipse cx="128" cy="182" rx="14" ry="7" fill="' + LIGHT + '"/></g>' +
+      '<ellipse cx="72" cy="182" rx="14" ry="7" fill="' + LIGHT + '"/><ellipse cx="128" cy="182" rx="14" ry="7" fill="' + LIGHT + '"/>' +
+      fluff(100, 132, 34, 24, 9, 11, 10, 170, BIB) + '</g>' +
     '<g id="head">' +
+      fluff(100, 98, 64, 54, 30, 15, -55, 235, MANE_DARK) + fluff(100, 100, 60, 50, 26, 12, -40, 220, MANE) +
       '<path d="M50 78 L58 28 L90 54 Z" fill="' + GRAY + '"/><path d="M58 68 L62 40 L82 56 Z" fill="' + PINK + '"/>' +
       '<path d="M150 78 L142 28 L110 54 Z" fill="' + GRAY + '"/><path d="M142 68 L138 40 L118 56 Z" fill="' + PINK + '"/>' +
       '<ellipse cx="100" cy="92" rx="56" ry="47" fill="' + GRAY + '"/>' +
       '<path d="M86 50 q3 10 0 20 M100 47 q0 12 0 24 M114 50 q-3 10 0 20" stroke="' + DARK + '" stroke-width="4.5" fill="none" stroke-linecap="round"/>' +
       '<path d="M46 96 l14 -2 M46 106 l14 0 M154 96 l-14 -2 M154 106 l-14 0" stroke="' + DARK + '" stroke-width="3.5" stroke-linecap="round"/>' +
+      fluff(100, 104, 52, 40, 7, 9, 20, 160, LIGHT) +
+      '<ellipse cx="100" cy="92" rx="52" ry="44" fill="' + GRAY + '"/>' +
+      '<path d="M86 50 q3 10 0 20 M100 47 q0 12 0 24 M114 50 q-3 10 0 20" stroke="' + DARK + '" stroke-width="4.5" fill="none" stroke-linecap="round"/>' +
+      '<path d="M44 92 l-8 -4 l6 8 l-9 2 l9 4 M156 92 l8 -4 l-6 8 l9 2 l-9 4" fill="' + MANE + '" stroke="' + MANE + '" stroke-width="2" stroke-linejoin="round"/>' +
       '<ellipse cx="100" cy="118" rx="26" ry="17" fill="' + LIGHT + '"/>' +
       eye('l', 76) + eye('r', 124) +
       '<path d="M94 108 L106 108 L100 115 Z" fill="' + PINK + '"/>' +
