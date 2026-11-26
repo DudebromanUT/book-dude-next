@@ -291,6 +291,15 @@ async function until(what, check, ms) {
     assert.equal((await counts(dad.p)).custom, 1);
     assert.equal(await dad.p.evaluate(() => document.documentElement.dataset.accent), 'teal', 'and so did her color');
 
+    /* ---- The screen-time clock: started on her dad's phone, it shows on her tablet by itself (it looks every 30 seconds) ---- */
+    await dad.p.evaluate(async () => {
+      const s = await import('/book-dude-next/app/state.js'), C = window.ReadingCore;
+      await s.saveSetting('timer', C.timerDo(null, 'cash', Date.now(), 30, 'famclock1').timer);
+    });
+    await until('the clock in her account', () => { const row = item(MIA, 'setting', 'timer'); return row && row.data.v.id === 'famclock1'; });
+    await pad.p.waitForFunction(() => /^Screen time: (30:00|29:\d\d) left/.test(document.getElementById('screen-timer').textContent), null, { timeout: 45000 });
+    await dad.p.waitForSelector('#screen-timer:not([hidden])');
+
     /* ---- Game scores: hers on every device, the best of each level, and the family's scoreboard ---- */
     const scoresKey = 'book-dude:arcade:/book-dude-next/kid:' + MIA + ':maple-madness:records';
     const play = async (p, name, records) => {
@@ -404,7 +413,7 @@ async function until(what, check, ms) {
     await ready(pad.p);
     assert.deepEqual(await kidDbs(pad.p), []);
     assert.deepEqual(owner('select jsonb_agg(kind || \':\' || id order by kind, id) from public.items where kid_id = ' + lit(MIA) + ' and not deleted'),
-      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:arcade', 'setting:payoutTold', 'setting:reward', 'setting:schoolLink', 'setting:storySeen'], 'nothing in the account was lost');
+      ['record:frindle--andrew-clements', 'record:hatchet--gary-paulsen', 'setting:accent', 'setting:arcade', 'setting:payoutTold', 'setting:reward', 'setting:schoolLink', 'setting:storySeen', 'setting:timer'], 'nothing in the account was lost');
 
     /* ---- The grown-up signs out, and back in ---- */
     await more(dad.p);

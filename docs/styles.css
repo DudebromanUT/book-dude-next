@@ -190,6 +190,15 @@ main {
   padding: calc(var(--safe-t) + 8px) 16px 8px; background: var(--accent-soft); color: var(--ink); font-weight: 600; font-size: .92rem; text-align: center;
 }
 .banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+/* The screen-time clock, at the top of every tab while it runs. */
+.banner.timer { background: var(--accent); color: var(--accent-ink); justify-content: space-between; text-align: left; padding-top: calc(var(--safe-t) + 20px); }
+.banner.timer.paused { background: var(--warn-bg); color: var(--warn-ink); }
+.banner.timer.up { background: #B3261E; color: #FFFFFF; }
+.timer-text small { font-weight: 600; opacity: .85; margin-left: 4px; white-space: nowrap; }
+.timer-time { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.timer-btns { display: flex; gap: 8px; }
+.banner.timer .btn { background: rgba(255, 255, 255, .92); color: #2A1F17; border-color: transparent; }
+.timer-up-msg { font-size: 1.1rem; }
 /* Which version this device is running, in small print at the top (for troubleshooting). */
 .app-version {
   position: absolute; z-index: 26; top: calc(var(--safe-t) + 3px); right: 14px; margin: 0; pointer-events: none;

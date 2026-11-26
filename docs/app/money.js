@@ -14,6 +14,7 @@ import { refreshBubble } from './dude-talk.js';
 import { hoursText } from './cobol.js';
 import { post } from './dude-ai.js';
 import { party } from './meters.js';
+import { cashIn } from './timer.js';
 
 // "A trip to the bookstore" reads as "earned a trip to the bookstore" mid-sentence.
 const prizeText = prize => String(prize).replace(/^(A|An|The)\b/, w => w.toLowerCase());
@@ -358,7 +359,7 @@ export const actions = {
     const owed = screenStatus(rewardPoints()).owed;
     if (!owed) return;
     showBox('Cash in screen time',
-      '<p>' + plural(owed, 'minute is', 'minutes are') + ' waiting. Tap how many she’s using now, on any screen. The rest stays saved for later.</p>' +
+      '<p>' + plural(owed, 'minute is', 'minutes are') + ' waiting. Tap how many she’s using now, on any screen. The clock starts right away, on every phone signed in; the rest stays saved for later.</p>' +
       '<div class="row-actions">' + [15, 30, 60].filter(n => n < owed).map(n => '<button type="button" class="btn" data-act="minutes-give" data-min="' + n + '">' + n + ' minutes</button>').join('') +
         '<button type="button" class="btn primary" data-act="minutes-give" data-min="' + owed + '">All ' + fmtNum(owed) + '</button>' +
         '<button type="button" class="btn" data-act="close-confirm">Cancel</button></div>');
@@ -368,8 +369,9 @@ export const actions = {
     confirmBox.close();
     if (!(n > 0)) return;
     await saveReward({ given: C.reward(state.settings.reward).given + n });
+    const clock = await cashIn(n);
     renderProgress();
-    toast(plural(n, 'minute') + ' of screen time cashed in. The Dude recommends stretching first.');
+    toast(plural(n, 'minute') + ' of screen time cashed in. ' + (clock || 'The Dude recommends stretching first.'));
   },
   'given-minus': guard(async () => { const cfg = C.reward(state.settings.reward); await saveReward({ given: Math.max(0, cfg.given - 30) }); renderMore(); }),
   'given-plus': guard(async () => { const cfg = C.reward(state.settings.reward); await saveReward({ given: cfg.given + 30 }); renderMore(); }),

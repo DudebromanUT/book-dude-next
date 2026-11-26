@@ -24,6 +24,7 @@ import { APP_VERSION } from './version.js';
 import { account, activeKid, activeKidName, takeNotice } from './cloud.js';
 import { firstPull, startSync, checkAccount } from './sync.js';
 import { mirrorArcade, mirrorSpelling } from './games.js';
+import { startTimer } from './timer.js';
 
 async function start() {
   $('#app-version').textContent = 'App version ' + APP_VERSION;
@@ -96,6 +97,7 @@ async function start() {
     if (!state.settings.storySeen && isNew) openStory();
   }
   startPets();
+  startTimer();
   registerWorker();
   const notice = takeNotice();
   if (notice) toast(notice);

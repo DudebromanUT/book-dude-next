@@ -451,6 +451,72 @@
     const minutes = days.reduce((sum, k) => sum + (p[k] || 0) * PIANO_STEP, 0);
     return { days, minutes, goal: PIANO_GOAL, met: minutes >= PIANO_GOAL };
   }
+  /**
+   * The screen-time clock, one for the family: a grown-up cashing in minutes starts it, and every signed-in device shows
+   * the same countdown. { id, minutes (all the minutes cashed in for this run of the clock), start (when it last
+   * started counting, ms, or 0 while paused), used (ms counted before that), stopped (a grown-up ended it early),
+   * at (when it was last changed) }. null when there is no clock, or what was saved isn't one.
+   */
+  const MINUTE = 60000;
+  function timer(o) {
+    if (!isPlain(o) || typeof o.id !== 'string' || !/^[a-z0-9]{4,24}$/.test(o.id)) return null;
+    const minutes = Number(o.minutes), start = Number(o.start) || 0, used = Number(o.used) || 0;
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440 || start < 0 || !(used >= 0) || used > minutes * MINUTE) return null;
+    return { id: o.id, minutes, start, used, stopped: o.stopped === true, at: typeof o.at === 'string' ? o.at : '' };
+  }
+  /** Milliseconds left on the clock at `now`. */
+  function timerLeft(o, now) {
+    const t = timer(o);
+    if (!t) return 0;
+    return Math.max(0, t.minutes * MINUTE - t.used - (t.start && !t.stopped ? Math.max(0, now - t.start) : 0));
+  }
+  /**
+   * Where the clock is at `now`: 'none' (no clock, or one that ended more than `keep` ms ago, 30 minutes by default),
+   * 'running', 'paused', 'up' (time ran out) or 'stopped' (a grown-up ended it early; shown no more).
+   */
+  function timerState(o, now, keep) {
+    const t = timer(o);
+    if (!t || t.stopped) return 'none';
+    const left = timerLeft(t, now);
+    if (left > 0) return t.start ? 'running' : 'paused';
+    const ended = t.start ? t.start + t.minutes * MINUTE - t.used : 0;
+    return ended && now - ended <= (keep === undefined ? 30 * MINUTE : keep) ? 'up' : 'none';
+  }
+  /** When a running clock runs out (ms), or 0. */
+  function timerEnds(o) {
+    const t = timer(o);
+    return t && t.start && !t.stopped ? t.start + t.minutes * MINUTE - t.used : 0;
+  }
+  /**
+   * The clock after a grown-up does something at `now`: 'cash' (add `minutes`, starting a new clock when none is
+   * going), 'pause', 'resume' or 'stop'. `id` names a new clock. For 'stop', `back` is the whole minutes not used,
+   * which go back to her bank.
+   */
+  function timerDo(o, what, now, minutes, id) {
+    const t = timer(o), at = new Date(now).toISOString(), st = timerState(t, now, 0);
+    const going = st === 'running' || st === 'paused';
+    if (what === 'cash') {
+      const n = Math.floor(Number(minutes));
+      if (!(n >= 1)) return { timer: t, back: 0 };
+      if (!going) return { timer: timer({ id, minutes: Math.min(1440, n), start: now, used: 0, at }), back: 0 };
+      return { timer: Object.assign({}, t, { minutes: Math.min(1440, t.minutes + n), at }), back: 0 };
+    }
+    if (!going) return { timer: t, back: 0 };
+    const used = t.minutes * MINUTE - timerLeft(t, now);
+    if (what === 'pause' && st === 'running') return { timer: Object.assign({}, t, { start: 0, used, at }), back: 0 };
+    if (what === 'resume' && st === 'paused') return { timer: Object.assign({}, t, { start: now, at }), back: 0 };
+    if (what === 'stop') {
+      const back = Math.floor(timerLeft(t, now) / MINUTE);
+      return { timer: Object.assign({}, t, { start: 0, used, stopped: true, at }), back };
+    }
+    return { timer: t, back: 0 };
+  }
+  /** "12:05" or "1:02:05" for a number of milliseconds (rounded up to the second, so 0 is only shown at the end). */
+  function clock(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(x).padStart(2, '0');
+  }
+
   /** Screen time cashes in from Friday after school (3 pm) through Sunday. `dow` is 0 (Sunday) to 6, `hour` 0 to 23. */
   const cashWindow = (dow, hour) => dow === 6 || dow === 0 || (dow === 5 && hour >= 15);
 
@@ -837,7 +903,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano', 'spelling'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano', 'spelling', 'timer'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -911,7 +977,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, PIANO_STEP, PIANO_GOAL, spelling, spellMerge, spellPoints, SPELL_LEVELS,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, timer, timerLeft, timerState, timerEnds, timerDo, clock, PIANO_STEP, PIANO_GOAL, spelling, spellMerge, spellPoints, SPELL_LEVELS,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

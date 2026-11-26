@@ -28,7 +28,7 @@ export const state = {
   limit: PAGE,
   records: {},
   custom: {},
-  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {}, spelling: C.spelling({}) },
+  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {}, spelling: C.spelling({}), timer: null },
   dudeLine: null,
   dudePs: '',
   offline: 'checking',
@@ -246,7 +246,9 @@ const TAKE = {
   arTrack: v => { if (v && typeof v === 'object') state.settings.arTrack = C.arTrack(v); },
   piano: v => { if (v && typeof v === 'object') state.settings.piano = C.piano(v); },
   // Spelling never loses a paid word: a copy from the account is put together with this one (core.js spellMerge).
-  spelling: v => { if (v && typeof v === 'object') state.settings.spelling = C.spellMerge(state.settings.spelling, v); }
+  spelling: v => { if (v && typeof v === 'object') state.settings.spelling = C.spellMerge(state.settings.spelling, v); },
+  // The family's screen-time clock (core.js timer): the newest change wins, like the other settings.
+  timer: v => { state.settings.timer = C.timer(v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);

@@ -10,6 +10,7 @@
  *      is emailed to them right away.
  *   5. Book money: when she puts enough points in the Book Money Jar for a payout, her parents get an email to add
  *      the money to her account (no Claude needed).
+ *   6. Screen time: texts to her parents when the clock starts, changes and runs out (Timer.gs, through Twilio).
  * Her name is never sent to Claude. Setup steps: scripts/school-email/README.md.
  *
  * Nothing secret is in this file. The link's key is made in your Google account by setup(), and the Claude API key is
@@ -827,6 +828,8 @@ function doPost(e) {
   try { r = JSON.parse((e.postData && e.postData.contents) || '{}'); } catch (err) { return json({ error: 'bad' }); }
   // Spelling BB (Spelling.gs, a second file in this project).
   if (String(r.action).indexOf('spell-') === 0) return json(typeof spellAction === 'function' ? spellAction(r) : { error: 'no spelling' });
+  // The screen-time clock's texts (Timer.gs, a third file in this project).
+  if (r.action === 'timer') return json(typeof timerAction === 'function' ? timerAction(r) : { ok: true, off: true });
   if (r.action === 'chat') return json(chat(r));
   if (r.action === 'picks') return json(pickBooks(r));
   if (r.action === 'report') return json(saveReport(r));

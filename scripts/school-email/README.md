@@ -138,3 +138,26 @@ into a "Spelling log" spreadsheet you can read.
 4. Optional Script Properties: `SPELL_MODEL` (default `claude-haiku-5-5`) and `SPELL_DAILY_LIMIT` (most Claude calls a
    day, default 300). Run `spellLogUrl` in the editor for the Spelling log's link.
 
+
+## Screen-time texts (optional)
+
+Book Dude's screen-time clock works without this: cashing in starts it, and every phone signed in to the family
+account shows the same countdown. With this, the script also texts both grown-ups when the clock starts, gets more
+minutes, is paused, resumed or stopped, and when it runs out (even if nobody has Book Dude open). Texts go through
+Twilio, which charges a little: a phone number for about $2 a month and about a cent a text.
+
+1. Make a Twilio account at twilio.com, buy a **toll-free** number that can send SMS, and complete **Toll-Free
+   Verification** for it (Console → Phone Numbers → Regulatory Compliance; it is free and takes a few days). Use case:
+   personal notifications to your own family's phones. Until it is verified, texts may not go out.
+2. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
+   `Timer.gs` from this folder. Paste in the updated `Code.gs` too (its `doPost` hands timer requests to `Timer.gs`).
+3. **Project Settings → Script Properties**, add:
+   - `TWILIO_SID`: the Account SID from the Twilio Console (starts with `AC`)
+   - `TWILIO_TOKEN`: the Auth Token from the Twilio Console. A secret: it goes here and nowhere else.
+   - `TWILIO_FROM`: your Twilio number, like `+18885551234`
+   - `TEXT_TO`: both phones, with a comma between, like `+18015551234, +18015555678`
+4. Pick `timerTextTest` in the editor's function menu and click **Run**. Both phones should get a test text; if not,
+   the log says what Twilio answered.
+5. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
+
+At most 40 texts a day are sent (each goes to every phone in `TEXT_TO`).

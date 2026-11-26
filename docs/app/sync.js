@@ -261,6 +261,10 @@ export function startSync(saved) {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && Date.now() - sync.at > 20000) syncNow(true);
   });
+  // While the app is on screen, a look every 30 seconds: a screen-time clock started on another phone shows up here.
+  setInterval(() => {
+    if (document.visibilityState === 'visible' && navigator.onLine !== false && Date.now() - sync.at > 25000) syncNow();
+  }, 30000);
   // What changed underneath while a box was open is drawn when it closes (an open book does the same in events.js).
   confirmBox.addEventListener('close', () => {
     if (state.dirty && !sheet.open) { state.dirty = false; render(true); }

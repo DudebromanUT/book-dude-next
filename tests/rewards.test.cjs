@@ -321,3 +321,38 @@ test('spelling: gems pay by list, each word once; comebacks count twice; list an
   assert.deepEqual([rep.yearAr, rep.yearOther], [0, 4]);
   assert.ok(C.SYNCED_SETTINGS.includes('spelling'));
 });
+
+test('the screen-time clock: cashing in starts it, grown-ups pause and stop it, and unused minutes go back', () => {
+  const t0 = Date.parse('2026-11-27T22:00:00Z'), M = 60000;
+  assert.equal(C.timer(null), null);
+  assert.equal(C.timer({ id: 'BAD id', minutes: 5 }), null);
+  assert.equal(C.timer({ id: 'abcd', minutes: 0 }), null);
+  assert.equal(C.timerState(null, t0), 'none');
+  let { timer: t } = C.timerDo(null, 'cash', t0, 30, 'abcd1234');
+  assert.deepEqual([t.minutes, t.start, t.used, t.stopped], [30, t0, 0, false]);
+  assert.equal(C.timerState(t, t0 + 10 * M), 'running');
+  assert.equal(C.timerLeft(t, t0 + 10 * M), 20 * M);
+  assert.equal(C.timerEnds(t), t0 + 30 * M);
+  // Cashing in more while it runs adds to the same clock.
+  t = C.timerDo(t, 'cash', t0 + 10 * M, 15, 'other111').timer;
+  assert.deepEqual([t.id, t.minutes, C.timerLeft(t, t0 + 10 * M)], ['abcd1234', 45, 35 * M]);
+  // Paused, it holds still; resumed, it counts from where it was.
+  t = C.timerDo(t, 'pause', t0 + 20 * M).timer;
+  assert.deepEqual([C.timerState(t, t0 + 50 * M), C.timerLeft(t, t0 + 50 * M), C.timerEnds(t)], ['paused', 25 * M, 0]);
+  t = C.timerDo(t, 'resume', t0 + 50 * M).timer;
+  assert.deepEqual([C.timerState(t, t0 + 55 * M), C.timerLeft(t, t0 + 55 * M), C.timerEnds(t)], ['running', 20 * M, t0 + 75 * M]);
+  // Time runs out: 'up' for half an hour, then gone.
+  assert.equal(C.timerState(t, t0 + 75 * M), 'up');
+  assert.equal(C.timerState(t, t0 + 104 * M), 'up');
+  assert.equal(C.timerState(t, t0 + 106 * M), 'none');
+  // A run-out clock is over: the next cash-in starts a new one.
+  const fresh = C.timerDo(t, 'cash', t0 + 80 * M, 15, 'newone11').timer;
+  assert.deepEqual([fresh.id, fresh.minutes, fresh.start], ['newone11', 15, t0 + 80 * M]);
+  // Stopping early gives back the whole minutes not used.
+  const stop = C.timerDo(t, 'stop', t0 + 60 * M + 30000);
+  assert.equal(stop.back, 14);
+  assert.equal(C.timerState(stop.timer, t0 + 60 * M + 30000), 'none');
+  assert.equal(C.timerDo(stop.timer, 'stop', t0 + 61 * M).back, 0, 'stopping twice gives nothing more');
+  assert.deepEqual([C.clock(0), C.clock(59001), C.clock(25 * M), C.clock(65 * M + 5000)], ['0:00', '1:00', '25:00', '1:05:05']);
+  assert.ok(C.SYNCED_SETTINGS.includes('timer'));
+});
