@@ -512,7 +512,8 @@
     return { timer: t, back: 0 };
   }
   /**
-   * Where the screen-time alerts go: two private ntfy.sh topics, `grown` (the grown-ups' phones) and `kid` (her iPad).
+   * Where the screen-time alerts go: two private ntfy.sh topics, `grown` (the grown-ups' phones) and `kid` (her iPad),
+   * and `key`, the pause code the grown-ups' Pause and Resume buttons carry (supabase/003_timer_button.sql).
    * A topic's name works like a password, so it must be long and random-looking: 8 to 64 letters, numbers, - or _.
    * null when alerts aren't set up.
    */
@@ -522,7 +523,9 @@
     const grown = typeof o.grown === 'string' && TOPIC.test(o.grown.trim()) ? o.grown.trim() : '';
     const kid = typeof o.kid === 'string' && TOPIC.test(o.kid.trim()) ? o.kid.trim() : '';
     if (!grown && !kid) return null;
-    return { grown, kid };
+    // The pause code in the grown-ups' alerts (their Pause and Resume buttons): long and random, like the topics.
+    const key = typeof o.key === 'string' && /^[A-Za-z0-9_-]{24,64}$/.test(o.key) ? o.key : '';
+    return key ? { grown, kid, key } : { grown, kid };
   }
   const topicOk = s => typeof s === 'string' && TOPIC.test(s.trim());
 

@@ -14,107 +14,25 @@ import { C, $, esc } from './util.js';
 import { state, saveSetting } from './state.js';
 import { toast, showBox, confirmBox } from './page.js';
 import { asGrownup } from './grownup.js';
+import { sendClock, sendTest, WARN } from './ntfy.js';
 
-const NTFY = 'https://ntfy.sh';
-const WARN = 5;   // the heads-up comes this many minutes before the end
 const figPage = () => new URL('timer/', document.baseURI).href;
-const PICTURE = { start: 'awake', add: 'awake', resume: 'awake', pause: 'paused', warn: 'yawn', up: 'asleep', stop: 'asleep', test: 'awake' };
-const PRIORITY = { warn: 4, up: 5 };   // the rest are normal (3); 5 comes through even on a quiet phone
-const mins = n => n + ' min';
-const pick = list => list[Math.floor(Math.random() * list.length)];
-const timeText = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
 export const topics = () => C.alerts(state.settings.alerts);
 
-// ---------------------------------------------------------------------------------------------------------------------
-// What the alerts say. `c` is { name, minutes, added, left, endsText, back, bank }.
-
-function grownupAlert(event, c) {
-  const ends = c.endsText ? ', ends ' + c.endsText : '';
-  const bank = c.bank >= 0 ? ' Bank: ' + mins(c.bank) + '.' : '';
-  if (event === 'start') return [ 'Screen time started', c.name + ': ' + mins(c.minutes) + ends + '.' + bank ];
-  if (event === 'add') return [ 'More screen time', mins(c.added) + ' added for ' + c.name + '. ' + mins(c.left) + ' left' + ends + '.' + bank ];
-  if (event === 'pause') return [ 'Screen time paused', c.name + ' has ' + mins(c.left) + ' left.' + bank ];
-  if (event === 'resume') return [ 'Screen time is back on', c.name + ': ' + mins(c.left) + ' left' + ends + '.' + bank ];
-  if (event === 'warn') return [ WARN + ' minutes left', c.name + '’s screen time ends at ' + c.endsText + '.' + bank ];
-  if (event === 'up') return [ 'Screen time is up!', c.name + '’s screen time is over (' + c.endsText + '). Time to hand over the remote.' + bank ];
-  if (event === 'test') return [ 'Book Dude alerts are on', 'Grown-ups: you’ll get the facts here when screen time starts, changes and ends.' ];
-  return [ 'Screen time stopped early', c.name + '’s clock was stopped.' + (c.back ? ' ' + mins(c.back) + ' went back to her bank.' : '') + bank ];
+// The pause code in the grown-ups' alerts (their Pause and Resume buttons): long and random, made once.
+const randomHex = n => {
+  const a = new Uint8Array(n);
+  window.crypto.getRandomValues(a);
+  return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
+};
+const newKey = () => 'pk' + randomHex(20);
+async function withKey(to) {
+  if (to.key) return to;
+  const next = Object.assign({}, to, { key: newKey() });
+  await saveSetting('alerts', next);
+  return next;
 }
-
-function kidAlert(event, c) {
-  const ends = c.endsText ? ' It ends at ' + c.endsText + '.' : '';
-  const bank = c.bank > 0 ? ' You have ' + mins(c.bank) + ' saved in your bank.' : '';
-  const lines = {
-    start: [
-      [ 'Screen time! Fig is wide awake', 'Meow! You have ' + mins(c.minutes) + '. Fig is watching the clock so you don’t have to.' + ends + bank ],
-      [ 'Fig says: go!', mins(c.minutes) + ' of screen time, starting now. Fig had three breakfasts and is ready.' + ends + bank ],
-      [ 'Screen time is on', 'Fig is wide awake and guarding your ' + mins(c.minutes) + '. Enjoy!' + ends + bank ]
-    ],
-    add: [
-      [ 'More screen time!', mins(c.added) + ' more! Fig had a snack and woke right back up. ' + mins(c.left) + ' left.' + ends ],
-      [ 'Bonus minutes', 'Fig found ' + mins(c.added) + ' more under the couch. ' + mins(c.left) + ' left.' + ends ]
-    ],
-    pause: [
-      [ 'Paused', 'Fig is frozen like a statue. Your ' + mins(c.left) + ' are safe until a grown-up starts the clock again.' ],
-      [ 'Screen time on hold', 'Fig is holding perfectly still. ' + mins(c.left) + ' left for later.' ]
-    ],
-    resume: [
-      [ 'Back on!', 'Fig stretched and is awake again. ' + mins(c.left) + ' left.' + ends ],
-      [ 'Screen time is back', 'Fig is back on duty. ' + mins(c.left) + ' to go.' + ends ]
-    ],
-    warn: [
-      [ WARN + ' minutes left', 'Fig is yawning. Finish your level or your episode.' ],
-      [ 'Almost time', 'Fig’s eyes are getting heavy. ' + WARN + ' more minutes, then nap time for the screen.' ],
-      [ 'Heads up from Fig', WARN + ' minutes left. Find a good stopping place.' ]
-    ],
-    up: [
-      [ 'Time’s up!', 'Fig is asleep, and so is the screen. Time to hand over the remote.' + bank ],
-      [ 'Screen time is over', 'Shhh. Fig is napping in her nightcap. Screen off, please.' + bank ],
-      [ 'Fig is asleep', 'Screen time is all done. Fig says goodnight to the screen.' + bank ]
-    ],
-    stop: [
-      [ 'Screen time stopped', 'A grown-up stopped the clock. Fig went back to sleep.' + bank ],
-      [ 'All done for now', 'The clock stopped early. Fig curled up for a nap.' + bank ]
-    ],
-    test: [ [ 'Hi from Fig!', 'Meow! I’ll tell you here when screen time starts, when ' + WARN + ' minutes are left, and when it’s over.' ] ]
-  };
-  return pick(lines[event]);
-}
-
-// The Fig-o-Clock link: the clock as of this alert (after #), and the topic, so the page can follow the clock live.
-function figLink(c, topic) {
-  const parts = [ 's=' + c.s, 'm=' + c.minutes ];
-  if (c.s === 'r') parts.push('e=' + Math.round(c.ends / 1000));
-  else parts.push('l=' + Math.round(c.leftMs / 1000));
-  if (c.bank >= 0) parts.push('b=' + c.bank);
-  if (c.name !== 'Maddy') parts.push('n=' + encodeURIComponent(c.name));
-  parts.push('k=' + topic);
-  return figPage() + '#' + parts.join('&');
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// ntfy
-
-async function publish(topic, event, kid, c, extra) {
-  const [ title, message ] = kid ? kidAlert(event, c) : grownupAlert(event, c);
-  const click = c.minutes ? figLink(c, topic) : figPage();
-  try {
-    const res = await fetch(NTFY + '/', { method: 'POST', body: JSON.stringify(Object.assign({
-      topic, title, message, priority: PRIORITY[event] || 3, click,
-      attach: figPage() + 'img/fig-' + PICTURE[event] + '.png', filename: 'fig.png',
-      actions: [ { action: 'view', label: 'Fig-o-Clock', url: click } ]
-    }, extra || {})) });
-    return res.ok;
-  } catch (e) {
-    return false;
-  }
-}
-// Cancels a scheduled alert (or takes back a delivered one). Nothing there to cancel is fine.
-async function cancel(topic, seq) {
-  try { await fetch(NTFY + '/' + topic + '/' + seq, { method: 'DELETE' }); } catch (e) { /* offline: it may still come */ }
-}
-const seqId = (t, which) => 'bookdude-' + t.id + '-' + which;
 
 /**
  * Sends the alerts for a change to the clock `t` ('start', 'add', 'pause', 'resume' or 'stop'), and sets, moves or
@@ -122,37 +40,19 @@ const seqId = (t, which) => 'bookdude-' + t.id + '-' + which;
  * or 'failed' (the grown-ups' alert didn't go: offline, most likely).
  */
 export async function alertClock(event, t, info) {
-  const to = topics();
+  let to = topics();
   if (!to) return 'off';
-  const now = Date.now(), ends = C.timerEnds(t), leftMs = C.timerLeft(t, now);
-  const s = event === 'pause' ? 'p' : event === 'stop' ? 'x' : 'r';
-  const c = { name: info.name, minutes: t.minutes, added: info.added || 0, back: info.back || 0, bank: info.bank,
-    left: Math.ceil(leftMs / 60000), leftMs, ends, endsText: ends ? timeText(ends) : '', s };
-  const one = async (topic, kid) => {
-    if (!topic) return true;
-    // The heads-up and time's up for this clock: cleared first, then set again if it's running.
-    if (event !== 'start') await Promise.all([ cancel(topic, seqId(t, 'warn')), cancel(topic, seqId(t, 'up')) ]);
-    const sent = await publish(topic, event, kid, c);
-    if (s === 'r' && ends > now + 15000) {
-      const later = [];
-      if (ends - WARN * 60000 > now + 30000) later.push(publish(topic, 'warn', kid, c, { delay: String(Math.round((ends - WARN * 60000) / 1000)), sequence_id: seqId(t, 'warn') }));
-      later.push(publish(topic, 'up', kid, c, { delay: String(Math.round(ends / 1000)), sequence_id: seqId(t, 'up') }));
-      await Promise.all(later);
-    }
-    return sent;
-  };
-  const [ grown ] = await Promise.all([ one(to.grown, false), one(to.kid, true) ]);
-  return grown ? 'ok' : 'failed';
+  to = await withKey(to);
+  const now = Date.now();
+  const clock = { id: t.id, name: info.name, minutes: t.minutes, added: info.added || 0, back: info.back || 0, bank: info.bank,
+    leftMs: C.timerLeft(t, now), ends: C.timerEnds(t), s: event === 'pause' ? 'p' : event === 'stop' ? 'x' : 'r' };
+  return (await sendClock(event, clock, to, figPage())) ? 'ok' : 'failed';
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Setting them up: Settings, behind the passcode.
 
-const randomTopic = prefix => {
-  const a = new Uint8Array(10);
-  window.crypto.getRandomValues(a);
-  return prefix + Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
-};
+const randomTopic = prefix => prefix + randomHex(10);
 
 export function alertsPanelHtml() {
   const to = topics();
@@ -197,9 +97,8 @@ export const actions = {
   'alerts-test': async () => {
     const to = topics();
     if (!to) return;
-    const c = { name: (state.settings.readerName || '').trim() || 'Maddy', minutes: 0 };
-    const [ a, b ] = await Promise.all([ to.grown ? publish(to.grown, 'test', false, c) : true, to.kid ? publish(to.kid, 'test', true, c) : true ]);
-    toast(a && b ? 'Test alerts sent. Check the phones and her iPad.' : 'A test alert didn’t go out. Is the internet on?');
+    const ok = await sendTest(to, figPage(), (state.settings.readerName || '').trim() || 'Maddy');
+    toast(ok ? 'Test alerts sent. Check the phones and her iPad.' : 'A test alert didn’t go out. Is the internet on?');
   }
 };
 
@@ -210,7 +109,8 @@ export const submits = {
     const bad = [ g && !C.topicOk(g) ? 'the grown-ups’ name' : '', k && !C.topicOk(k) ? 'her name' : '' ].filter(Boolean);
     if (bad.length) { err.textContent = 'Check ' + bad.join(' and ') + ': 8 to 64 letters, numbers, - or _ (just the name, not ntfy.sh/).'; err.hidden = false; return; }
     if (g && g === k) { err.textContent = 'Use two different names, so her iPad doesn’t get the grown-ups’ alerts.'; err.hidden = false; return; }
-    await saveSetting('alerts', g || k ? { grown: g, kid: k } : null);
+    const was = topics();
+    await saveSetting('alerts', g || k ? { grown: g, kid: k, key: (was && was.key) || newKey() } : null);
     showBox('Screen-time alerts', boxHtml());
     toast(g || k ? 'Saved on every device in the family account. Send a test alert to check.' : 'Alerts are off.');
     const panel = $('#alerts-panel');

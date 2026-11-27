@@ -4,7 +4,11 @@
  * The link carries the clock as it was when the alert went out (after #): e (when it ends, in seconds), m (minutes on
  * the clock), l (seconds left, when paused or stopped), s (r running, p paused, x stopped), b (minutes still in her
  * bank), n (her name), and k (the ntfy topic the alert came on). Every 30 seconds the page reads that topic's latest
- * alert from ntfy.sh, whose link carries the clock as it is now, so a pause, more minutes or a stop shows here too. */
+ * alert from ntfy.sh, whose link carries the clock as it is now, so a pause, more minutes or a stop shows here too.
+ *
+ * The grown-ups' links also carry pk, the family's pause code: then the page has a Pause / Resume button, and do=pause
+ * or do=resume (from the buttons on their alerts) does it right away. It asks the family account to pause or resume
+ * the clock (supabase/003_timer_button.sql), then sends the alerts the way Book Dude does (app/ntfy.js). */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -22,6 +26,9 @@
   }
   var clock = fromLink(q);
   var topic = /^[A-Za-z0-9_-]{8,64}$/.test(q.get('k') || '') ? q.get('k') : '';
+  var pressedAt = 0;   // when Pause or Resume was last tapped here
+  var pauseKey = /^[A-Za-z0-9_-]{24,64}$/.test(q.get('pk') || '') ? q.get('pk') : '';
+  var todo = pauseKey && (q.get('do') === 'pause' || q.get('do') === 'resume') ? q.get('do') : '';
 
   // ---------------------------------------------------------------------------------------------------------------
   // Fig, drawn facing you on her cushion: a gray tabby with yellow-green eyes.
@@ -169,6 +176,7 @@
     $('bar').style.width = (frac * 100).toFixed(1) + '%';
     var c = caption(st, frac);
     if (c !== lastCaption) { $('caption').textContent = c; lastCaption = c; }
+    showControl(st);
     $('bank').textContent = clock.bank === null ? '' : clock.bank + ' min still in ' + name + '’s bank';
     document.title = (st === 'running' ? mmss(left) + ' · ' : '') + 'Fig-o-Clock';
     if (!document.body.classList.contains('ready')) setTimeout(function () { document.body.classList.add('ready'); }, 50);
@@ -195,15 +203,82 @@
         if (!m || m.event !== 'message' || typeof m.click !== 'string' || m.click.indexOf('#') < 0) return;
         if (!newest || m.time >= newest.time) newest = m;
       });
-      if (!newest) return;
+      // Older than a Pause or Resume tapped here: this page already knows better.
+      if (!newest || newest.time * 1000 < pressedAt - 2000) return;
       var c = fromLink(new URLSearchParams(newest.click.slice(newest.click.indexOf('#') + 1)));
       if (c.state === 'none' || !c.minutes) return;
       Object.keys(c).forEach(function (k) { clock[k] = c[k]; });
     }).catch(function () { /* offline: the link's own time keeps counting */ });
   }
 
+  // ---------------------------------------------------------------------------------------------------------------
+  // Grown-ups: Pause and Resume.
+
+  var busy = false, shownControl = '';
+  function showControl(st) {
+    var want = !pauseKey ? '' : st === 'running' ? 'pause' : st === 'paused' ? 'resume' : '';
+    if (busy || want === shownControl) return;
+    shownControl = want;
+    $('controls').hidden = !want;
+    $('ctl').textContent = want === 'pause' ? 'Pause screen time' : 'Resume screen time';
+    $('ctl').className = 'ctl' + (want === 'resume' ? ' resume' : '');
+  }
+  function say(text) { $('ctl-msg').textContent = text; }
+
+  function press(what) {
+    if (busy || !pauseKey) return;
+    busy = true;
+    pressedAt = Date.now();
+    $('ctl').disabled = true;
+    say(what === 'pause' ? 'Pausing…' : 'Starting the clock again…');
+    var page = location.origin + location.pathname;
+    Promise.all([import('../app/config.js'), import('../app/ntfy.js')]).then(function (mods) {
+      var cloud = mods[0].CLOUD, ntfy = mods[1];
+      return fetch(cloud.url + '/rest/v1/rpc/timer_button', {
+        method: 'POST', headers: { apikey: cloud.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pause_key: pauseKey, what: what })
+      }).then(function (r) { return r.json(); }).then(function (r) {
+        if (!r || !r.ok) {
+          say(r && r.error === 'unknown' ? 'This button is from an old alert. Use Book Dude to ' + what + ' the clock.' : 'That didn’t work. Try again, or use Book Dude.');
+          return;
+        }
+        // The clock as the family account has it now.
+        if (r.state === 'running' || r.state === 'paused') {
+          clock.state = r.state; clock.minutes = r.minutes; clock.ends = r.ends; clock.left = r.left;
+        } else if (r.state === 'up') {
+          clock.state = 'running'; clock.ends = Date.now() - 1000;
+        } else {
+          clock.state = 'stopped'; clock.left = 0;
+        }
+        if (!r.changed) {
+          say(r.state === 'paused' ? 'It’s already paused.' : r.state === 'running' ? 'It’s already running.' : 'There’s no screen time going right now.');
+          return;
+        }
+        var info = { id: r.id, name: r.name || name, minutes: r.minutes, leftMs: r.left, ends: r.ends, s: r.state === 'paused' ? 'p' : 'r',
+          bank: clock.bank === null ? -1 : clock.bank };
+        return ntfy.sendClock(what, info, { grown: r.grown, kid: r.kid, key: pauseKey }, page).then(function (sent) {
+          var done = what === 'pause' ? 'Paused on every device. ' + mmss(r.left) + ' saved for later.' : 'Back on. It ends at ' + ntfy.timeText(r.ends) + '.';
+          say(sent ? done : done + ' (The alerts couldn’t be updated: is the internet on?)');
+        });
+      });
+    }).catch(function () {
+      say('Couldn’t reach the family account. Is the internet on?');
+    }).then(function () {
+      busy = false;
+      $('ctl').disabled = false;
+      shownControl = '';
+    });
+  }
+  $('ctl').addEventListener('click', function () { press(shownControl); });
+
   window.__fig = clock;
   draw();
+  // From an alert's Pause or Resume button: do it now, once (a reload or a later visit won't do it again).
+  if (todo) {
+    q.delete('do');
+    history.replaceState(null, '', location.pathname + '#' + q.toString());
+    press(todo);
+  }
   look();
   setInterval(look, 30000);
   document.addEventListener('visibilitychange', look);

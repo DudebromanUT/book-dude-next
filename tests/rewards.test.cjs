@@ -364,5 +364,8 @@ test('screen-time alert topics: two long, random-looking names, or nothing', () 
     { grown: 'bookdude-0123abcd456789ef0123', kid: 'bookdude-kid-0123abcd456789ef0123' });
   assert.deepEqual(C.alerts({ grown: 'bookdude-0123abcd456789ef0123', kid: 'has spaces in it' }), { grown: 'bookdude-0123abcd456789ef0123', kid: '' });
   assert.equal(C.topicOk('ntfy.sh/bookdude-123456'), false, 'a name, not an address');
+  assert.deepEqual(C.alerts({ grown: 'bookdude-0123abcd456789ef0123', kid: '', key: 'pk0123456789abcdef0123456789abcdef01234567' }),
+    { grown: 'bookdude-0123abcd456789ef0123', kid: '', key: 'pk0123456789abcdef0123456789abcdef01234567' }, 'and the pause code');
+  assert.deepEqual(C.alerts({ grown: 'bookdude-0123abcd456789ef0123', key: 'too-short' }), { grown: 'bookdude-0123abcd456789ef0123', kid: '' });
   assert.ok(C.SYNCED_SETTINGS.includes('alerts'));
 });

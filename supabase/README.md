@@ -12,8 +12,10 @@ this repo, a chat or the app.
 - `002_scores.sql`: the arcade scoreboard: each player's best on each level, and the family's board. Run it after
   `001_foundation.sql`, the same way. Scores can only be saved for yourself and only get better; the board shows
   first names, stars and scores for your own family.
+- `003_timer_button.sql`: Pause and Resume from the grown-ups' screen-time alerts. One function that pauses or resumes
+  a reader's screen-time clock when given her pause code (a long random code in her alerts setting, which only the
+  grown-ups' alerts carry), without signing in, and does nothing else. Run it after `001_foundation.sql`.
 - `project.json`: the project's public address and publishable key.
-
 ## Setting up (the owner, once)
 
 1. **Sign-in settings.** In the Supabase dashboard: **Authentication**, **Sign In / Providers**.

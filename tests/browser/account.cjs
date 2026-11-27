@@ -140,7 +140,7 @@ async function until(what, check, ms) {
   const admin = sql => { const r = psql('postgres', ['-c', sql]); assert.ok(r.ok, r.err); };
   admin('drop database if exists ' + DB);
   admin('create database ' + DB);
-  for (const file of [path.join(ROOT, 'tests', 'db', 'supabase-stub.sql'), path.join(ROOT, 'supabase', '001_foundation.sql'), path.join(ROOT, 'supabase', '002_scores.sql')]) {
+  for (const file of [path.join(ROOT, 'tests', 'db', 'supabase-stub.sql'), path.join(ROOT, 'supabase', '001_foundation.sql'), path.join(ROOT, 'supabase', '002_scores.sql'), path.join(ROOT, 'supabase', '003_timer_button.sql')]) {
     const r = psql(DB, ['-f', file]); assert.ok(r.ok, r.err);
   }
   const server = await serve();

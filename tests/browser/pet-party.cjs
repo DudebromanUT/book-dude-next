@@ -142,7 +142,10 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.fill('#alerts-kid', K);
     await p.$eval('form[data-form="alerts"] button[type="submit"]', e => e.click());
     await p.waitForSelector('#confirm[open] [data-act="alerts-test"]');
-    assert.deepEqual(await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.alerts), { grown: G, kid: K });
+    const alertsSaved = await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.alerts);
+    assert.deepEqual([alertsSaved.grown, alertsSaved.kid], [G, K]);
+    assert.match(alertsSaved.key, /^pk[0-9a-f]{40}$/, 'and a pause code for the grown-ups\' Pause and Resume buttons');
+    const PK = alertsSaved.key;
     assert.match(clean(await p.innerText('#alerts-panel')), /^Screen-time alerts for grown-ups On\. /i);
     await p.$eval('#confirm [data-act="alerts-test"]', e => e.click());
     await p.waitForFunction(() => /Test alerts sent/.test(document.getElementById('toast').textContent));
@@ -227,6 +230,13 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.equal(now.filter(n => n.body.topic === K).length, 5, 'and Fig tells her, every time');
     assert.match(now.find(n => n.body.topic === K).body.title, /^(Screen time! Fig is wide awake|Fig says: go!|Screen time is on)$/);
     assert.deepEqual(now.filter(n => n.body.topic === G).map(n => n.body.attach.replace(BASE + 'timer/img/', '')), ['fig-awake.png', 'fig-paused.png', 'fig-awake.png', 'fig-asleep.png', 'fig-awake.png']);
+    // The grown-ups' alerts carry Pause (while it runs) or Resume (while paused), with the pause code; hers never do.
+    const buttons = n => n.body.actions.map(a => a.label + (a.url.includes('do=pause') ? ':pause' : a.url.includes('do=resume') ? ':resume' : '')).join(' ');
+    assert.deepEqual(now.filter(n => n.body.topic === G).map(buttons), ['Pause:pause Fig-o-Clock', 'Resume:resume Fig-o-Clock', 'Pause:pause Fig-o-Clock', 'Fig-o-Clock', 'Pause:pause Fig-o-Clock']);
+    assert.ok(now.filter(n => n.body.topic === G).every(n => n.body.click.includes('&pk=' + PK)), 'her grown-ups\' Fig-o-Clock links can pause it');
+    assert.ok(ntfy.filter(n => n.body && n.body.topic === K).every(n => !JSON.stringify(n.body).includes(PK)), 'her iPad never gets the pause code');
+    assert.equal(buttons(later.find(n => n.body.topic === G && n.body.title === '5 minutes left')), 'Pause:pause Fig-o-Clock', 'the heads-up can pause it too');
+    assert.equal(buttons(later.find(n => n.body.topic === G && n.body.title === 'Screen time is up!')), 'Fig-o-Clock');
     const first = now[0].body.click;
     assert.ok(first.startsWith(BASE + 'timer/#s=r&m=15&e=' + t(12, 15) + '&b=45&k='), 'a tap opens the Fig-o-Clock: ' + first);
     const ids = (await timerNow()).id;
@@ -259,6 +269,60 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.match(clean(await figPage.innerText('.wrap')), /10:00 paused Paused\. Fig is holding perfectly still.* 38 min still in Maddy’s bank/);
     assert.ok(looks >= 1);
     await figPage.close();
+    // From an alert's Pause button: the Fig-o-Clock pauses the clock in the family account right away, sends the
+    // alerts, and offers Resume.
+    const ctl = await ctx.newPage();
+    ctl.on('pageerror', e => errors.push(e.message));
+    const rpcCalls = [], sent = [];
+    let clockState = 'running';
+    await ctl.route('https://coolooehjmqrxnndremb.supabase.co/**', r => {
+      const body = JSON.parse(r.request().postData());
+      rpcCalls.push(body);
+      const answer = body.pause_key !== PK ? { error: 'unknown' } : (() => {
+        const changed = body.what !== 'look' && (body.what === 'pause') === (clockState === 'running');
+        if (changed) clockState = body.what === 'pause' ? 'paused' : 'running';
+        const fixed = Date.parse('2026-11-22T12:47:00-07:00');
+        return { ok: true, changed, state: clockState, name: 'Maddy', id: 'clockabc123', minutes: 30, left: 18 * 60000,
+          ends: clockState === 'running' ? fixed + 18 * 60000 : 0, grown: G, kid: K };
+      })();
+      r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(answer) });
+    });
+    await ctl.route('https://ntfy.sh/**', r => {
+      const q = r.request();
+      if (q.url().includes('/json?')) return r.fulfill({ contentType: 'application/x-ndjson', headers: { 'access-control-allow-origin': '*' }, body: '' });
+      sent.push({ method: q.method(), url: q.url(), body: q.postData() ? JSON.parse(q.postData()) : null });
+      r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' });
+    });
+    const runEnds = Math.round(Date.parse('2026-11-22T13:05:00-07:00') / 1000);
+    await ctl.goto(BASE + 'timer/#s=r&m=30&e=' + runEnds + '&b=38&k=' + G + '&pk=' + PK + '&do=pause');
+    await ctl.waitForFunction(() => /^Paused on every device\. 18:00 saved for later\./.test(document.getElementById('ctl-msg').textContent));
+    assert.deepEqual(rpcCalls, [{ pause_key: PK, what: 'pause' }]);
+    assert.ok(!(await ctl.evaluate(() => location.hash)).includes('do='), 'a reload won\'t pause it again');
+    assert.match(clean(await ctl.innerText('.wrap')), /18:00 paused Paused\. Fig is holding perfectly still.* Resume screen time/);
+    assert.deepEqual(sent.filter(n => n.method === 'DELETE').map(n => n.url.replace('https://ntfy.sh/', '')).sort(),
+      [G + '/bookdude-clockabc123-up', G + '/bookdude-clockabc123-warn', K + '/bookdude-clockabc123-up', K + '/bookdude-clockabc123-warn'], 'the heads-up and time\'s up are cancelled');
+    const pausedNow = sent.filter(n => n.method === 'POST');
+    assert.deepEqual(pausedNow.filter(n => n.body.topic === G).map(n => [n.body.title, n.body.message]), [['Screen time paused', 'Maddy has 18 min left. Bank: 38 min.']]);
+    assert.equal(pausedNow.filter(n => n.body.topic === K).length, 1);
+    if (SHOTS) await ctl.screenshot({ path: path.join(SHOTS, 'fig-paused-control.png') });
+    // Resume, from the page's own button: the clock goes again, and the heads-up and time's up are set again.
+    sent.length = 0;
+    await ctl.click('#ctl');
+    await ctl.waitForFunction(() => /^Back on\. It ends at 1:05 PM\./.test(document.getElementById('ctl-msg').textContent));
+    assert.deepEqual(rpcCalls.map(c => c.what), ['pause', 'resume']);
+    const back = sent.filter(n => n.method === 'POST' && n.body.topic === G);
+    assert.deepEqual(back.map(n => [n.body.title, n.body.delay || '']), [['Screen time is back on', ''], ['5 minutes left', String(runEnds - 300)], ['Screen time is up!', String(runEnds)]]);
+    assert.match(clean(await ctl.innerText('#controls')), /^Pause screen time/);
+    // An old alert's button (a pause code that's no longer the family's) does nothing, and says so.
+    await ctl.goto('about:blank');
+    await ctl.goto(BASE + 'timer/#s=r&m=30&e=' + runEnds + '&k=' + G + '&pk=pk' + '0'.repeat(40) + '&do=pause');
+    await ctl.waitForFunction(() => /This button is from an old alert/.test(document.getElementById('ctl-msg').textContent));
+    // Her own link has no pause code, so no button.
+    await ctl.goto('about:blank');
+    await ctl.goto(BASE + 'timer/#s=r&m=30&e=' + runEnds + '&k=' + K);
+    await ctl.waitForTimeout(500);
+    assert.equal(await ctl.isVisible('#controls'), false);
+    await ctl.close();
     // With alerts off, the clock still works and nothing goes to ntfy.
     await p.evaluate(async () => { (await import('/book-dude-next/app/state.js')).state.settings.alerts = null; });
     ntfy.length = 0;

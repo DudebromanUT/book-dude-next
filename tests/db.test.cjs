@@ -10,6 +10,7 @@ const test = require('node:test'), assert = require('node:assert/strict'), fs = 
 const BASE = process.env.BOOKDUDE_TEST_DB;
 const MIGRATION = path.join(__dirname, '..', 'supabase', '001_foundation.sql');
 const SCORES = path.join(__dirname, '..', 'supabase', '002_scores.sql');
+const BUTTON = path.join(__dirname, '..', 'supabase', '003_timer_button.sql');
 const STUB = path.join(__dirname, 'db', 'supabase-stub.sql');
 const DB = 'bookdude_test_' + process.pid;
 
@@ -59,12 +60,13 @@ if (!BASE) {
     let r = psql(DB, ['-f', STUB]); assert.ok(r.ok, r.err);
     r = psql(DB, ['-f', MIGRATION]); assert.ok(r.ok, r.err);
     r = psql(DB, ['-f', SCORES]); assert.ok(r.ok, r.err);
+    r = psql(DB, ['-f', BUTTON]); assert.ok(r.ok, r.err);
   });
   test.after(() => { psql('postgres', ['-c', 'drop database if exists ' + DB + ' with (force)']); });
 
   test('the script can be run again without changing or losing anything', () => {
     assert.equal(changed('owner', 'insert into public.families (name) values (\'Keep me\')'), 1);
-    for (const file of [MIGRATION, SCORES]) { const r = psql(DB, ['-f', file]); assert.ok(r.ok, r.err); }
+    for (const file of [MIGRATION, SCORES, BUTTON]) { const r = psql(DB, ['-f', file]); assert.ok(r.ok, r.err); }
     assert.equal(rows('owner', 'select name from public.families').length, 1);
     assert.equal(changed('owner', 'delete from public.families'), 1);
   });
@@ -85,10 +87,10 @@ if (!BASE) {
       ? 'select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in (\'public\', \'bookdude\') and has_function_privilege(' + lit(role) + ', p.oid, \'execute\') order by 1'
       : 'select c.relname || \':\' || string_agg(x.priv, \',\' order by x.priv) as name from pg_class c join pg_namespace n on n.oid = c.relnamespace cross join (values (\'SELECT\'), (\'INSERT\'), (\'UPDATE\'), (\'DELETE\'), (\'TRUNCATE\')) x(priv) ' +
         'where n.nspname in (\'public\', \'bookdude\') and c.relkind in (\'r\', \'S\', \'v\') and has_table_privilege(' + lit(role) + ', c.oid, x.priv) group by c.relname order by 1').map(r => r.name);
-    assert.deepEqual(can('anon', 'functions'), ['invite_ok', 'ping']);
+    assert.deepEqual(can('anon', 'functions'), ['invite_ok', 'ping', 'timer_button']);
     assert.deepEqual(can('anon', 'tables'), []);
     assert.deepEqual(can('authenticated', 'functions'), ['create_invite', 'create_kid', 'grownup_family', 'invite_ok', 'is_admin', 'kid_sign_in', 'kid_sign_out',
-      'me', 'my_family', 'my_kids', 'ping', 'reset_grownup', 'save_scores', 'scoreboard', 'set_kid_password', 'sign_out_kid']);
+      'me', 'my_family', 'my_kids', 'ping', 'reset_grownup', 'save_scores', 'scoreboard', 'set_kid_password', 'sign_out_kid', 'timer_button']);
     assert.deepEqual(can('authenticated', 'tables'), ['families:SELECT', 'grownups:SELECT', 'items:INSERT,SELECT,UPDATE', 'kid_devices:SELECT', 'kids:SELECT']);
     // Every table has its rules switched on, and every function that runs with the owner's rights pins where it looks things up.
     assert.deepEqual(rows('owner', 'select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in (\'public\', \'bookdude\') and c.relkind = \'r\' and not c.relrowsecurity'), []);
@@ -454,5 +456,43 @@ if (!BASE) {
     run('owner', 'delete from auth.users where id = ' + lit(P.dee));
     assert.equal(rows('owner', 'select 1 from public.kids where family_id = ' + lit(P.cousins)).length, 1);
     assert.equal(rows('owner', 'select 1 from public.items where kid_id = ' + lit(P.zoe)).length, 2);
+  });
+
+  test('Pause and Resume from an alert: only with the reader\'s pause code, only her clock, and only pause or resume', () => {
+    const KEY = 'pk_' + 'a1'.repeat(15), OTHER = 'pk_' + 'b2'.repeat(15);
+    const now = Date.now();
+    const timerRow = who => get(who, '(select data -> \'v\' from public.items where kid_id = ' + lit(P.mia) + ' and kind = \'setting\' and id = \'timer\')');
+    const rev = () => Number(get('owner', '(select rev from public.items where kid_id = ' + lit(P.mia) + ' and kind = \'setting\' and id = \'timer\')'));
+    assert.equal(changed('owner', upsert(P.mia, 'setting', 'alerts', { v: { grown: 'bookdude-0123abcd456789ef0123', kid: 'bookdude-kid-0123abcd456789ef0123', key: KEY } }, new Date(now - 60000).toISOString())), 1);
+    // Started 10 minutes ago, saved by a phone whose clock runs two minutes fast.
+    assert.equal(changed('owner', upsert(P.mia, 'setting', 'timer', { v: { id: 'clock1234', minutes: 30, start: now - 10 * 60000, used: 0, stopped: false, at: '' } }, new Date(now + 120000).toISOString())), 1);
+    assert.deepEqual(rpc('anon', 'timer_button(\'short\', \'pause\')'), { error: 'bad' });
+    assert.deepEqual(rpc('anon', 'timer_button(' + lit(KEY) + ', \'stop\')'), { error: 'bad' }, 'pause or resume only: no stopping, no adding minutes');
+    assert.deepEqual(rpc('anon', 'timer_button(' + lit(OTHER) + ', \'pause\')'), { error: 'unknown' });
+    refused('anon', 'select * from public.items', /permission denied/);
+
+    const r0 = rev();
+    const paused = rpc('anon', 'timer_button(' + lit(KEY) + ', \'pause\')');
+    assert.deepEqual([paused.ok, paused.changed, paused.state, paused.name, paused.id, paused.minutes, paused.ends, paused.grown, paused.kid],
+      [true, true, 'paused', 'Mia', 'clock1234', 30, 0, 'bookdude-0123abcd456789ef0123', 'bookdude-kid-0123abcd456789ef0123']);
+    assert.ok(Math.abs(paused.left - 20 * 60000) < 5000, 'about 20 minutes left: ' + paused.left);
+    const t = timerRow('owner');
+    assert.equal(t.start, 0);
+    assert.ok(Math.abs(t.used - 10 * 60000) < 5000);
+    assert.match(t.at, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+    assert.ok(rev() > r0, 'a new change number, so every device picks it up');
+    assert.deepEqual(Object.keys(paused).sort(), ['changed', 'ends', 'grown', 'id', 'kid', 'left', 'minutes', 'name', 'ok', 'state'], 'the clock and the topics, nothing else');
+
+    const again = rpc('anon', 'timer_button(' + lit(KEY) + ', \'pause\')');
+    assert.deepEqual([again.changed, again.state], [false, 'paused'], 'pausing twice changes nothing');
+    assert.deepEqual([rpc('anon', 'timer_button(' + lit(KEY) + ', \'look\')').state, rev() > r0], ['paused', true]);
+
+    const before = Date.now();
+    const resumed = rpc('anon', 'timer_button(' + lit(KEY) + ', \'resume\')');
+    assert.deepEqual([resumed.changed, resumed.state], [true, 'running']);
+    assert.ok(Math.abs(resumed.ends - (before + paused.left)) < 5000, 'it ends 20 minutes from now');
+    assert.ok(timerRow('owner').start >= before - 1000);
+    // A grown-up in her family sees the change like any other.
+    assert.equal(timerRow(P.ann).start, timerRow('owner').start);
   });
 }

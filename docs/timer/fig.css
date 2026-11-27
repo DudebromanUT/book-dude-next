@@ -24,6 +24,15 @@ h1 { margin: 2px 0 6px; font-size: 2rem; }
 .bar i { display: block; height: 100%; width: 0; background: var(--bar); border-radius: 6px; }
 .ready .bar i { transition: width 1s linear; }
 .bank { margin: 14px 0 0; font-weight: 700; }
+/* Grown-ups' Pause and Resume (only on their alerts' links). */
+.controls { margin: 18px auto 0; max-width: 420px; }
+.controls[hidden] { display: none; }
+.ctl { width: 100%; min-height: 56px; border: 0; border-radius: 16px; background: #2A1F17; color: #FFF6DE; font: 800 1.25rem -apple-system, sans-serif; cursor: pointer; }
+.ctl.resume { background: #2E7247; color: #FFFFFF; }
+.ctl:disabled { opacity: .55; }
+body.night .ctl { background: #FFF6DE; color: #2A1F17; }
+body.night .ctl.resume { background: #6FCB8B; color: #12261A; }
+.ctl-msg { margin: 8px 0 0; min-height: 1.2em; font-weight: 600; }
 .foot { margin: 22px 0 0; font-size: .9rem; }
 .foot a { color: inherit; }
 
