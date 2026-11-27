@@ -136,7 +136,8 @@
   }
 
   var blinkAt = Date.now() + 2500, yawnAt = Date.now() + 6000, lastCaption = '';
-  function draw() {
+  // One picture of Fig and the clock, as they are now (paint), and the loop that keeps redrawing it (draw).
+  function paint() {
     var now = Date.now(), left = leftNow(now), total = clock.minutes * 60000;
     var frac = total ? Math.min(1, left / total) : 0;
     var st = clock.state === 'running' && left <= 0 ? 'up' : clock.state;
@@ -180,6 +181,9 @@
     $('bank').textContent = clock.bank === null ? '' : clock.bank + ' min still in ' + name + '’s bank';
     document.title = (st === 'running' ? mmss(left) + ' · ' : '') + 'Fig-o-Clock';
     if (!document.body.classList.contains('ready')) setTimeout(function () { document.body.classList.add('ready'); }, 50);
+  }
+  function draw() {
+    paint();
     requestAnimationFrame(draw);
   }
   function mix(a, b, t) {
@@ -208,6 +212,7 @@
       var c = fromLink(new URLSearchParams(newest.click.slice(newest.click.indexOf('#') + 1)));
       if (c.state === 'none' || !c.minutes) return;
       Object.keys(c).forEach(function (k) { clock[k] = c[k]; });
+      paint();
     }).catch(function () { /* offline: the link's own time keeps counting */ });
   }
 
@@ -250,6 +255,7 @@
         } else {
           clock.state = 'stopped'; clock.left = 0;
         }
+        paint();
         if (!r.changed) {
           say(r.state === 'paused' ? 'It’s already paused.' : r.state === 'running' ? 'It’s already running.' : 'There’s no screen time going right now.');
           return;
@@ -267,6 +273,7 @@
       busy = false;
       $('ctl').disabled = false;
       shownControl = '';
+      paint();
     });
   }
   $('ctl').addEventListener('click', function () { press(shownControl); });

@@ -298,6 +298,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await ctl.waitForFunction(() => /^Paused on every device\. 18:00 saved for later\./.test(document.getElementById('ctl-msg').textContent));
     assert.deepEqual(rpcCalls, [{ pause_key: PK, what: 'pause' }]);
     assert.ok(!(await ctl.evaluate(() => location.hash)).includes('do='), 'a reload won\'t pause it again');
+    await ctl.waitForFunction(() => document.getElementById('ends').textContent === 'paused' && /Resume/.test(document.getElementById('ctl').textContent));
     assert.match(clean(await ctl.innerText('.wrap')), /18:00 paused Paused\. Fig is holding perfectly still.* Resume screen time/);
     assert.deepEqual(sent.filter(n => n.method === 'DELETE').map(n => n.url.replace('https://ntfy.sh/', '')).sort(),
       [G + '/bookdude-clockabc123-up', G + '/bookdude-clockabc123-warn', K + '/bookdude-clockabc123-up', K + '/bookdude-clockabc123-warn'], 'the heads-up and time\'s up are cancelled');
@@ -312,7 +313,7 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.deepEqual(rpcCalls.map(c => c.what), ['pause', 'resume']);
     const back = sent.filter(n => n.method === 'POST' && n.body.topic === G);
     assert.deepEqual(back.map(n => [n.body.title, n.body.delay || '']), [['Screen time is back on', ''], ['5 minutes left', String(runEnds - 300)], ['Screen time is up!', String(runEnds)]]);
-    assert.match(clean(await ctl.innerText('#controls')), /^Pause screen time/);
+    await ctl.waitForFunction(() => /^Pause screen time/.test(document.getElementById('ctl').textContent));
     // An old alert's button (a pause code that's no longer the family's) does nothing, and says so.
     await ctl.goto('about:blank');
     await ctl.goto(BASE + 'timer/#s=r&m=30&e=' + runEnds + '&k=' + G + '&pk=pk' + '0'.repeat(40) + '&do=pause');
