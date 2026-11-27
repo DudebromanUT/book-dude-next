@@ -16,6 +16,7 @@ this repo, a chat or the app.
   a reader's screen-time clock when given her pause code (a long random code in her alerts setting, which only the
   grown-ups' alerts carry), without signing in, and does nothing else. Run it after `001_foundation.sql`.
 - `project.json`: the project's public address and publishable key.
+
 ## Setting up (the owner, once)
 
 1. **Sign-in settings.** In the Supabase dashboard: **Authentication**, **Sign In / Providers**.
