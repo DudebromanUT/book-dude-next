@@ -22,7 +22,7 @@ function load(props = {}, status = 200) {
       getProperties: () => Object.assign({}, store)
     }) },
     UrlFetchApp: { fetch: (url, opts) => {
-      sent.alerts.push(Object.assign({ url }, JSON.parse(opts.payload)));
+      sent.alerts.push(Object.assign({ url, auth: (opts.headers || {}).Authorization }, JSON.parse(opts.payload)));
       return { getResponseCode: () => status, getContentText: () => '{"error":"nope"}' };
     } },
     Utilities: { formatDate: d => d.toISOString().slice(0, 10), getUuid: () => '0123abcd-4567-89ef-0123-456789abcdef' },
@@ -149,4 +149,17 @@ test('the Fig-o-Clock link: a view-only code shows the clock and nothing else', 
   assert.deepEqual(s.get({ clock: 'nope' }), { error: 'bad' });
   assert.deepEqual(s.get({ clock: VIEW }), { id: 'abcd1234', state: 'running', minutes: 30, ends: 1999999999000, left: 0, bank: 45 });
   assert.deepEqual(s.get({ key: 'nope' }), { error: 'That link is not right.' }, 'the school link still needs its key');
+});
+
+test('a free ntfy.sh account\'s token is sent along, and a 429 without one says what to do', () => {
+  const s = load({}, 429);
+  s.ctx.timerSetup();
+  assert.equal(s.sent.alerts[0].auth, undefined);
+  assert.match(s.sent.log.join('\n'), /shared allowance for Google scripts running out\. Add NTFY_TOKEN/);
+  const t = load({ NTFY_TOKEN: 'tk_abc123' });
+  t.post(clock({ event: 'start', minutes: 30, left: 30, ends: Date.now() + 30 * 60000, endsText: '4:35 PM', bank: 45 }));
+  assert.deepEqual(t.sent.alerts.map(a => a.auth), ['Bearer tk_abc123', 'Bearer tk_abc123']);
+  const bad = load({ NTFY_TOKEN: 'tk_wrong' }, 401);
+  bad.ctx.timerSetup();
+  assert.match(bad.sent.log.join('\n'), /did not accept NTFY_TOKEN/);
 });

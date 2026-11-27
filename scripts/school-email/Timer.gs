@@ -19,6 +19,10 @@
  * topic on your phones, Maddy's on her iPad. Then Deploy > Manage deployments > pencil > Version: New version > Deploy.
  *
  * A topic's name works like a password: anyone who knows it can see its alerts, so share them only with the family.
+ *
+ * NTFY_TOKEN (Script Property): an access token from a free ntfy.sh account (ntfy.sh > Sign up > Account > Access
+ * tokens > Create). Without one, ntfy.sh counts this script together with every other Google script sharing Google's
+ * internet addresses, and their messages can use up the daily allowance (error 429). With one, the allowance is yours.
  * Optional Script Property: NTFY_SERVER, for your own ntfy server instead of https://ntfy.sh.
  */
 
@@ -237,8 +241,10 @@ function ntfyServer() { return (setting('NTFY_SERVER') || 'https://ntfy.sh').rep
 // One alert. `click` is the page a tap opens and a button's too; `picture` is shown with it; priority 3 is normal,
 // 5 is urgent. true if it went.
 function sendAlert(topic, title, body, click, priority, picture) {
+  var token = setting('NTFY_TOKEN');
   var res = UrlFetchApp.fetch(ntfyServer() + '/', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: token ? { Authorization: 'Bearer ' + token } : {},
     payload: JSON.stringify({
       topic: topic, title: String(title).slice(0, 80), message: String(body).slice(0, 400), priority: priority || 3,
       click: click || undefined, attach: picture || undefined, filename: picture ? 'fig.png' : undefined,
@@ -248,6 +254,8 @@ function sendAlert(topic, title, body, click, priority, picture) {
   var code = res.getResponseCode();
   if (code >= 200 && code < 300) return true;
   Logger.log('ntfy did not take the alert: ' + code + ' ' + String(res.getContentText()).slice(0, 300));
+  if (code === 429 && !token) Logger.log('That is the shared allowance for Google scripts running out. Add NTFY_TOKEN (a free ntfy.sh account\'s access token) in Project Settings, Script Properties, and run timerSetup again.');
+  if (code === 401 || code === 403) Logger.log('ntfy did not accept NTFY_TOKEN. Check it in Project Settings, Script Properties (it starts with tk_).');
   return false;
 }
 

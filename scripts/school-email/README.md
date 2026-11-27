@@ -155,12 +155,15 @@ clock with a view-only code that shows nothing else). No account, no phone numbe
 
 1. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
    `Timer.gs` from this folder. Paste in the updated `Code.gs` too (it hands the clock's requests to `Timer.gs`).
-2. Pick `timerSetup` in the editor's function menu and click **Run**. It makes both topics, sends a test alert to each,
+2. Make a free account at **ntfy.sh** (Sign up), then **Account → Access tokens → Create access token**. In
+   **Project Settings → Script Properties**, add `NTFY_TOKEN` with that token (it starts with `tk_`). Without it,
+   ntfy.sh shares one daily allowance among all Google scripts, and alerts can fail with error 429.
+3. Pick `timerSetup` in the editor's function menu and click **Run**. It makes both topics, sends a test alert to each,
    and prints their names in the log.
-3. Install **ntfy** from the App Store. On your phone and your spouse's: tap **+**, type the **grown-ups'** topic
+4. Install **ntfy** from the App Store. On your phone and your spouse's: tap **+**, type the **grown-ups'** topic
    name exactly, and tap **Subscribe**. On her iPad, subscribe to **Maddy's** topic. Allow notifications, including
    Time Sensitive ones, so the urgent time's-up alert comes through.
-4. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
+5. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
 
 A topic name works like a password: anyone who knows it can see those alerts, so share them only with the family.
 Optional Script Property: `NTFY_SERVER`, to use your own ntfy server instead of `https://ntfy.sh`. The Fig pictures
