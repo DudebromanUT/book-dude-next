@@ -87,6 +87,7 @@ export function accountPanelHtml() {
       (admin ? '<button type="button" class="btn small" data-act="acct-invite">Make an invite code</button>' : '') + '</div>' +
     '<div class="row-actions">' + (kid ? '<button type="button" class="btn small" data-act="acct-sync">Save now</button>' +
         '<button type="button" class="btn small" data-act="acct-own">Show this device’s own books</button>' : '') +
+      (kids.length ? '<button type="button" class="btn small" data-act="acct-check">Account check</button>' : '') +
       '<button type="button" class="btn small" data-act="acct-signout">Sign out</button></div></section>';
 }
 

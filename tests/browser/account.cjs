@@ -300,6 +300,26 @@ async function until(what, check, ms) {
     await pad.p.waitForFunction(() => /^Screen time: (30:00|29:\d\d) left/.test(document.getElementById('screen-timer').textContent), null, { timeout: 45000 });
     await dad.p.waitForSelector('#screen-timer:not([hidden])');
 
+    /* ---- Account check: a grown-up sees what the account itself holds for each reader, and can download it ---- */
+    await more(dad.p);
+    await dad.p.click('#account-panel [data-act="acct-check"]');
+    await dad.p.waitForSelector('#confirm[open] .check-table');
+    const checked = await dad.p.$$eval('.check-table tr', rows => Object.fromEntries(rows.map(r => [r.querySelector('th').textContent, r.querySelector('td').textContent])));
+    const inAccount = owner('select count(*) from public.items where kid_id = ' + lit(MIA) + " and kind = 'record' and not deleted");
+    assert.equal(checked.Reader, 'Mia');
+    assert.equal(Number(checked['Book records']), Number(inAccount), 'the same books the account holds');
+    assert.equal(Number(checked['Finished books']), 1, 'Frindle');
+    assert.equal(checked['School AR total'], 'not yet');
+    assert.match(checked['Last saved'], /^\d{4}-\d\d-\d\d \d\d:\d\d$/);
+    assert.ok(await dad.p.$$eval('.check-recent li', li => li.some(l => /setting timer/.test(l.textContent))), 'the clock is among the latest saves');
+    if (process.env.SHOTS) await dad.p.screenshot({ path: path.join(process.env.SHOTS, 'account-check.png') });
+    const [file] = await Promise.all([dad.p.waitForEvent('download'), dad.p.click('#confirm [data-act="acct-check-csv"][data-which="summary"]')]);
+    assert.match(file.suggestedFilename(), /^book-dude-account-check-\d{4}-\d\d-\d\d-\d\d-\d\d\.csv$/);
+    const text = fs.readFileSync(await file.path(), 'utf8');
+    assert.match(text, /^reader,Mia\nbook_records,\d+\nfinished_books,1\n/);
+    assert.match(text, /\npoints_for_rewards,[\d.]+\n/);
+    await dad.p.click('#confirm [data-act="close-confirm"]');
+
     /* ---- Game scores: hers on every device, the best of each level, and the family's scoreboard ---- */
     const scoresKey = 'book-dude:arcade:/book-dude-next/kid:' + MIA + ':maple-madness:records';
     const play = async (p, name, records) => {
