@@ -2,25 +2,28 @@
  * The screen-time clock's alerts, server side (Google Apps Script), for Book Dude.
  *
  * When a grown-up cashes in screen time in Book Dude, or pauses, resumes or stops the clock, the app tells this script
- * (through doPost in Code.gs, with the same key as everything else Book Dude sends), and it sends a notification to
- * everyone subscribed in the free ntfy app (ntfy.sh): the grown-ups' iPhones and Maddy's iPad. While the clock runs,
- * the script also sets itself an alarm for the end and sends "time's up" then, as an urgent alert, whether or not
- * anyone has Book Dude open. Each alert says how many minutes are still in her bank, and tapping it opens the
- * Fig-o-Clock: a live countdown page where Fig the cat gets sleepier as time runs out. The page asks this script for
- * the clock with a view-only code (doGet in Code.gs, ?clock=...), which shows the clock and nothing else.
+ * (through doPost in Code.gs, with the same key as everything else Book Dude sends), and it sends alerts through the
+ * free ntfy app (ntfy.sh) to two private topics:
+ *   - the grown-ups' topic (your iPhones): the plain facts, with Fig's picture;
+ *   - Maddy's topic (her iPad): Fig talking to her, in lines that change from one alert to the next.
+ * While the clock runs, the script also sets itself two alarms: a warning when 5 minutes are left, and "time's up" at
+ * the end (urgent), whether or not anyone has Book Dude open. Each alert says how many minutes are still in her bank,
+ * carries a picture of Fig (wide awake, yawning, paused mid-yawn, or asleep in her nightcap), and tapping it opens the
+ * Fig-o-Clock: a live countdown where Fig gets sleepier as time runs out. The page asks this script for the clock
+ * with a view-only code (doGet in Code.gs, ?clock=...), which shows the clock and nothing else.
  *
  * SETUP: in the Book Dude Apps Script project, click + next to Files, choose Script, name it Timer, and paste in this
  * file. Code.gs hands the clock's requests to this file (doPost's 'timer' line and doGet's 'clock' line, both in the
- * current Code.gs). Then pick timerSetup in the function menu and click Run: it makes the family's private ntfy topic,
- * sends a test alert to it, and prints the topic's name. In the ntfy app on each device, tap +, type that name exactly,
- * and Subscribe. Then Deploy > Manage deployments > pencil > Version: New version > Deploy (the link stays the same).
+ * current Code.gs). Then pick timerSetup in the function menu and click Run: it makes the two topics, sends a test
+ * alert to each, and prints their names. In the ntfy app, tap +, type the name exactly, and Subscribe: the grown-ups'
+ * topic on your phones, Maddy's on her iPad. Then Deploy > Manage deployments > pencil > Version: New version > Deploy.
  *
- * The topic's name works like a password: anyone who knows it can see these alerts, so share it only with the family.
+ * A topic's name works like a password: anyone who knows it can see its alerts, so share them only with the family.
  * Optional Script Property: NTFY_SERVER, for your own ntfy server instead of https://ntfy.sh.
  */
 
-var ALERT_DAILY_LIMIT = 60;   // alerts a day at most
-
+var ALERT_DAILY_LIMIT = 60;   // clock changes a day that send alerts, at most
+var WARN_MINUTES = 5;         // the heads-up comes this many minutes before the end
 var FIG_PAGE = 'https://dudebromanut.github.io/book-dude-next/timer/';
 
 // Book Dude's request: { action: 'timer', event: 'start'|'add'|'pause'|'resume'|'stop', id, name, minutes, added,
@@ -35,29 +38,33 @@ function timerAction(r) {
     minutes: timerNum(r.minutes), added: timerNum(r.added), back: timerNum(r.back), left: timerNum(r.left),
     ends: Number(r.ends) > 0 ? Number(r.ends) : 0,
     endsText: /^\d{1,2}:\d\d\s?[AP]M$/.test(clip(r.endsText, 12)) ? clip(r.endsText, 12) : '',
-    leftMs: Number(r.leftMs) >= 0 && Number(r.leftMs) <= 1440 * 60000 ? Math.round(Number(r.leftMs)) : 0, bank: r.bank === undefined || r.bank === null ? -1 : timerNum(r.bank),
+    leftMs: Number(r.leftMs) >= 0 && Number(r.leftMs) <= 1440 * 60000 ? Math.round(Number(r.leftMs)) : 0,
+    bank: r.bank === undefined || r.bank === null ? -1 : timerNum(r.bank),
     page: /^https:\/\/[\w.-]+\/[\w\/.-]*$/.test(clip(r.page, 200)) ? clip(r.page, 200) : FIG_PAGE
   };
   t.state = event === 'pause' ? 'paused' : event === 'stop' ? 'stopped' : 'running';
+  var props = PropertiesService.getScriptProperties();
   // The clock as it is now, for the Fig-o-Clock page.
-  PropertiesService.getScriptProperties().setProperty('TIMER_NOW', JSON.stringify({
+  props.setProperty('TIMER_NOW', JSON.stringify({
     id: t.id, state: t.state, minutes: t.minutes, ends: t.state === 'running' ? t.ends : 0, left: t.state === 'running' ? 0 : t.leftMs, bank: t.bank, at: Date.now() }));
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    // One alarm at a time: for the clock that is running now, if it is.
+    // The alarms are for the clock that is running now, if it is: a 5-minute warning (when there's time for one) and
+    // time's up.
     clearTimerAlarm();
-    var running = event === 'start' || event === 'add' || event === 'resume';
-    if (running && t.ends > Date.now() && t.ends - Date.now() < 25 * 3600e3) {
+    var now = Date.now();
+    if (t.state === 'running' && t.ends > now && t.ends - now < 25 * 3600e3) {
       ScriptApp.newTrigger('timerUp').timeBased().at(new Date(t.ends)).create();
-      PropertiesService.getScriptProperties().setProperty('TIMER_UP', JSON.stringify({ id: t.id, name: t.name, ends: t.ends, endsText: t.endsText, minutes: t.minutes, bank: t.bank, page: t.page }));
+      var warnAt = t.ends - WARN_MINUTES * 60000;
+      if (warnAt - now > 60000) ScriptApp.newTrigger('timerWarn').timeBased().at(new Date(warnAt)).create();
+      props.setProperty('TIMER_UP', JSON.stringify({ id: t.id, name: t.name, ends: t.ends, endsText: t.endsText, minutes: t.minutes, bank: t.bank, page: t.page, warnAt: warnAt }));
     }
   } finally {
     lock.releaseLock();
   }
   if (!countToday('alert', ALERT_DAILY_LIMIT)) return { ok: true, later: true };
-  var m = timerMessage(event, t);
-  return sendAlert(m.title, m.body + bankLine(t.bank), figLink(t), 3) ? { ok: true, sent: true } : { error: 'alert' };
+  return alertBoth(event, t, figLink(t)) ? { ok: true, sent: true } : { error: 'alert' };
 }
 
 function timerNum(v) {
@@ -65,8 +72,77 @@ function timerNum(v) {
   return n >= 0 && n <= 100000 ? n : 0;
 }
 function mins(n) { return n + ' min'; }
-function bankLine(bank) { return bank >= 0 ? ' Bank: ' + mins(bank) + '.' : ''; }
+function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// What the alerts say. The grown-ups get the facts; Maddy gets Fig, in a different line most times.
+
+var PICTURE = { start: 'awake', add: 'awake', resume: 'awake', pause: 'paused', warn: 'yawn', up: 'asleep', stop: 'asleep' };
+var PRIORITY = { warn: 4, up: 5 };   // the rest are normal (3); 5 comes through even on a quiet phone
+
+function grownupAlert(event, t) {
+  var ends = t.endsText ? ', ends ' + t.endsText : '';
+  var bank = t.bank >= 0 ? ' Bank: ' + mins(t.bank) + '.' : '';
+  if (event === 'start') return { title: 'Screen time started', body: t.name + ': ' + mins(t.minutes) + ends + '.' + bank };
+  if (event === 'add') return { title: 'More screen time', body: mins(t.added) + ' added for ' + t.name + '. ' + mins(t.left) + ' left' + ends + '.' + bank };
+  if (event === 'pause') return { title: 'Screen time paused', body: t.name + ' has ' + mins(t.left) + ' left.' + bank };
+  if (event === 'resume') return { title: 'Screen time is back on', body: t.name + ': ' + mins(t.left) + ' left' + ends + '.' + bank };
+  if (event === 'warn') return { title: WARN_MINUTES + ' minutes left', body: t.name + '\'s screen time' + (t.endsText ? ' ends at ' + t.endsText : ' ends soon') + '.' + bank };
+  if (event === 'up') return { title: 'Screen time is up!', body: t.name + '\'s screen time is over' + (t.endsText ? ' (' + t.endsText + ')' : '') + '. Time to hand over the remote.' + bank };
+  return { title: 'Screen time stopped early', body: t.name + '\'s clock was stopped.' + (t.back ? ' ' + mins(t.back) + ' went back to her bank.' : '') + bank };
+}
+
+function kidAlert(event, t) {
+  var bank = t.bank > 0 ? ' You have ' + mins(t.bank) + ' saved in your bank.' : '';
+  var ends = t.endsText ? ' It ends at ' + t.endsText + '.' : '';
+  var lines = {
+    start: [
+      ['Screen time! Fig is wide awake', 'Meow! You have ' + mins(t.minutes) + '. Fig is watching the clock so you don\'t have to.' + ends],
+      ['Fig says: go!', mins(t.minutes) + ' of screen time, starting now. Fig had three breakfasts and is ready.' + ends],
+      ['Screen time is on', 'Fig is wide awake and guarding your ' + mins(t.minutes) + '. Enjoy!' + ends]
+    ],
+    add: [
+      ['More screen time!', mins(t.added) + ' more! Fig had a snack and woke right back up. ' + mins(t.left) + ' left.' + ends],
+      ['Bonus minutes', 'Fig found ' + mins(t.added) + ' more under the couch. ' + mins(t.left) + ' left.' + ends]
+    ],
+    pause: [
+      ['Paused', 'Fig is frozen like a statue. Your ' + mins(t.left) + ' are safe until a grown-up starts the clock again.'],
+      ['Screen time on hold', 'Fig is holding perfectly still. ' + mins(t.left) + ' left for later.']
+    ],
+    resume: [
+      ['Back on!', 'Fig stretched and is awake again. ' + mins(t.left) + ' left.' + ends],
+      ['Screen time is back', 'Fig is back on duty. ' + mins(t.left) + ' to go.' + ends]
+    ],
+    warn: [
+      [WARN_MINUTES + ' minutes left', 'Fig is yawning. Finish your level or your episode.'],
+      ['Almost time', 'Fig\'s eyes are getting heavy. ' + WARN_MINUTES + ' more minutes, then nap time for the screen.'],
+      ['Heads up from Fig', WARN_MINUTES + ' minutes left. Find a good stopping place.']
+    ],
+    up: [
+      ['Time\'s up!', 'Fig is asleep, and so is the screen. Time to hand over the remote.'],
+      ['Screen time is over', 'Shhh. Fig is napping in her nightcap. Screen off, please.'],
+      ['Fig is asleep', 'Screen time is all done. Fig says goodnight to the screen.']
+    ],
+    stop: [
+      ['Screen time stopped', 'A grown-up stopped the clock. Fig went back to sleep.'],
+      ['All done for now', 'The clock stopped early. Fig curled up for a nap.']
+    ]
+  };
+  var l = pick(lines[event]);
+  return { title: l[0], body: l[1] + (event === 'start' || event === 'stop' || event === 'up' ? bank : '') };
+}
+
+// Sends one alert to each topic. true if the grown-ups' went (Maddy's iPad is a bonus).
+function alertBoth(event, t, link) {
+  var pic = (t.page || FIG_PAGE) + 'img/fig-' + PICTURE[event] + '.png';
+  var g = grownupAlert(event, t), k = kidAlert(event, t);
+  var ok = sendAlert(ntfyTopic('NTFY_TOPIC'), g.title, g.body, link, PRIORITY[event] || 3, pic);
+  sendAlert(ntfyTopic('NTFY_KID_TOPIC'), k.title, k.body, link, PRIORITY[event] || 3, pic);
+  return ok;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The Fig-o-Clock link
 
 // The view-only code in the Fig-o-Clock links: made once, kept in Script Properties.
 function figCode() {
@@ -75,7 +151,7 @@ function figCode() {
   if (!code) { code = Utilities.getUuid().replace(/-/g, '').slice(0, 16); props.setProperty('TIMER_VIEW', code); }
   return code;
 }
-// The link: the clock as of this text (after #), the view-only code, and this script's id so the page can ask for updates.
+// The link: the clock as of this alert (after #), the view-only code, and this script's id so the page can ask for updates.
 function figLink(t) {
   var id = (/\/s\/([\w-]+)\/exec/.exec(ScriptApp.getService().getUrl() || '') || [])[1] || '';
   var parts = ['s=' + { running: 'r', paused: 'p', stopped: 'x' }[t.state], 'm=' + t.minutes];
@@ -96,38 +172,48 @@ function timerView(code) {
   return { id: now.id, state: now.state, minutes: now.minutes, ends: now.ends, left: now.left, bank: now.bank >= 0 ? now.bank : null };
 }
 
-// Each alert's title and first line.
-function timerMessage(event, t) {
-  var ends = t.endsText ? ', ends ' + t.endsText : '';
-  if (event === 'start') return { title: 'Screen time started', body: t.name + ': ' + mins(t.minutes) + ends + '.' };
-  if (event === 'add') return { title: 'More screen time', body: mins(t.added) + ' added for ' + t.name + '. ' + mins(t.left) + ' left' + ends + '.' };
-  if (event === 'pause') return { title: 'Screen time paused', body: t.name + ' has ' + mins(t.left) + ' left.' };
-  if (event === 'resume') return { title: 'Screen time is back on', body: t.name + ': ' + mins(t.left) + ' left' + ends + '.' };
-  return { title: 'Screen time stopped early', body: t.name + '\'s clock was stopped.' + (t.back ? ' ' + mins(t.back) + ' went back to her bank.' : '') };
+// ---------------------------------------------------------------------------------------------------------------------
+// The alarms
+
+function savedClock() {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty('TIMER_UP') || 'null'); } catch (e) { return null; }
+}
+function asClock(c) {
+  return { state: 'running', name: c.name, minutes: c.minutes || 0, ends: c.ends, endsText: c.endsText, bank: c.bank >= 0 ? c.bank : -1, page: c.page };
 }
 
-// The alarm at the end of the clock: "time's up", to every phone.
+// Five minutes left.
+function timerWarn() {
+  ScriptApp.getProjectTriggers().forEach(function (tr) { if (tr.getHandlerFunction() === 'timerWarn') ScriptApp.deleteTrigger(tr); });
+  var c = savedClock();
+  if (!c || !(c.warnAt > 0)) return;
+  // Google woke this up early: set it again for the real time.
+  if (Date.now() < c.warnAt - 90000) { ScriptApp.newTrigger('timerWarn').timeBased().at(new Date(c.warnAt)).create(); return; }
+  if (Date.now() > c.ends - 60000) return;   // too late for a warning: time's up comes next
+  var t = asClock(c);
+  alertBoth('warn', t, figLink(t));
+}
+
+// Time's up: urgent, so it comes through with a long buzz even when the phone is quiet.
 function timerUp() {
-  var props = PropertiesService.getScriptProperties();
-  var t = null;
-  try { t = JSON.parse(props.getProperty('TIMER_UP') || 'null'); } catch (e) { t = null; }
+  var c = savedClock();
   clearTimerAlarm();
-  if (!t || !(t.ends > 0)) return;
+  if (!c || !(c.ends > 0)) return;
   // Google woke this up early: set it again for the real end.
-  if (Date.now() < t.ends - 90000) {
-    ScriptApp.newTrigger('timerUp').timeBased().at(new Date(t.ends)).create();
-    props.setProperty('TIMER_UP', JSON.stringify(t));
+  if (Date.now() < c.ends - 90000) {
+    ScriptApp.newTrigger('timerUp').timeBased().at(new Date(c.ends)).create();
+    PropertiesService.getScriptProperties().setProperty('TIMER_UP', JSON.stringify(c));
     return;
   }
-  if (Date.now() - t.ends > 30 * 60000) return;   // long past: say nothing
-  // Urgent, so it comes through with a long buzz even when the phone is quiet.
-  sendAlert('Screen time is up!', t.name + '\'s screen time is over' + (t.endsText ? ' (' + t.endsText + ')' : '') + '. Time to hand over the remote.' +
-    bankLine(t.bank >= 0 ? t.bank : -1), figLink({ state: 'running', minutes: t.minutes || 0, ends: t.ends, bank: t.bank >= 0 ? t.bank : -1, name: t.name, page: t.page }), 5);
+  if (Date.now() - c.ends > 30 * 60000) return;   // long past: say nothing
+  var t = asClock(c);
+  alertBoth('up', t, figLink(t));
 }
 
 function clearTimerAlarm() {
   ScriptApp.getProjectTriggers().forEach(function (tr) {
-    if (tr.getHandlerFunction() === 'timerUp') ScriptApp.deleteTrigger(tr);
+    var h = tr.getHandlerFunction();
+    if (h === 'timerUp' || h === 'timerWarn') ScriptApp.deleteTrigger(tr);
   });
   PropertiesService.getScriptProperties().deleteProperty('TIMER_UP');
 }
@@ -135,21 +221,29 @@ function clearTimerAlarm() {
 // ---------------------------------------------------------------------------------------------------------------------
 // ntfy
 
-// The family's private topic: made once, from random letters and numbers, and kept in Script Properties.
-function ntfyTopic() {
+// A private topic, made once from random letters and numbers and kept in Script Properties: NTFY_TOPIC for the
+// grown-ups, NTFY_KID_TOPIC for Maddy's iPad.
+function ntfyTopic(name) {
   var props = PropertiesService.getScriptProperties();
-  var topic = props.getProperty('NTFY_TOPIC');
-  if (!topic) { topic = 'bookdude-' + Utilities.getUuid().replace(/-/g, '').slice(0, 20); props.setProperty('NTFY_TOPIC', topic); }
+  var topic = props.getProperty(name);
+  if (!topic) {
+    topic = (name === 'NTFY_KID_TOPIC' ? 'bookdude-kid-' : 'bookdude-') + Utilities.getUuid().replace(/-/g, '').slice(0, 20);
+    props.setProperty(name, topic);
+  }
   return topic;
 }
 function ntfyServer() { return (setting('NTFY_SERVER') || 'https://ntfy.sh').replace(/\/+$/, ''); }
 
-// One alert to everyone subscribed. `click` is the page a tap opens; priority 3 is normal, 5 is urgent. true if it went.
-function sendAlert(title, body, click, priority) {
+// One alert. `click` is the page a tap opens and a button's too; `picture` is shown with it; priority 3 is normal,
+// 5 is urgent. true if it went.
+function sendAlert(topic, title, body, click, priority, picture) {
   var res = UrlFetchApp.fetch(ntfyServer() + '/', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    payload: JSON.stringify({ topic: ntfyTopic(), title: String(title).slice(0, 80), message: String(body).slice(0, 400),
-      click: click || undefined, priority: priority || 3, actions: click ? [{ action: 'view', label: 'Fig-o-Clock', url: click }] : undefined })
+    payload: JSON.stringify({
+      topic: topic, title: String(title).slice(0, 80), message: String(body).slice(0, 400), priority: priority || 3,
+      click: click || undefined, attach: picture || undefined, filename: picture ? 'fig.png' : undefined,
+      actions: click ? [{ action: 'view', label: 'Fig-o-Clock', url: click }] : undefined
+    })
   });
   var code = res.getResponseCode();
   if (code >= 200 && code < 300) return true;
@@ -157,11 +251,14 @@ function sendAlert(title, body, click, priority) {
   return false;
 }
 
-// Run this once from the editor: it makes the family's topic, sends a test alert, and prints the name to subscribe to.
+// Run this once from the editor: it makes both topics, sends a test alert to each, and prints their names.
 function timerSetup() {
-  var topic = ntfyTopic();
-  var ok = sendAlert('Book Dude alerts are on', 'You\'ll get an alert here when screen time starts, changes and ends.', FIG_PAGE, 3);
-  Logger.log((ok ? 'A test alert went to the topic.' : 'The test alert did not go out (see above).') +
-    ' In the ntfy app on each family device: tap +, type this topic name exactly, and tap Subscribe:\n\n    ' + topic +
-    '\n\nThe name works like a password: share it only with the family.');
+  var grown = ntfyTopic('NTFY_TOPIC'), kid = ntfyTopic('NTFY_KID_TOPIC');
+  var a = sendAlert(grown, 'Book Dude alerts are on', 'Grown-ups: you\'ll get the facts here when screen time starts, changes and ends.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
+  var b = sendAlert(kid, 'Hi from Fig!', 'Meow! I\'ll tell you here when screen time starts, when 5 minutes are left, and when it\'s over.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
+  Logger.log((a && b ? 'Test alerts went to both topics.' : 'A test alert did not go out (see above).') +
+    ' In the ntfy app: tap +, type the name exactly, and tap Subscribe.\n\n' +
+    '    Grown-ups (your phones):   ' + grown + '\n' +
+    '    Maddy (her iPad):          ' + kid + '\n\n' +
+    'Each name works like a password: share them only with the family.');
 }

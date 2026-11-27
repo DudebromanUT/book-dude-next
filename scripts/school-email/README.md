@@ -142,20 +142,26 @@ into a "Spelling log" spreadsheet you can read.
 ## Screen-time alerts (optional)
 
 Book Dude's screen-time clock works without this: cashing in starts it, and every phone signed in to the family
-account shows the same countdown. With this, everyone in the family gets an alert in the free **ntfy** app (iPhone,
-iPad, Android) when the clock starts, gets more minutes, is paused, resumed or stopped, and an urgent one when it runs
-out, even if nobody has Book Dude open. Each alert says how many minutes are still in her bank, and tapping it opens
-the **Fig-o-Clock**: a live countdown where Fig the cat gets sleepier as time runs out (it asks this script for the
+account shows the same countdown. With this, the family gets alerts in the free **ntfy** app (iPhone, iPad, Android)
+when the clock starts, gets more minutes, is paused, resumed or stopped, a heads-up when 5 minutes are left, and an
+urgent alert when time is up, even if nobody has Book Dude open. There are two private topics:
+
+- **Grown-ups** (your phones): the plain facts and what's still in her bank.
+- **Maddy** (her iPad): Fig talking to her, in lines that change from one alert to the next.
+
+Every alert carries a picture of Fig (wide awake, yawning, paused mid-yawn, or asleep in her nightcap), and tapping it
+opens the **Fig-o-Clock**, a live countdown where Fig gets sleepier as time runs out (it asks this script for the
 clock with a view-only code that shows nothing else). No account, no phone numbers and no cost.
 
 1. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
    `Timer.gs` from this folder. Paste in the updated `Code.gs` too (it hands the clock's requests to `Timer.gs`).
-2. Pick `timerSetup` in the editor's function menu and click **Run**. It makes the family's private topic, sends a test
-   alert, and prints the topic's name in the log.
-3. On each family device (your iPhone, your spouse's, her iPad): install **ntfy** from the App Store, tap **+**, type
-   the topic name exactly, and tap **Subscribe**. Allow notifications when it asks. Tap the test alert to see Fig.
+2. Pick `timerSetup` in the editor's function menu and click **Run**. It makes both topics, sends a test alert to each,
+   and prints their names in the log.
+3. Install **ntfy** from the App Store. On your phone and your spouse's: tap **+**, type the **grown-ups'** topic
+   name exactly, and tap **Subscribe**. On her iPad, subscribe to **Maddy's** topic. Allow notifications, including
+   Time Sensitive ones, so the urgent time's-up alert comes through.
 4. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
 
-The topic name works like a password: anyone who knows it can see the alerts, so share it only with the family. At
-most 60 alerts a day are sent. Optional Script Property: `NTFY_SERVER`, to use your own ntfy server instead of
-`https://ntfy.sh`.
+A topic name works like a password: anyone who knows it can see those alerts, so share them only with the family.
+Optional Script Property: `NTFY_SERVER`, to use your own ntfy server instead of `https://ntfy.sh`. The Fig pictures
+are drawn from the Fig-o-Clock page by `node scripts/fig-pictures.cjs`.

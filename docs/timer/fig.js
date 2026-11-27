@@ -10,6 +10,8 @@
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var q = new URLSearchParams(location.hash.slice(1));
+  // pose=still (no blinking) or pose=yawn (mid-yawn): only for drawing the pictures the alerts carry (scripts/fig-pictures.cjs).
+  var pose = q.get('pose');
   var num = function (k) { var v = Number(q.get(k)); return isFinite(v) && v >= 0 ? v : 0; };
   var name = (q.get('n') || 'Maddy').replace(/[^A-Za-z .'-]/g, '').slice(0, 30) || 'Maddy';
   var clock = {
@@ -132,7 +134,7 @@
     var asleep = st === 'up' || st === 'stopped' || st === 'none';
     // Eyes: wide open down to 80% left, then closing; a blink now and then, slower as she gets sleepy.
     var open = asleep ? 0 : Math.min(1, frac / .8);
-    if (!asleep && st !== 'paused' && now > blinkAt) {
+    if (!asleep && st !== 'paused' && !pose && now > blinkAt) {
       var t = now - blinkAt, len = frac > .4 ? 220 : 900;
       if (t < len) open *= Math.abs(1 - 2 * t / len);
       else blinkAt = now + (frac > .4 ? 2500 + Math.random() * 3000 : 1800 + Math.random() * 1500);
@@ -144,7 +146,8 @@
       if (now - yawnAt < 1400) yawning = true;
       else yawnAt = now + 7000 + Math.random() * 5000;
     }
-    if (st === 'paused') yawning = true;   // frozen mid-yawn
+    if (st === 'paused' || pose === 'yawn') yawning = true;   // frozen mid-yawn
+    if (pose === 'still') yawning = false;
     svg.querySelector('.yawn').setAttribute('opacity', yawning ? '1' : '0');
     svg.querySelector('.mouth').setAttribute('opacity', yawning ? '0' : '1');
     svg.querySelector('.cap').setAttribute('opacity', asleep && st !== 'none' ? '1' : '0');
