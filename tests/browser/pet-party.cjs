@@ -117,13 +117,40 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     assert.match(await screen(), /Cash-in is open! Any screen: iPad, Switch, laptop or TV\. Cash in \(a grown-up approves\)/);
     if (SHOTS) { await p.$eval('#toast', e => { e.style.display = 'none'; }); await p.$eval('#piano', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(SHOTS, 'piano.png') });
       await p.$eval('.screen-card', e => e.scrollIntoView({ block: 'start' })); await p.screenshot({ path: path.join(SHOTS, 'cash-in.png') }); await p.$eval('#toast', e => { e.style.display = ''; }); }
-    // The family script (its link set right here) texts the grown-ups about the clock: what Book Dude tells it.
-    const texts = [];
-    await p.route('https://script.google.com/**', r => {
-      if (r.request().method() === 'POST') texts.push(JSON.parse(r.request().postData()));
-      r.fulfill({ contentType: 'application/json', body: r.request().method() === 'POST' ? '{"ok":true,"texted":2}' : '{"quizzes":[]}' });
+    // Screen-time alerts go to ntfy, straight from Book Dude. Set up in Settings, behind the passcode (still open).
+    const G = 'bookdude-0123abcd456789ef0123', K = 'bookdude-kid-0123abcd456789ef0123';
+    const ntfy = [];
+    await p.route('https://ntfy.sh/**', r => {
+      const q = r.request();
+      ntfy.push({ method: q.method(), url: q.url(), body: q.postData() ? JSON.parse(q.postData()) : null });
+      r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' });
     });
-    await p.evaluate(async () => { (await import('/book-dude-next/app/state.js')).state.settings.schoolLink = 'https://script.google.com/macros/s/TESTLINK/exec?key=k123'; });
+    await p.$eval('.tab[data-tab="more"]', e => e.click());
+    await p.waitForSelector('#alerts-panel');
+    assert.match(clean(await p.innerText('#alerts-panel')), /^Screen-time alerts for grown-ups Get an alert in the free ntfy app .* Set up alerts$/i);
+    await p.$eval('#alerts-panel [data-act="alerts-open"]', e => e.click());
+    await p.waitForSelector('#confirm[open] #alerts-grown');
+    await p.$eval('#confirm [data-act="alerts-new"]', e => e.click());
+    const made = await p.$$eval('#alerts-grown, #alerts-kid', e => e.map(i => i.value));
+    assert.match(made[0], /^bookdude-[0-9a-f]{20}$/);
+    assert.match(made[1], /^bookdude-kid-[0-9a-f]{20}$/);
+    await p.fill('#alerts-grown', 'ntfy.sh/' + G);
+    await p.$eval('form[data-form="alerts"] button[type="submit"]', e => e.click());
+    await p.waitForFunction(() => !document.getElementById('alerts-error').hidden);
+    assert.match(clean(await p.innerText('#alerts-error')), /Check the grown-ups’ name: .* \(just the name, not ntfy\.sh\/\)\./);
+    await p.fill('#alerts-grown', G);
+    await p.fill('#alerts-kid', K);
+    await p.$eval('form[data-form="alerts"] button[type="submit"]', e => e.click());
+    await p.waitForSelector('#confirm[open] [data-act="alerts-test"]');
+    assert.deepEqual(await p.evaluate(async () => (await import('/book-dude-next/app/state.js')).state.settings.alerts), { grown: G, kid: K });
+    assert.match(clean(await p.innerText('#alerts-panel')), /^Screen-time alerts for grown-ups On\. /i);
+    await p.$eval('#confirm [data-act="alerts-test"]', e => e.click());
+    await p.waitForFunction(() => /Test alerts sent/.test(document.getElementById('toast').textContent));
+    assert.deepEqual(ntfy.map(n => [n.method, n.url, n.body.topic, n.body.title]).sort(), [['POST', 'https://ntfy.sh/', G, 'Book Dude alerts are on'], ['POST', 'https://ntfy.sh/', K, 'Hi from Fig!']]);
+    assert.equal(ntfy[0].body.attach, BASE + 'timer/img/fig-awake.png', 'with Fig');
+    ntfy.length = 0;
+    await p.$eval('#confirm [data-act="close-confirm"]', e => e.click());
+    await progress();
     assert.equal(await p.isVisible('#screen-timer'), false, 'no clock yet');
     // Cash in 15 of the 60 minutes.
     await p.$eval('.screen-card [data-act="minutes-given"]', e => e.click());
@@ -183,34 +210,58 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.$eval('#confirm [data-act="close-confirm"]', e => e.click());
     await p.$eval('#screen-timer [data-act="timer-ok"]', e => e.click());
     await p.waitForSelector('#screen-timer[hidden]', { state: 'attached' });
-    // What the script was asked to text, in order.
-    for (let i = 0; i < 50 && texts.length < 5; i++) await p.waitForTimeout(100);
-    assert.deepEqual(texts.map(t => [t.action, t.event, t.minutes, t.left, t.endsText || '', t.back, t.added]), [
-      ['timer', 'start', 15, 15, '12:15 PM', 0, 15],
-      ['timer', 'pause', 15, 10, '', 0, 0],
-      ['timer', 'resume', 15, 10, '12:40 PM', 0, 0],
-      ['timer', 'stop', 15, 0, '', 8, 0],
-      ['timer', 'start', 15, 15, '12:46 PM', 0, 15]
+    // What went to ntfy: an alert to each topic for every change, and the 5-minute heads-up and time's up handed to
+    // ntfy to deliver later, cancelled when the clock pauses or stops and set again when it goes on.
+    const t = (h, m, sec = 0) => String(Date.parse('2026-11-22T' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0') + '-07:00') / 1000);
+    for (let i = 0; i < 50 && ntfy.filter(n => n.method === 'POST').length < 22; i++) await p.waitForTimeout(100);
+    const now = ntfy.filter(n => n.method === 'POST' && !n.body.delay);
+    const later = ntfy.filter(n => n.method === 'POST' && n.body.delay);
+    const gone = ntfy.filter(n => n.method === 'DELETE');
+    assert.deepEqual(now.filter(n => n.body.topic === G).map(n => n.body.title + ': ' + n.body.message), [
+      'Screen time started: Maddy: 15 min, ends 12:15 PM. Bank: 45 min.',
+      'Screen time paused: Maddy has 10 min left. Bank: 45 min.',
+      'Screen time is back on: Maddy: 10 min left, ends 12:40 PM. Bank: 45 min.',
+      'Screen time stopped early: Maddy’s clock was stopped. 8 min went back to her bank. Bank: 53 min.',
+      'Screen time started: Maddy: 15 min, ends 12:46 PM. Bank: 38 min.'
     ]);
-    assert.deepEqual(texts.map(t => t.bank), [45, 45, 45, 53, 38], 'each text says what is still in her bank');
-    assert.ok(texts.every(t => t.page === BASE + 'timer/'), 'and links to the Fig-o-Clock');
-    // The Fig-o-Clock: the link's own time right away, then the clock as it is now from the family script.
+    assert.equal(now.filter(n => n.body.topic === K).length, 5, 'and Fig tells her, every time');
+    assert.match(now.find(n => n.body.topic === K).body.title, /^(Screen time! Fig is wide awake|Fig says: go!|Screen time is on)$/);
+    assert.deepEqual(now.filter(n => n.body.topic === G).map(n => n.body.attach.replace(BASE + 'timer/img/', '')), ['fig-awake.png', 'fig-paused.png', 'fig-awake.png', 'fig-asleep.png', 'fig-awake.png']);
+    const first = now[0].body.click;
+    assert.ok(first.startsWith(BASE + 'timer/#s=r&m=15&e=' + t(12, 15) + '&b=45&k='), 'a tap opens the Fig-o-Clock: ' + first);
+    const ids = (await timerNow()).id;
+    assert.deepEqual(later.filter(n => n.body.topic === G).map(n => [n.body.title, n.body.delay, n.body.priority, n.body.sequence_id.replace(/^bookdude-\w+-/, '')]), [
+      ['5 minutes left', t(12, 10), 4, 'warn'], ['Screen time is up!', t(12, 15), 5, 'up'],
+      ['5 minutes left', t(12, 35), 4, 'warn'], ['Screen time is up!', t(12, 40), 5, 'up'],
+      ['5 minutes left', t(12, 41, 30), 4, 'warn'], ['Screen time is up!', t(12, 46, 30), 5, 'up']
+    ]);
+    assert.ok(later.slice(-2).every(n => n.body.sequence_id.startsWith('bookdude-' + ids + '-')), 'named for the clock they belong to');
+    assert.deepEqual(gone.filter(n => n.url.includes('/' + G + '/')).map(n => n.url.replace(/^.*-/, '')).join(' '), 'warn up warn up warn up', 'pause, resume and stop clear them first');
+    assert.equal(gone.length, 12, 'on both topics');
+    // The Fig-o-Clock: the link's own time right away, then the clock as it is now, from the topic's newest alert.
     const figPage = await ctx.newPage();
     figPage.on('pageerror', e => errors.push(e.message));
     let looks = 0;
-    await figPage.route('https://script.google.com/**', r => { looks++; assert.match(r.request().url(), /\/macros\/s\/AKfyTESTID123\/exec\?clock=0123abcd456789ef$/);
-      r.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'x', state: 'paused', minutes: 30, ends: 0, left: 600000, bank: 38 }) }); });
     const endsAt = Math.round(Date.parse('2026-11-22T12:30:00-07:00') / 1000);
+    await figPage.route('https://ntfy.sh/**', r => {
+      looks++;
+      assert.match(r.request().url(), new RegExp('^https://ntfy\\.sh/' + K + '/json\\?poll=1&since=12h$'));
+      const msg = (time, hash) => JSON.stringify({ id: 'm' + time, time, event: 'message', topic: K, title: 'x', message: 'x', click: BASE + 'timer/#' + hash });
+      r.fulfill({ contentType: 'application/x-ndjson', headers: { 'access-control-allow-origin': '*' }, body: [
+        msg(100, 's=r&m=30&e=' + endsAt + '&b=45&k=' + K), msg(300, 's=p&m=30&l=600&b=38&k=' + K), JSON.stringify({ id: 'q', time: 200, event: 'message', click: BASE + 'timer/' })].join('\n') + '\n' });
+    });
     await figPage.goto(BASE + 'timer/#s=r&m=30&e=' + endsAt + '&b=45');
     await figPage.waitForFunction(() => /min still in Maddy’s bank/.test(document.getElementById('bank').textContent));
     assert.match(clean(await figPage.innerText('.wrap')), /Fig-o-Clock .* ended 12:30 PM Fig is asleep\. So is screen time\. .* 45 min still in Maddy’s bank/);
-    await figPage.goto(BASE + 'timer/#s=r&m=30&e=' + endsAt + '&b=45&t=0123abcd456789ef&u=AKfyTESTID123');
+    assert.equal(looks, 0, 'no topic, nothing to ask');
+    await figPage.goto(BASE + 'timer/#s=r&m=30&e=' + endsAt + '&b=45&k=' + K);
     await figPage.waitForFunction(() => /^Paused\./.test(document.getElementById('caption').textContent));
     assert.match(clean(await figPage.innerText('.wrap')), /10:00 paused Paused\. Fig is holding perfectly still.* 38 min still in Maddy’s bank/);
     assert.ok(looks >= 1);
     await figPage.close();
-    await p.unroute('https://script.google.com/**');
-    await p.evaluate(async () => { (await import('/book-dude-next/app/state.js')).state.settings.schoolLink = ''; });
+    // With alerts off, the clock still works and nothing goes to ntfy.
+    await p.evaluate(async () => { (await import('/book-dude-next/app/state.js')).state.settings.alerts = null; });
+    ntfy.length = 0;
     await grown('.screen-card [data-act="minutes-given"]');
     await p.waitForSelector('#confirm[open] [data-act="minutes-give"][data-min="15"]');
     await p.$eval('#confirm [data-act="minutes-give"][data-min="15"]', e => e.click());
@@ -219,6 +270,8 @@ const clean = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
     await p.waitForSelector('#confirm[open] [data-act="confirm-ok"]');
     await p.$eval('#confirm [data-act="confirm-ok"]', e => e.click());
     await p.waitForFunction(() => /38/.test(document.querySelector('.screen-card .jar-count').textContent));
+    assert.equal(ntfy.length, 0);
+    await p.unroute('https://ntfy.sh/**');
     // Take a check back: the week drops below 90 and cash-in locks again.
     await p.$$eval('#piano .today .piano-check.done', e => e[0].click());
     await p.waitForFunction(() => document.querySelectorAll('#piano .piano-check.done').length === 5);

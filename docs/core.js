@@ -511,6 +511,21 @@
     }
     return { timer: t, back: 0 };
   }
+  /**
+   * Where the screen-time alerts go: two private ntfy.sh topics, `grown` (the grown-ups' phones) and `kid` (her iPad).
+   * A topic's name works like a password, so it must be long and random-looking: 8 to 64 letters, numbers, - or _.
+   * null when alerts aren't set up.
+   */
+  const TOPIC = /^[A-Za-z0-9_-]{8,64}$/;
+  function alerts(o) {
+    if (!isPlain(o)) return null;
+    const grown = typeof o.grown === 'string' && TOPIC.test(o.grown.trim()) ? o.grown.trim() : '';
+    const kid = typeof o.kid === 'string' && TOPIC.test(o.kid.trim()) ? o.kid.trim() : '';
+    if (!grown && !kid) return null;
+    return { grown, kid };
+  }
+  const topicOk = s => typeof s === 'string' && TOPIC.test(s.trim());
+
   /** "12:05" or "1:02:05" for a number of milliseconds (rounded up to the second, so 0 is only shown at the end). */
   function clock(ms) {
     const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
@@ -903,7 +918,7 @@
   // The settings that travel with a reader between her devices, the school quiz link among them (so a grown-up
   // pastes it once, not on every device; it is as private as her password). The others belong to one device: when a
   // backup was last saved, when the weekly numbers were last sent, and how far this device has read the account.
-  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano', 'spelling', 'timer'];
+  const SYNCED_SETTINGS = ['goals', 'readerName', 'accent', 'storySeen', 'pets', 'reward', 'schoolSeen', 'schoolLink', 'dudeChat', 'thinkReplies', 'arcade', 'payoutTold', 'arTrack', 'piano', 'spelling', 'timer', 'alerts'];
 
   /**
    * One saved thing as the account stores it. `kind` is 'record' (a book's journal entry), 'book' (a book she added)
@@ -977,7 +992,7 @@
   }
 
   return {
-    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, timer, timerLeft, timerState, timerEnds, timerDo, clock, PIANO_STEP, PIANO_GOAL, spelling, spellMerge, spellPoints, SPELL_LEVELS,
+    SYNCED_SETTINGS, cloudRow, cloudValue, cloudWins, arcadeBest, homePoints, schoolYear, ledger, arTrack, quarterOf, arReport, piano, pianoMinutes, pianoWeek, cashWindow, timer, timerLeft, timerState, timerEnds, timerDo, clock, alerts, topicOk, PIANO_STEP, PIANO_GOAL, spelling, spellMerge, spellPoints, SPELL_LEVELS,
     STATUSES, BACKUP_VERSION, CUSTOM_PREFIX, BackupError, day, entry, isBlank, safeId, isCustomId, customBook, knownPoints,
     reward, rewardStatus, rewardPoints, examPoints, isExam, choices, screenTime, codeHash, metrics, periods, parseBackup, mergeBackup, exportBackup, fold,
     schoolQuizzes, findBook, readNextCandidates

@@ -1,25 +1,27 @@
-/* Fig-o-Clock: the screen-time countdown the family's texts link to. Fig the cat is wide awake when the clock is full
+/* Fig-o-Clock: the screen-time countdown the family's alerts open. Fig the cat is wide awake when the clock is full
  * and gets sleepier as it runs down, until she is fast asleep when screen time is over.
  *
- * The link carries the clock as it was when the text went out (after #): e (when it ends, in seconds), m (minutes on
+ * The link carries the clock as it was when the alert went out (after #): e (when it ends, in seconds), m (minutes on
  * the clock), l (seconds left, when paused or stopped), s (r running, p paused, x stopped), b (minutes still in her
- * bank), n (her name). With t and u (a view-only code and the family script's id) it also asks the family script every
- * 30 seconds for the clock as it is now, so a pause, more minutes or a stop shows here too. The view-only code shows the
- * clock and nothing else. */
+ * bank), n (her name), and k (the ntfy topic the alert came on). Every 30 seconds the page reads that topic's latest
+ * alert from ntfy.sh, whose link carries the clock as it is now, so a pause, more minutes or a stop shows here too. */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var q = new URLSearchParams(location.hash.slice(1));
   // pose=still (no blinking) or pose=yawn (mid-yawn): only for drawing the pictures the alerts carry (scripts/fig-pictures.cjs).
   var pose = q.get('pose');
-  var num = function (k) { var v = Number(q.get(k)); return isFinite(v) && v >= 0 ? v : 0; };
   var name = (q.get('n') || 'Maddy').replace(/[^A-Za-z .'-]/g, '').slice(0, 30) || 'Maddy';
-  var clock = {
-    state: { r: 'running', p: 'paused', x: 'stopped' }[q.get('s')] || (num('e') ? 'running' : 'none'),
-    minutes: Math.min(1440, num('m')), ends: num('e') * 1000, left: num('l') * 1000, bank: q.has('b') ? num('b') : null
-  };
-  var token = /^[a-f0-9]{8,40}$/.test(q.get('t') || '') ? q.get('t') : '';
-  var script = /^[\w-]{10,120}$/.test(q.get('u') || '') ? q.get('u') : '';
+  // The clock, from a link's part after # (this page's own, or a newer alert's).
+  function fromLink(p) {
+    var n = function (k) { var v = Number(p.get(k)); return isFinite(v) && v >= 0 ? v : 0; };
+    return {
+      state: { r: 'running', p: 'paused', x: 'stopped' }[p.get('s')] || (n('e') ? 'running' : 'none'),
+      minutes: Math.min(1440, n('m')), ends: n('e') * 1000, left: n('l') * 1000, bank: p.has('b') ? n('b') : null
+    };
+  }
+  var clock = fromLink(q);
+  var topic = /^[A-Za-z0-9_-]{8,64}$/.test(q.get('k') || '') ? q.get('k') : '';
 
   // ---------------------------------------------------------------------------------------------------------------
   // Fig, drawn facing you on her cushion: a gray tabby with yellow-green eyes.
@@ -181,15 +183,22 @@
   // ---------------------------------------------------------------------------------------------------------------
   // The clock as it is now, from the family script (view only).
 
+  // The newest alert on this topic from the last 12 hours (what ntfy.sh keeps), and the clock its link carries.
+  // An alert that is still scheduled (the 5-minute heads-up, time's up) isn't there until it goes out.
   function look() {
-    if (!token || !script || document.hidden) return;
-    fetch('https://script.google.com/macros/s/' + script + '/exec?clock=' + token).then(function (r) { return r.json(); }).then(function (c) {
-      if (!c || !c.state || c.error) return;
-      clock.state = c.state === 'running' || c.state === 'paused' || c.state === 'stopped' ? c.state : clock.state;
-      if (Number(c.minutes) > 0) clock.minutes = Math.min(1440, Number(c.minutes));
-      if (Number(c.ends) > 0) clock.ends = Number(c.ends);
-      if (Number(c.left) >= 0) clock.left = Number(c.left);
-      if (Number(c.bank) >= 0) clock.bank = Number(c.bank);
+    if (!topic || document.hidden) return;
+    fetch('https://ntfy.sh/' + topic + '/json?poll=1&since=12h').then(function (r) { return r.text(); }).then(function (text) {
+      var newest = null;
+      text.split('\n').forEach(function (line) {
+        var m;
+        try { m = JSON.parse(line); } catch (e) { return; }
+        if (!m || m.event !== 'message' || typeof m.click !== 'string' || m.click.indexOf('#') < 0) return;
+        if (!newest || m.time >= newest.time) newest = m;
+      });
+      if (!newest) return;
+      var c = fromLink(new URLSearchParams(newest.click.slice(newest.click.indexOf('#') + 1)));
+      if (c.state === 'none' || !c.minutes) return;
+      Object.keys(c).forEach(function (k) { clock[k] = c[k]; });
     }).catch(function () { /* offline: the link's own time keeps counting */ });
   }
 

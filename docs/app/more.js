@@ -7,6 +7,7 @@ import { state, saveSetting } from './state.js';
 import { main, toast } from './page.js';
 import { greeting } from './cards.js';
 import { rewardPanelHtml } from './money.js';
+import { alertsPanelHtml } from './alerts.js';
 import { coversItem } from './offline.js';
 import { accountPanelHtml } from './account.js';
 import { guideButtonHtml } from './guide.js';
@@ -56,6 +57,7 @@ export function renderMore() {
         '<div class="field"><label class="switch"><input type="checkbox" id="pets-on"' + (state.settings.pets ? ' checked' : '') + '> Visiting pets</label><p class="hint">' + esc(petsHint()) + '</p></div>' +
       '</div></section>' +
       rewardPanelHtml() +
+      alertsPanelHtml() +
       '<section class="panel"><h2>Backups</h2><p class="lead">' + (reader
         ? esc(reader) + '’s shelves, notes, quiz points, and added books are saved on this device and in the family account. A backup file is an extra copy to keep, and a way to bring books in from another Book Dude.'
         : 'Your shelves, notes, quiz points, and the books you added are saved only on this device. A backup file lets you move them to a new device or get them back if something goes wrong.') + '</p>' +

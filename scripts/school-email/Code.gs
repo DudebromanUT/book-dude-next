@@ -10,7 +10,6 @@
  *      is emailed to them right away.
  *   5. Book money: when she puts enough points in the Book Money Jar for a payout, her parents get an email to add
  *      the money to her account (no Claude needed).
- *   6. Screen time: alerts in the ntfy app when the clock starts, changes and runs out (Timer.gs).
  * Her name is never sent to Claude. Setup steps: scripts/school-email/README.md.
  *
  * Nothing secret is in this file. The link's key is made in your Google account by setup(), and the Claude API key is
@@ -815,8 +814,6 @@ function keyOk(given) {
 
 // Asking for the quiz list (and whether the Claude features are on).
 function doGet(e) {
-  // The Fig-o-Clock page asking for the screen-time clock, with its view-only code (Timer.gs). It shows nothing else.
-  if (e && e.parameter && e.parameter.clock !== undefined) return json(typeof timerView === 'function' ? timerView(String(e.parameter.clock)) : { error: 'off' });
   if (!keyOk(e && e.parameter && e.parameter.key)) return json({ error: 'That link is not right.' });
   var all = PropertiesService.getScriptProperties().getProperties();
   var quizzes = Object.keys(all).filter(function (n) { return n.indexOf('q_') === 0; }).map(function (n) { return JSON.parse(all[n]); });
@@ -830,8 +827,6 @@ function doPost(e) {
   try { r = JSON.parse((e.postData && e.postData.contents) || '{}'); } catch (err) { return json({ error: 'bad' }); }
   // Spelling BB (Spelling.gs, a second file in this project).
   if (String(r.action).indexOf('spell-') === 0) return json(typeof spellAction === 'function' ? spellAction(r) : { error: 'no spelling' });
-  // The screen-time clock's alerts (Timer.gs, a third file in this project).
-  if (r.action === 'timer') return json(typeof timerAction === 'function' ? timerAction(r) : { ok: true, off: true });
   if (r.action === 'chat') return json(chat(r));
   if (r.action === 'picks') return json(pickBooks(r));
   if (r.action === 'report') return json(saveReport(r));

@@ -35,8 +35,9 @@ import * as arUi from './ar.js';
 import * as piano from './piano.js';
 import * as guide from './guide.js';
 import * as timer from './timer.js';
+import * as alerts from './alerts.js';
 
-const FEATURES = [page, tabs, explore, shelves, progress, more, book, myBooks, dudeTalk, money, backup, offline, share, grownup, dudeAi, cobol, accountUi, arUi, piano, guide, timer];
+const FEATURES = [page, tabs, explore, shelves, progress, more, book, myBooks, dudeTalk, money, backup, offline, share, grownup, dudeAi, cobol, accountUi, arUi, piano, guide, timer, alerts];
 
 // One list per kind of event. A name used twice would quietly lose one handler, so that is reported.
 function gather(kind) {

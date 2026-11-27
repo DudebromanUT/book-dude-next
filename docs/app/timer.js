@@ -1,14 +1,14 @@
 /* The screen-time clock, one for the family. A grown-up cashing in minutes starts it; every device signed in to her
  * account shows the same countdown in a strip at the top of every tab; grown-ups can pause or stop it (stopping puts
  * the unused minutes back in her bank); and when it runs out, any device with Book Dude open chimes and says so. The
- * family Google script sends alerts to the ntfy app when it starts, changes and runs out (Timer.gs). */
+ * grown-up's device sends alerts to the ntfy app when it starts, changes and runs out (alerts.js). */
 
 import { C, $, esc, plural } from './util.js';
 import { state, saveSetting } from './state.js';
 import { confirmBox, toast, showConfirm } from './page.js';
 import { asGrownup } from './grownup.js';
-import { post } from './dude-ai.js';
 import { saveReward, screenStatus, rewardPoints } from './money.js';
+import { alertClock } from './alerts.js';
 import { renderProgress } from './progress.js';
 
 const UP_SEEN = 'book-dude:timer-up-seen';
@@ -132,15 +132,9 @@ async function change(what, minutes) {
   return r;
 }
 
-// The Fig-o-Clock page the alerts open: Fig gets sleepier as the clock runs down (docs/timer).
-const figPage = () => new URL('timer/', document.baseURI).href;
-
 function alertFamily(event, t, added, back) {
-  const ends = C.timerEnds(t), leftMs = C.timerLeft(t, Date.now());
-  post({ action: 'timer', event, id: t.id, name: herName(), minutes: t.minutes, added, back,
-    left: event === 'stop' ? 0 : Math.ceil(leftMs / 60000), leftMs: Math.round(leftMs), ends, endsText: ends ? timeText(ends) : '',
-    bank: screenStatus(rewardPoints()).owed, page: figPage() }).then(r => {
-    if (r && r.error && state.settings.schoolLink) toast('The clock is set, but the alerts didn’t go out. (Is the internet on?)');
+  alertClock(event, t, { name: herName(), added, back, bank: screenStatus(rewardPoints()).owed }).then(r => {
+    if (r === 'failed') toast('The clock is set, but the alerts didn’t go out. (Is the internet on?)');
   });
 }
 

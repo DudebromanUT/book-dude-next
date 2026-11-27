@@ -356,3 +356,13 @@ test('the screen-time clock: cashing in starts it, grown-ups pause and stop it, 
   assert.deepEqual([C.clock(0), C.clock(59001), C.clock(25 * M), C.clock(65 * M + 5000)], ['0:00', '1:00', '25:00', '1:05:05']);
   assert.ok(C.SYNCED_SETTINGS.includes('timer'));
 });
+
+test('screen-time alert topics: two long, random-looking names, or nothing', () => {
+  assert.equal(C.alerts(null), null);
+  assert.equal(C.alerts({ grown: 'short', kid: '' }), null, 'too short to be private');
+  assert.deepEqual(C.alerts({ grown: ' bookdude-0123abcd456789ef0123 ', kid: 'bookdude-kid-0123abcd456789ef0123' }),
+    { grown: 'bookdude-0123abcd456789ef0123', kid: 'bookdude-kid-0123abcd456789ef0123' });
+  assert.deepEqual(C.alerts({ grown: 'bookdude-0123abcd456789ef0123', kid: 'has spaces in it' }), { grown: 'bookdude-0123abcd456789ef0123', kid: '' });
+  assert.equal(C.topicOk('ntfy.sh/bookdude-123456'), false, 'a name, not an address');
+  assert.ok(C.SYNCED_SETTINGS.includes('alerts'));
+});

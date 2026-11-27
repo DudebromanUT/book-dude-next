@@ -139,32 +139,11 @@ into a "Spelling log" spreadsheet you can read.
    day, default 300). Run `spellLogUrl` in the editor for the Spelling log's link.
 
 
-## Screen-time alerts (optional)
+## Screen-time alerts
 
-Book Dude's screen-time clock works without this: cashing in starts it, and every phone signed in to the family
-account shows the same countdown. With this, the family gets alerts in the free **ntfy** app (iPhone, iPad, Android)
-when the clock starts, gets more minutes, is paused, resumed or stopped, a heads-up when 5 minutes are left, and an
-urgent alert when time is up, even if nobody has Book Dude open. There are two private topics:
-
-- **Grown-ups** (your phones): the plain facts and what's still in her bank.
-- **Maddy** (her iPad): Fig talking to her, in lines that change from one alert to the next.
-
-Every alert carries a picture of Fig (wide awake, yawning, paused mid-yawn, or asleep in her nightcap), and tapping it
-opens the **Fig-o-Clock**, a live countdown where Fig gets sleepier as time runs out (it asks this script for the
-clock with a view-only code that shows nothing else). No account, no phone numbers and no cost.
-
-1. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
-   `Timer.gs` from this folder. Paste in the updated `Code.gs` too (it hands the clock's requests to `Timer.gs`).
-2. Make a free account at **ntfy.sh** (Sign up), then **Account → Access tokens → Create access token**. In
-   **Project Settings → Script Properties**, add `NTFY_TOKEN` with that token (it starts with `tk_`). Without it,
-   ntfy.sh shares one daily allowance among all Google scripts, and alerts can fail with error 429.
-3. Pick `timerSetup` in the editor's function menu and click **Run**. It makes both topics, sends a test alert to each,
-   and prints their names in the log.
-4. Install **ntfy** from the App Store. On your phone and your spouse's: tap **+**, type the **grown-ups'** topic
-   name exactly, and tap **Subscribe**. On her iPad, subscribe to **Maddy's** topic. Allow notifications, including
-   Time Sensitive ones, so the urgent time's-up alert comes through.
-5. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
-
-A topic name works like a password: anyone who knows it can see those alerts, so share them only with the family.
-Optional Script Property: `NTFY_SERVER`, to use your own ntfy server instead of `https://ntfy.sh`. The Fig pictures
-are drawn from the Fig-o-Clock page by `node scripts/fig-pictures.cjs`.
+Screen-time alerts don't use this script. Book Dude sends them itself, to the free ntfy app, from the device a
+grown-up uses to change the clock: set them up in Book Dude, **Settings → Screen-time alerts**. (An earlier version
+sent them from a `Timer` file in this project, but ntfy.sh limits messages per internet address and Google scripts
+share theirs with everyone else's, so the daily allowance ran out. If your project still has a `Timer` file, or
+`NTFY_TOKEN`, `NTFY_TOPIC` and `NTFY_KID_TOPIC` in Script Properties, you can delete them once the topics are in
+Book Dude.)

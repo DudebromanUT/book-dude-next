@@ -28,7 +28,7 @@ export const state = {
   limit: PAGE,
   records: {},
   custom: {},
-  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {}, spelling: C.spelling({}), timer: null },
+  settings: { goals: {}, readerName: '', accent: 'leather', lastExportAt: '', storySeen: false, reward: C.reward({}), pets: true, schoolLink: '', schoolSeen: [], dudeChat: true, reportAt: '', thinkReplies: {}, arcade: {}, spelling: C.spelling({}), timer: null, alerts: null },
   dudeLine: null,
   dudePs: '',
   offline: 'checking',
@@ -248,7 +248,9 @@ const TAKE = {
   // Spelling never loses a paid word: a copy from the account is put together with this one (core.js spellMerge).
   spelling: v => { if (v && typeof v === 'object') state.settings.spelling = C.spellMerge(state.settings.spelling, v); },
   // The family's screen-time clock (core.js timer): the newest change wins, like the other settings.
-  timer: v => { state.settings.timer = C.timer(v); }
+  timer: v => { state.settings.timer = C.timer(v); },
+  // Where the screen-time alerts go (two ntfy topics), shared by the family's devices.
+  alerts: v => { state.settings.alerts = C.alerts(v); }
 };
 export function takeSettings(s) {
   for (const key of Object.keys(TAKE)) if (Object.prototype.hasOwnProperty.call(s, key)) TAKE[key](s[key]);
