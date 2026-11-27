@@ -139,43 +139,23 @@ into a "Spelling log" spreadsheet you can read.
    day, default 300). Run `spellLogUrl` in the editor for the Spelling log's link.
 
 
-## Screen-time texts (optional)
+## Screen-time alerts (optional)
 
 Book Dude's screen-time clock works without this: cashing in starts it, and every phone signed in to the family
-account shows the same countdown. With this, the script also texts both grown-ups when the clock starts, gets more
-minutes, is paused, resumed or stopped, and when it runs out (even if nobody has Book Dude open). Each text says how
-many minutes are still in her bank and ends with a **Fig-o-Clock** link: a live countdown where Fig the cat gets
-sleepier as time runs out (it asks this script for the clock with a view-only code that shows nothing else). Texts go
-through Twilio, which charges a little: a phone number for about $2 a month and a few cents a text (the link makes
-each one two or three text segments).
+account shows the same countdown. With this, everyone in the family gets an alert in the free **ntfy** app (iPhone,
+iPad, Android) when the clock starts, gets more minutes, is paused, resumed or stopped, and an urgent one when it runs
+out, even if nobody has Book Dude open. Each alert says how many minutes are still in her bank, and tapping it opens
+the **Fig-o-Clock**: a live countdown where Fig the cat gets sleepier as time runs out (it asks this script for the
+clock with a view-only code that shows nothing else). No account, no phone numbers and no cost.
 
-1. Make a Twilio account at twilio.com, buy a **toll-free** number that can send SMS, and complete **Toll-Free
-   Verification** for it (Console → Phone Numbers → Regulatory Compliance; it is free and takes a few days). Use case:
-   personal notifications to your own family's phones; the messages include a link to your own countdown page. A
-   sample: "Book Dude: Maddy's screen time started: 30 min, ends 4:35 PM. Bank: 45 min." Until it is verified, texts
-   may not go out.
-2. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
-   `Timer.gs` from this folder. Paste in the updated `Code.gs` too (its `doPost` hands timer requests to `Timer.gs`).
-3. **Project Settings → Script Properties**, add:
-   - `TWILIO_SID`: the Account SID from the Twilio Console (starts with `AC`)
-   - `TWILIO_TOKEN`: the Auth Token from the Twilio Console. A secret: it goes here and nowhere else.
-   - `TWILIO_FROM`: your Twilio number, like `+18885551234`
-   - `TEXT_TO`: both phones, with a comma between, like `+18015551234, +18015555678`
-4. Pick `timerTextTest` in the editor's function menu and click **Run**. Both phones should get a test text; if not,
-   the log says what Twilio answered.
-5. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
+1. In this Apps Script project, click **+** next to Files, choose **Script**, name it **Timer**, and paste in all of
+   `Timer.gs` from this folder. Paste in the updated `Code.gs` too (it hands the clock's requests to `Timer.gs`).
+2. Pick `timerSetup` in the editor's function menu and click **Run**. It makes the family's private topic, sends a test
+   alert, and prints the topic's name in the log.
+3. On each family device (your iPhone, your spouse's, her iPad): install **ntfy** from the App Store, tap **+**, type
+   the topic name exactly, and tap **Subscribe**. Allow notifications when it asks. Tap the test alert to see Fig.
+4. **Deploy → Manage deployments → pencil → Version: New version → Deploy.** The link stays the same.
 
-At most 40 texts a day are sent (each goes to every phone in `TEXT_TO`).
-
-### Getting the texts to Maddy's iPad too (as iMessages, from one iPhone)
-
-A Wi-Fi iPad can't get regular texts, so one grown-up's iPhone forwards them to her as iMessages. Set this up on
-**one** iPhone only, or she gets every message twice.
-
-1. Save your Twilio number as a contact named **Book Dude**.
-2. **Shortcuts** app → **Automation** → **+** → **Message**.
-3. **Sender**: Book Dude. **Message Contains**: `Book Dude`. Pick **Run Immediately**. **Next**.
-4. **New Blank Automation** → **Add Action** → **Send Message**.
-5. Tap **Message** and pick **Shortcut Input** (if it offers a choice, pick **Content**). Tap **Recipients** and pick
-   Maddy (the email or number her iPad uses for iMessage). Tap the arrow on the action and turn off **Show When Run**.
-6. **Done**. Run `timerTextTest` again: her iPad should get it as a blue iMessage, and tapping the link shows Fig.
+The topic name works like a password: anyone who knows it can see the alerts, so share it only with the family. At
+most 60 alerts a day are sent. Optional Script Property: `NTFY_SERVER`, to use your own ntfy server instead of
+`https://ntfy.sh`.

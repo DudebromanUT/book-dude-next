@@ -53,7 +53,7 @@ function guideHtml() {
       '<b>Cashing in</b> opens Friday after school (3 pm) through Sunday, and only once she has practiced piano <b>' + C.PIANO_GOAL + ' minutes</b> that week (Monday to Sunday).',
       'She taps <b>Cash in</b>, a grown-up enters the passcode and picks how many minutes she’s using (15, 30, 60 or all). <b>The clock starts right away</b>: a countdown at the top of every tab, the same on every phone signed in to the family account. Cashing in more while it runs adds to it.',
       '<b>Pause</b> and <b>Stop</b> are on the countdown (passcode). Stopping early puts the unused minutes back in her bank. When it runs out, any phone with Book Dude open chimes and says so.',
-      '<b>Texts:</b> with Twilio set up in the family Google script, both grown-ups get a text when the clock starts, changes and runs out, even with Book Dude closed. Each text says what’s still in her bank and links to the <b>Fig-o-Clock</b>, a live countdown where Fig gets sleepier as time runs out. One iPhone can forward the texts to her iPad as iMessages (steps in the script’s README).',
+      '<b>Alerts:</b> in the free <b>ntfy</b> app, on both grown-ups’ phones and her iPad, when the clock starts, changes and runs out, even with Book Dude closed. Each one says what’s still in her bank; tap it for the <b>Fig-o-Clock</b>, a live countdown where Fig gets sleepier as time runs out. Setup steps are in the family script’s README.',
       'Sick week or a holiday? <b>Grown-up: cash in anyway</b> skips the rules.',
       '<b>Piano:</b> on the Piano practice card, tap <b>+</b> for each 15 minutes she practices (passcode). Piano doesn’t earn minutes; it unlocks cashing in.'
     ].filter(Boolean))) : '') +

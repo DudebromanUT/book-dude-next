@@ -1,33 +1,31 @@
 /**
- * The screen-time clock's texts, server side (Google Apps Script), for Book Dude.
+ * The screen-time clock's alerts, server side (Google Apps Script), for Book Dude.
  *
  * When a grown-up cashes in screen time in Book Dude, or pauses, resumes or stops the clock, the app tells this script
- * (through doPost in Code.gs, with the same key as everything else Book Dude sends), and it texts the grown-ups through
- * Twilio. While the clock runs, the script also sets itself an alarm for the end and texts "time's up" then, whether or
- * not anyone has Book Dude open. Each text says how many minutes are still in her bank, and ends with a link to the
- * Fig-o-Clock: a live countdown page where Fig the cat gets sleepier as time runs out. The page asks this script for the
- * clock with a view-only code (doGet in Code.gs, ?clock=...), which shows the clock and nothing else.
+ * (through doPost in Code.gs, with the same key as everything else Book Dude sends), and it sends a notification to
+ * everyone subscribed in the free ntfy app (ntfy.sh): the grown-ups' iPhones and Maddy's iPad. While the clock runs,
+ * the script also sets itself an alarm for the end and sends "time's up" then, as an urgent alert, whether or not
+ * anyone has Book Dude open. Each alert says how many minutes are still in her bank, and tapping it opens the
+ * Fig-o-Clock: a live countdown page where Fig the cat gets sleepier as time runs out. The page asks this script for
+ * the clock with a view-only code (doGet in Code.gs, ?clock=...), which shows the clock and nothing else.
  *
  * SETUP: in the Book Dude Apps Script project, click + next to Files, choose Script, name it Timer, and paste in this
  * file. Code.gs hands the clock's requests to this file (doPost's 'timer' line and doGet's 'clock' line, both in the
- * current Code.gs).
- * Then, in Project Settings > Script Properties, add:
- *   TWILIO_SID    your Twilio Account SID (it starts with AC)
- *   TWILIO_TOKEN  your Twilio Auth Token. It is a secret: it goes here and nowhere else.
- *   TWILIO_FROM   your Twilio phone number, like +18885551234
- *   TEXT_TO       the phones to text, with commas between them, like +18015551234, +18015555678
- * Run timerTextTest() once from the editor: both phones should get a test text. Then Deploy > Manage deployments >
- * pencil > Version: New version > Deploy (the link stays the same).
- * Without those properties the clock still works in Book Dude; nothing is texted.
+ * current Code.gs). Then pick timerSetup in the function menu and click Run: it makes the family's private ntfy topic,
+ * sends a test alert to it, and prints the topic's name. In the ntfy app on each device, tap +, type that name exactly,
+ * and Subscribe. Then Deploy > Manage deployments > pencil > Version: New version > Deploy (the link stays the same).
+ *
+ * The topic's name works like a password: anyone who knows it can see these alerts, so share it only with the family.
+ * Optional Script Property: NTFY_SERVER, for your own ntfy server instead of https://ntfy.sh.
  */
 
-var TEXT_DAILY_LIMIT = 40;   // texts a day at most (each one goes to every phone in TEXT_TO)
+var ALERT_DAILY_LIMIT = 60;   // alerts a day at most
 
 var FIG_PAGE = 'https://dudebromanut.github.io/book-dude-next/timer/';
 
 // Book Dude's request: { action: 'timer', event: 'start'|'add'|'pause'|'resume'|'stop', id, name, minutes, added,
 // back, left, leftMs, ends (ms), endsText ('4:35 PM'), bank (minutes still in her bank), page (the Fig-o-Clock's
-// address) }. Answers { ok, texted } or { ok, off } (texts not set up) or { error }.
+// address) }. Answers { ok, sent: true } or { error }.
 function timerAction(r) {
   var event = String(r.event);
   if (['start', 'add', 'pause', 'resume', 'stop'].indexOf(event) < 0) return { error: 'bad' };
@@ -44,7 +42,6 @@ function timerAction(r) {
   // The clock as it is now, for the Fig-o-Clock page.
   PropertiesService.getScriptProperties().setProperty('TIMER_NOW', JSON.stringify({
     id: t.id, state: t.state, minutes: t.minutes, ends: t.state === 'running' ? t.ends : 0, left: t.state === 'running' ? 0 : t.leftMs, bank: t.bank, at: Date.now() }));
-  if (!textsOn()) return { ok: true, off: true };
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -58,9 +55,9 @@ function timerAction(r) {
   } finally {
     lock.releaseLock();
   }
-  if (!countToday('text', TEXT_DAILY_LIMIT)) return { ok: true, later: true };
-  var n = sendText(timerMessage(event, t) + bankLine(t.bank) + '\nFig-o-Clock: ' + figLink(t));
-  return n ? { ok: true, texted: n } : { error: 'text' };
+  if (!countToday('alert', ALERT_DAILY_LIMIT)) return { ok: true, later: true };
+  var m = timerMessage(event, t);
+  return sendAlert(m.title, m.body + bankLine(t.bank), figLink(t), 3) ? { ok: true, sent: true } : { error: 'alert' };
 }
 
 function timerNum(v) {
@@ -69,6 +66,7 @@ function timerNum(v) {
 }
 function mins(n) { return n + ' min'; }
 function bankLine(bank) { return bank >= 0 ? ' Bank: ' + mins(bank) + '.' : ''; }
+
 
 // The view-only code in the Fig-o-Clock links: made once, kept in Script Properties.
 function figCode() {
@@ -98,14 +96,14 @@ function timerView(code) {
   return { id: now.id, state: now.state, minutes: now.minutes, ends: now.ends, left: now.left, bank: now.bank >= 0 ? now.bank : null };
 }
 
+// Each alert's title and first line.
 function timerMessage(event, t) {
-  var who = t.name + '\'s screen time';
   var ends = t.endsText ? ', ends ' + t.endsText : '';
-  if (event === 'start') return 'Book Dude: ' + who + ' started: ' + mins(t.minutes) + ends + '.';
-  if (event === 'add') return 'Book Dude: ' + mins(t.added) + ' added to ' + who + '. ' + mins(t.left) + ' left' + ends + '.';
-  if (event === 'pause') return 'Book Dude: ' + who + ' is paused with ' + mins(t.left) + ' left.';
-  if (event === 'resume') return 'Book Dude: ' + who + ' is back on: ' + mins(t.left) + ' left' + ends + '.';
-  return 'Book Dude: ' + who + ' was stopped early.' + (t.back ? ' ' + mins(t.back) + ' went back to her bank.' : '');
+  if (event === 'start') return { title: 'Screen time started', body: t.name + ': ' + mins(t.minutes) + ends + '.' };
+  if (event === 'add') return { title: 'More screen time', body: mins(t.added) + ' added for ' + t.name + '. ' + mins(t.left) + ' left' + ends + '.' };
+  if (event === 'pause') return { title: 'Screen time paused', body: t.name + ' has ' + mins(t.left) + ' left.' };
+  if (event === 'resume') return { title: 'Screen time is back on', body: t.name + ': ' + mins(t.left) + ' left' + ends + '.' };
+  return { title: 'Screen time stopped early', body: t.name + '\'s clock was stopped.' + (t.back ? ' ' + mins(t.back) + ' went back to her bank.' : '') };
 }
 
 // The alarm at the end of the clock: "time's up", to every phone.
@@ -121,9 +119,10 @@ function timerUp() {
     props.setProperty('TIMER_UP', JSON.stringify(t));
     return;
   }
-  if (Date.now() - t.ends > 30 * 60000 || !textsOn()) return;   // long past: say nothing
-  sendText('Book Dude: ' + t.name + '\'s screen time is up' + (t.endsText ? ' (' + t.endsText + ')' : '') + '. Time to hand over the remote.' +
-    bankLine(t.bank >= 0 ? t.bank : -1) + ' Reply STOP to opt out.\nFig-o-Clock: ' + figLink({ state: 'running', minutes: t.minutes || 0, ends: t.ends, bank: t.bank >= 0 ? t.bank : -1, name: t.name, page: t.page }));
+  if (Date.now() - t.ends > 30 * 60000) return;   // long past: say nothing
+  // Urgent, so it comes through with a long buzz even when the phone is quiet.
+  sendAlert('Screen time is up!', t.name + '\'s screen time is over' + (t.endsText ? ' (' + t.endsText + ')' : '') + '. Time to hand over the remote.' +
+    bankLine(t.bank >= 0 ? t.bank : -1), figLink({ state: 'running', minutes: t.minutes || 0, ends: t.ends, bank: t.bank >= 0 ? t.bank : -1, name: t.name, page: t.page }), 5);
 }
 
 function clearTimerAlarm() {
@@ -134,52 +133,35 @@ function clearTimerAlarm() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Twilio
+// ntfy
 
-function textPhone(s) {
-  var raw = String(s || '').replace(/[^\d+]/g, '');
-  if (/^\+[1-9]\d{7,14}$/.test(raw)) return raw;
-  var d = raw.replace(/\D/g, '');
-  if (d.length === 10) return '+1' + d;
-  if (d.length === 11 && d.charAt(0) === '1') return '+' + d;
-  return '';
+// The family's private topic: made once, from random letters and numbers, and kept in Script Properties.
+function ntfyTopic() {
+  var props = PropertiesService.getScriptProperties();
+  var topic = props.getProperty('NTFY_TOPIC');
+  if (!topic) { topic = 'bookdude-' + Utilities.getUuid().replace(/-/g, '').slice(0, 20); props.setProperty('NTFY_TOPIC', topic); }
+  return topic;
 }
-function textNumbers() {
-  var seen = {};
-  return String(setting('TEXT_TO') || '').split(/[,;]+/).map(textPhone).filter(function (p) {
-    if (!p || seen[p]) return false;
-    seen[p] = true;
-    return true;
-  }).slice(0, 5);
-}
-function textsOn() {
-  return !!(setting('TWILIO_SID') && setting('TWILIO_TOKEN') && textPhone(setting('TWILIO_FROM')) && textNumbers().length);
-}
+function ntfyServer() { return (setting('NTFY_SERVER') || 'https://ntfy.sh').replace(/\/+$/, ''); }
 
-// Sends `body` to every phone in TEXT_TO. Returns how many went out.
-function sendText(body) {
-  var sid = setting('TWILIO_SID'), token = setting('TWILIO_TOKEN'), from = textPhone(setting('TWILIO_FROM'));
-  var sent = 0;
-  textNumbers().forEach(function (to) {
-    var res = UrlFetchApp.fetch('https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(sid) + '/Messages.json', {
-      method: 'post',
-      payload: { To: to, From: from, Body: String(body).slice(0, 600) },
-      headers: { Authorization: 'Basic ' + Utilities.base64Encode(sid + ':' + token) },
-      muteHttpExceptions: true
-    });
-    var code = res.getResponseCode();
-    if (code >= 200 && code < 300) sent++;
-    else Logger.log('Twilio did not send to ' + to.slice(0, -4) + '****: ' + code + ' ' + String(res.getContentText()).slice(0, 300));
+// One alert to everyone subscribed. `click` is the page a tap opens; priority 3 is normal, 5 is urgent. true if it went.
+function sendAlert(title, body, click, priority) {
+  var res = UrlFetchApp.fetch(ntfyServer() + '/', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    payload: JSON.stringify({ topic: ntfyTopic(), title: String(title).slice(0, 80), message: String(body).slice(0, 400),
+      click: click || undefined, priority: priority || 3, actions: click ? [{ action: 'view', label: 'Fig-o-Clock', url: click }] : undefined })
   });
-  return sent;
+  var code = res.getResponseCode();
+  if (code >= 200 && code < 300) return true;
+  Logger.log('ntfy did not take the alert: ' + code + ' ' + String(res.getContentText()).slice(0, 300));
+  return false;
 }
 
-// Run this from the editor after adding the Script Properties: every phone in TEXT_TO should get a test text.
-function timerTextTest() {
-  if (!textsOn()) {
-    Logger.log('Texts are not set up yet: add TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM and TEXT_TO in Project Settings, Script Properties.');
-    return;
-  }
-  var n = sendText('Book Dude: texts work. You\'ll hear from me when screen time starts, changes and ends.');
-  Logger.log(n + ' of ' + textNumbers().length + ' test texts went out.' + (n < textNumbers().length ? ' The log above says what Twilio answered.' : ''));
+// Run this once from the editor: it makes the family's topic, sends a test alert, and prints the name to subscribe to.
+function timerSetup() {
+  var topic = ntfyTopic();
+  var ok = sendAlert('Book Dude alerts are on', 'You\'ll get an alert here when screen time starts, changes and ends.', FIG_PAGE, 3);
+  Logger.log((ok ? 'A test alert went to the topic.' : 'The test alert did not go out (see above).') +
+    ' In the ntfy app on each family device: tap +, type this topic name exactly, and tap Subscribe:\n\n    ' + topic +
+    '\n\nThe name works like a password: share it only with the family.');
 }
