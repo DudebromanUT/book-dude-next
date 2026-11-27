@@ -139,7 +139,7 @@ test('odd input is cleaned up, ntfy refusing is reported, and setup prints the t
   ok.ctx.timerSetup();
   assert.equal(ok.sent.alerts[0].url, 'https://ntfy.example.org/', 'your own server, if you have one');
   assert.deepEqual(ok.sent.alerts.map(a => [a.topic, a.title]), [[TOPIC, 'Book Dude alerts are on'], [KID, 'Hi from Fig!']]);
-  assert.match(ok.sent.log.join('\n'), new RegExp('Test alerts went to both topics\\..*Grown-ups \\(your phones\\): +' + TOPIC + '.*Maddy \\(her iPad\\): +' + KID, 's'));
+  assert.match(ok.sent.log.join('\n'), new RegExp('Grown-ups \\(your phones\\): +' + TOPIC + '.*Maddy \\(her iPad\\): +' + KID + '.*Test alerts went to both topics\\.', 's'), 'the names come first');
 });
 
 test('the Fig-o-Clock link: a view-only code shows the clock and nothing else', () => {
@@ -162,4 +162,14 @@ test('a free ntfy.sh account\'s token is sent along, and a 429 without one says 
   const bad = load({ NTFY_TOKEN: 'tk_wrong' }, 401);
   bad.ctx.timerSetup();
   assert.match(bad.sent.log.join('\n'), /did not accept NTFY_TOKEN/);
+});
+
+test('when Google can\'t reach ntfy at all, setup still prints the names and says to try again', () => {
+  const s = load();
+  s.ctx.UrlFetchApp.fetch = () => { throw new Error('Address unavailable: https://ntfy.sh/'); };
+  s.ctx.timerSetup();
+  const log = s.sent.log.join('\n');
+  assert.match(log, new RegExp('Grown-ups \\(your phones\\): +' + TOPIC));
+  assert.match(log, /Google could not reach ntfy: Address unavailable.*Try again in a few minutes\./);
+  assert.match(log, /A test alert did not go out/);
 });

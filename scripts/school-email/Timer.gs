@@ -241,8 +241,10 @@ function ntfyServer() { return (setting('NTFY_SERVER') || 'https://ntfy.sh').rep
 // One alert. `click` is the page a tap opens and a button's too; `picture` is shown with it; priority 3 is normal,
 // 5 is urgent. true if it went.
 function sendAlert(topic, title, body, click, priority, picture) {
-  var token = setting('NTFY_TOKEN');
-  var res = UrlFetchApp.fetch(ntfyServer() + '/', {
+  var token = setting('NTFY_TOKEN'), res;
+  // Google sometimes can't reach ntfy at all ("Address unavailable"): say so, instead of stopping the whole run.
+  try {
+    res = UrlFetchApp.fetch(ntfyServer() + '/', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: token ? { Authorization: 'Bearer ' + token } : {},
     payload: JSON.stringify({
@@ -250,7 +252,11 @@ function sendAlert(topic, title, body, click, priority, picture) {
       click: click || undefined, attach: picture || undefined, filename: picture ? 'fig.png' : undefined,
       actions: click ? [{ action: 'view', label: 'Fig-o-Clock', url: click }] : undefined
     })
-  });
+    });
+  } catch (e) {
+    Logger.log('Google could not reach ntfy: ' + String(e && e.message || e).slice(0, 200) + '. Try again in a few minutes.');
+    return false;
+  }
   var code = res.getResponseCode();
   if (code >= 200 && code < 300) return true;
   Logger.log('ntfy did not take the alert: ' + code + ' ' + String(res.getContentText()).slice(0, 300));
@@ -262,11 +268,13 @@ function sendAlert(topic, title, body, click, priority, picture) {
 // Run this once from the editor: it makes both topics, sends a test alert to each, and prints their names.
 function timerSetup() {
   var grown = ntfyTopic('NTFY_TOPIC'), kid = ntfyTopic('NTFY_KID_TOPIC');
-  var a = sendAlert(grown, 'Book Dude alerts are on', 'Grown-ups: you\'ll get the facts here when screen time starts, changes and ends.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
-  var b = sendAlert(kid, 'Hi from Fig!', 'Meow! I\'ll tell you here when screen time starts, when 5 minutes are left, and when it\'s over.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
-  Logger.log((a && b ? 'Test alerts went to both topics.' : 'A test alert did not go out (see above).') +
-    ' In the ntfy app: tap +, type the name exactly, and tap Subscribe.\n\n' +
+  // The names first, so they're in the log even if ntfy can't be reached right now.
+  Logger.log('In the ntfy app: tap +, paste the whole name, and tap Subscribe (leave "Use another server" off).\n\n' +
     '    Grown-ups (your phones):   ' + grown + '\n' +
     '    Maddy (her iPad):          ' + kid + '\n\n' +
-    'Each name works like a password: share them only with the family.');
+    'Each name works like a password: share them only with the family. They are also in Project Settings, Script Properties (NTFY_TOPIC and NTFY_KID_TOPIC).');
+  if (!setting('NTFY_TOKEN')) Logger.log('No NTFY_TOKEN yet: without one, alerts can fail with error 429 (see the top of this file).');
+  var a = sendAlert(grown, 'Book Dude alerts are on', 'Grown-ups: you\'ll get the facts here when screen time starts, changes and ends.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
+  var b = sendAlert(kid, 'Hi from Fig!', 'Meow! I\'ll tell you here when screen time starts, when 5 minutes are left, and when it\'s over.', FIG_PAGE, 3, FIG_PAGE + 'img/fig-awake.png');
+  Logger.log(a && b ? 'Test alerts went to both topics. Check your phone and her iPad.' : 'A test alert did not go out (see above).');
 }
